@@ -1,0 +1,10 @@
+{
+    "targets": {
+        "elm-playground": {
+            "inputs": [
+                "src/Main.elm"
+            ],
+            "output": "elm-stuff/index.js"
+        }
+    }
+}
