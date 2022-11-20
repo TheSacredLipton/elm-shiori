@@ -1,2 +1,12 @@
 elm-stuff
 VerifyExamples
+
+
+package-lock.json
+node_modules
+generated
+
+UiTests
+
+ui-tests/*
+!ui-tests/ui-doctest.json

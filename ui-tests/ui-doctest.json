@@ -1,0 +1,11 @@
+{
+    "htmltag": [],
+    "import": [
+        "Element"
+    ],
+    "root": "./src",
+    "tests": [
+        "Main"
+    ],
+    "lib": true
+}
