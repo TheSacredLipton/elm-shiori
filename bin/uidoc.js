@@ -60,7 +60,7 @@ const copyCodeGen = async (isLib) => {
         await fse.copy('codegen', 'elm-stuff/ui-doctest/codegen')
     } else {
       if (!(await fileExists('elm-stuff/ui-doctest/codegen')))
-        await fse.copy('../node_modules/uidoc/codegen', 'elm-stuff/ui-doctest/codegen')
+        await fse.copy('node_modules/uidoc/codegen', 'elm-stuff/ui-doctest/codegen')
     }
   } catch (err) {
     console.log(err.toString())
