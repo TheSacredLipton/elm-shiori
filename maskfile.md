@@ -1,7 +1,7 @@
 ## start
 
 ```sh
-npx nodemon --watch bin -x "node bin/shiori --watch --serve --dev"
+npx nodemon --watch bin -x "node bin/shiori serve --dev"
 ```
 
 ## install

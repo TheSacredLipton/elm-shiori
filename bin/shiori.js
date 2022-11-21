@@ -12,6 +12,7 @@ const handler = require('serve-handler')
 const http = require('http')
 
 const args = yargs
+  .command('* arg', 'arg')
   .options({
     watch: {
       type: 'boolean',
@@ -34,7 +35,7 @@ const args = yargs
   })
   .parseSync()
 
-/** @typedef {'..' | 'elm-stuff' | 'codegen' | 'elm.json' | 'shiori' | 'shiori' | 'node_modules' | 'elm-codegen' | 'bin' | 'src' | 'tmp.json' | 'shiori.json' | 'helpers' |  'elm-watch' | 'index.js'} Join */
+/** @typedef {'..' | 'elm-stuff' | 'codegen' | 'elm.json' | 'shiori' | 'shiori' | 'node_modules' | 'elm-codegen' | 'bin' | 'src' | 'tmp.json' | 'shiori.json' | 'helpers' |  'elm-watch' | 'index.js' | '.' | 'node_modules/shiori' | 'boilerplate'} Join */
 
 /**
  * @param {Join[]} args
@@ -46,6 +47,11 @@ const join = (...args) => {
 /** @typedef {{[key:string]: string}} Tests */
 /** @typedef {{root: string, lib: boolean, tests: Tests[], import: string[]}} UIJson */
 /** @typedef {{"source-directories" : string[]}} ElmJson */
+
+/**
+ * @returns {Join}
+ */
+const shioriRoot = () => (args.dev ? '.' : 'node_modules/shiori')
 
 /**
  * @returns {Promise<ElmJson>}
@@ -127,24 +133,29 @@ const configToTmp = async (uijson) => {
   }
 }
 
+const copyBoilerplate = async () => {
+  const p_shiori = join('shiori')
+  try {
+    if (!(await fileExists(p_shiori))) await fse.copy(join(shioriRoot(), 'boilerplate'), p_shiori)
+  } catch (err) {
+    console.log(err.toString())
+  }
+}
+
 /**
- * @param {boolean} isDev
  * @returns {Promise<void>}
  */
-const copyCodeGen = async (isDev) => {
+const copyCodeGen = async () => {
+  // const shioriRoot = isDev ? '.' : join('node_modules', 'shiori')
+
   const p_selmstuffCodegen = join('elm-stuff', 'shiori', 'codegen')
   const p_helpers = join('elm-stuff', 'shiori', 'helpers')
   try {
     await fse.remove(p_selmstuffCodegen)
     await fse.remove(p_helpers)
-    if (isDev) {
-      if (!(await fileExists(p_selmstuffCodegen))) await fse.copy('codegen', p_selmstuffCodegen)
-      if (!(await fileExists(p_helpers))) await fse.copy('helpers', p_helpers)
-    } else {
-      if (!(await fileExists(p_selmstuffCodegen)))
-        await fse.copy(join('node_modules', 'shiori', 'codegen'), p_selmstuffCodegen)
-      if (!(await fileExists(p_helpers))) await fse.copy(join('node_modules', 'shiori', 'helpers'), p_helpers)
-    }
+
+    if (!(await fileExists(p_selmstuffCodegen))) await fse.copy(join(shioriRoot(), 'codegen'), p_selmstuffCodegen)
+    if (!(await fileExists(p_helpers))) await fse.copy(join(shioriRoot(), 'helpers'), p_helpers)
   } catch (err) {
     console.log(err.toString())
   }
@@ -196,30 +207,30 @@ const main = async (uiJson) => {
 /*
  */
 ;(async () => {
-  const isDev = args.dev
-  const uiJson = await readUiJson()
-  await copyCodeGen(isDev)
-  await main(uiJson)
+  if (args.arg === 'init') {
+    await copyBoilerplate()
+  }
 
-  // NOTE: --watch
-  if (args.watch) {
+  if (args.arg === 'serve') {
+    const uiJson = await readUiJson()
+    await copyCodeGen()
+    await main(uiJson)
+
     chokidar.watch(uiJson.root).on('change', async (event, path) => {
       console.log(event, path)
       await main(uiJson)
     })
     chokidar.watch(join('codegen')).on('change', async (event, path) => {
       console.log(event, path)
-      await copyCodeGen(isDev)
+      await copyCodeGen()
       await main(uiJson)
     })
     chokidar.watch(join('helpers')).on('change', async (event, path) => {
       console.log(event, path)
-      await copyCodeGen(isDev)
+      await copyCodeGen()
       await main(uiJson)
     })
-  }
-  // NOTE: --serve
-  if (args.serve) {
+
     await elmWatch()
 
     const server = http.createServer((request, response) => {

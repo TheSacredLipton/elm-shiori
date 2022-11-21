@@ -1,0 +1,8 @@
+{
+    "import": [],
+    "root": "src",
+    "tests": [
+        "Ui"
+    ],
+    "port": 8080
+}
