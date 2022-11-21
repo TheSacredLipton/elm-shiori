@@ -1,9 +1,9 @@
 {
-  "name": "uidoc",
+  "name": "shiori",
   "version": "0.0.1",
   "description": "elm ui doc",
   "bin": {
-    "uidoc": "bin/uidoc.js"
+    "shiori": "bin/shiori.js"
   },
   "devDependencies": {
     "nodemon": "^2.0.20",
@@ -13,6 +13,9 @@
     "chokidar": "^3.5.3",
     "elm": "^0.19.1-5",
     "elm-codegen": "^0.2.0",
-    "fs-extra": "^10.1.0"
+    "elm-watch": "^1.1.0",
+    "fs-extra": "^10.1.0",
+    "serve": "^14.1.2",
+    "yargs": "^17.6.2"
   }
 }

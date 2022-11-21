@@ -8,5 +8,7 @@ generated
 
 UiTests
 
-ui-tests/*
-!ui-tests/ui-doctest.json
+shiori/*
+!shiori/shiori.json
+!shiori/index.html
+!shiori/elm-watch.json

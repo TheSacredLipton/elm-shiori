@@ -1,0 +1,9 @@
+{
+    "import": [
+        "Element"
+    ],
+    "root": "examples",
+    "tests": [
+        "Ui"
+    ]
+}

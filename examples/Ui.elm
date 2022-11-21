@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Ui exposing (..)
 
 import Element exposing (..)
 import Element.Input as Input
@@ -8,7 +8,7 @@ type Msg
     = ReplaceMe
 
 
-{-| uitest
+{-|
 
     :: layout [] <| try 1
 
@@ -19,10 +19,11 @@ type Msg
 -}
 try : Int -> Element msg
 try i =
-    text <| "tomtom" ++ String.fromInt i
+    text <| String.fromInt i
 
 
-{-| uitest
+
+{-|
 
     :: layout [] <| try2 1
 

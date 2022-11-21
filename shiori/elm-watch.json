@@ -1,0 +1,10 @@
+{
+    "targets": {
+        "shiori": {
+            "inputs": [
+                "src/Shiori.elm"
+            ],
+            "output": "./shiori.js"
+        }
+    }
+}
