@@ -1,7 +1,7 @@
 {
-  "name": "shiori",
+  "name": "elm-shiori",
   "version": "0.0.1",
-  "description": "elm ui doc",
+  "description": "UI document generator",
   "bin": {
     "shiori": "bin/shiori.js"
   },

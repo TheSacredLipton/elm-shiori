@@ -1,11 +1,14 @@
-[maskfile.md](./maskfile.md)
+# elm-shiori
+
+## Run
 
 ```
-init
+shiori init
+shiori serve
+```
 
-run
+## options 
 
-serve
-
+```
 --dev
 ```
