@@ -2,7 +2,7 @@
     "targets": {
         "shiori": {
             "inputs": [
-                "shiori/Shiori.elm"
+                "src/Shiori.elm"
             ],
             "output": "./shiori.js"
         }

@@ -2,3 +2,4 @@ elm-stuff
 elm.json
 shiori.js
 src/*
+!src/Shiori.elm

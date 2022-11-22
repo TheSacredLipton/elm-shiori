@@ -9,6 +9,9 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
+import Shiori.Button0
+import Shiori.Route as Route exposing (Route(..))
+import Shiori.Ui0
 import Url
 
 
@@ -42,6 +45,7 @@ init _ url key =
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url.Url
+    | NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -59,6 +63,9 @@ update msg model =
             ( { model | url = url }
             , Cmd.none
             )
+
+        NoOp ->
+            ( model, Cmd.none )
 
 
 view : Model -> Browser.Document Msg
@@ -79,11 +86,12 @@ view model =
                         }
                     ]
                   <|
-                    row [ width <| px 1000, height fill, centerX, Font.color <| rgb255 255 255 255 ]
-                        [ text "elm-shiori" ]
-                , row [ width <| px 1000, height fill, centerX, explain Debug.todo ]
-                    [ column [ width <| px 300, height fill ] []
-                    , column [ width fill, height fill, scrollbars ] [ el [ height <| px 10000 ] none ]
+                    row [ width <| px 800, height fill, centerX, Font.color <| rgb255 255 255 255 ]
+                        [ link [] { url = "/", label = text "elm-shiori" } ]
+                , row [ width <| px 800, height fill, centerX ]
+                    [ column [ width <| px 300, height fill, paddingXY 10 30, spacing 18, Font.size 20 ] <|
+                        List.map (\l -> link [] { url = "/" ++ l, label = text l }) Route.links
+                    , column [ width fill, height fill, scrollbars, paddingXY 10 30 ] [ map (\_ -> NoOp) <| Route.view model.url none ]
                     ]
                 ]
         ]

@@ -35,7 +35,7 @@ const args = yargs
   })
   .parseSync()
 
-/** @typedef {'..' | 'elm-stuff' | 'codegen' | 'elm.json' | 'shiori' | 'shiori' | 'node_modules' | 'elm-codegen' | 'bin' | 'src' | 'tmp.json' | 'shiori.json' | 'helpers' |  'elm-watch' | 'index.js' | '.' | 'node_modules/shiori' | 'boilerplate'} Join */
+/** @typedef {'..' | 'elm-stuff' | 'codegen' | 'elm.json' | 'shiori' | 'shiori' | 'node_modules' | 'elm-codegen' | 'bin' | 'src' | 'tmp.json' | 'shiori.json' |  'elm-watch' | 'index.js' | '.' | 'node_modules/shiori' | 'boilerplate'} Join */
 
 /**
  * @param {Join[]} args
@@ -101,7 +101,7 @@ const fileExists = async (filepath) => {
 const copyElmJson = async (root) => {
   try {
     let elmjson = await readElmJson()
-    elmjson['source-directories'] = ['shiori', 'src', '../' + root]
+    elmjson['source-directories'] = ['src', '../' + root]
     await fs.writeFile(join('shiori', 'elm.json'), JSON.stringify(elmjson))
   } catch (err) {
     console.log(err.toString())
@@ -149,13 +149,10 @@ const copyCodeGen = async () => {
   // const shioriRoot = isDev ? '.' : join('node_modules', 'shiori')
 
   const p_selmstuffCodegen = join('elm-stuff', 'shiori', 'codegen')
-  const p_helpers = join('elm-stuff', 'shiori', 'helpers')
   try {
     await fse.remove(p_selmstuffCodegen)
-    await fse.remove(p_helpers)
 
     if (!(await fileExists(p_selmstuffCodegen))) await fse.copy(join(shioriRoot(), 'codegen'), p_selmstuffCodegen)
-    if (!(await fileExists(p_helpers))) await fse.copy(join(shioriRoot(), 'helpers'), p_helpers)
   } catch (err) {
     console.log(err.toString())
   }
@@ -225,16 +222,14 @@ const main = async (uiJson) => {
       await copyCodeGen()
       await main(uiJson)
     })
-    chokidar.watch(join('helpers')).on('change', async (event, path) => {
-      console.log(event, path)
-      await copyCodeGen()
-      await main(uiJson)
-    })
 
     await elmWatch()
 
     const server = http.createServer((request, response) => {
-      return handler(request, response, { public: join('shiori') })
+      return handler(request, response, {
+        public: join('shiori'),
+        rewrites: [{ source: '**', destination: '/index.html' }]
+      })
     })
 
     server.listen(3000, () => {
