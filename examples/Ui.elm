@@ -22,7 +22,6 @@ try i =
     text <| String.fromInt i
 
 
-
 {-|
 
     :: layout [] <| try2 1

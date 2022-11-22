@@ -101,7 +101,7 @@ const fileExists = async (filepath) => {
 const copyElmJson = async (root) => {
   try {
     let elmjson = await readElmJson()
-    elmjson['source-directories'] = ['src', '../' + root]
+    elmjson['source-directories'] = ['shiori', 'src', '../' + root]
     await fs.writeFile(join('shiori', 'elm.json'), JSON.stringify(elmjson))
   } catch (err) {
     console.log(err.toString())

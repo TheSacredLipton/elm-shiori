@@ -1,5 +1,4 @@
 elm-stuff
-UiTests
 elm.json
 shiori.js
-src
+src/*
