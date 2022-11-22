@@ -45,23 +45,16 @@ elm =
     P.map List.concat <|
         P.succeed (\a -> a)
             |. P.spaces
-            |= P.loop [] commentsParser
-            |. P.spaces
-
-
-commentsParser : List (List String) -> Parser (Step (List (List String)) (List (List String)))
-commentsParser revStmts =
-    P.oneOf
-        [ P.succeed (\stmt -> P.Loop (stmt :: revStmts))
-            |. P.spaces
             |. P.chompUntil "{-|"
-            |. P.keyword "{-|"
-            |= P.loop [] codeParser
-            |. P.keyword "-}"
+            |= P.sequence
+                { start = "{-|"
+                , separator = "\n"
+                , end = "-}"
+                , spaces = P.spaces
+                , item = P.loop [] codeParser
+                , trailing = P.Optional
+                }
             |. P.spaces
-        , P.succeed ()
-            |> P.map (\_ -> P.Done (List.reverse revStmts))
-        ]
 
 
 codeParser : List String -> Parser (Step (List String) (List String))
@@ -81,28 +74,50 @@ codeParser revStmts =
 
 mock =
     """
-{-| 
+--
+type Msg
+    = ReplaceMe
 
-    :: layout [] <| try 1
 
-    :: layout [] <| try 2
+colors =
+    { red = rgb255 255 0 0
+    , green = rgb255 0 255 0
+    , blue = rgb255 0 0 255
+    }
 
-    :: layout [] <| try 3
 
--} 
+{-|
 
-type alias 
+    :: square colors.red
 
-{-| 
+    :: square colors.green
 
-    :: layout [] <| try 1
+    :: square colors.blue
 
-    :: layout [] <| try 2
+-}
 
-    :: layout [] <| try 3
+square : Color -> Element msg
+square color =
+    el
+        [ width <| px 100
+        , height <| px 100
+        , Background.color color
+        ]
+        none
 
--} 
- 
+aaa
+
+{-| 選択中は変化するボタン
+-}
+square : Color -> Element msg
+square color =
+    el
+        [ width <| px 100
+        , height <| px 100
+        , Background.color color
+        ]
+        none
+
 """
 
 

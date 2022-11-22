@@ -25,6 +25,18 @@ colors =
     :: square colors.blue
 
 -}
+a =
+    2
+
+
+{-| -}
+a3 =
+    1
+
+
+{-| 選択中は変化するボタン
+aaa
+-}
 square : Color -> Element msg
 square color =
     el
