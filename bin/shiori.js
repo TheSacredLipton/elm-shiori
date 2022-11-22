@@ -35,7 +35,7 @@ const args = yargs
   })
   .parseSync()
 
-/** @typedef {'..' | 'elm-stuff' | 'codegen' | 'elm.json' | 'shiori' | 'shiori' | 'node_modules' | 'elm-codegen' | 'bin' | 'src' | 'tmp.json' | 'shiori.json' |  'elm-watch' | 'index.js' | '.' | 'node_modules/shiori' | 'boilerplate'} Join */
+/** @typedef {'..' | 'elm-stuff' | 'codegen' | 'elm.json' | 'shiori' | 'shiori' | 'node_modules' | 'elm-codegen' | 'bin' | 'src' | 'tmp.json' | 'shiori.json' |  'elm-watch' | 'index.js' | '.' | 'node_modules/elm-shiori' | 'boilerplate'} Join */
 
 /**
  * @param {Join[]} args
@@ -51,7 +51,7 @@ const join = (...args) => {
 /**
  * @returns {Join}
  */
-const shioriRoot = () => (args.dev ? '.' : 'node_modules/shiori')
+const shioriRoot = () => (args.dev ? '.' : 'node_modules/elm-shiori')
 
 /**
  * @returns {Promise<ElmJson>}
