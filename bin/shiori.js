@@ -39,7 +39,7 @@ const join = (...args) => {
 }
 
 /** @typedef {{[key:string]: string}} Targets */
-/** @typedef {{root: string,  targets: Targets[], import: string[]}} ShioriJson */
+/** @typedef {{root: string,  targets: Targets[], import: string[], assets: string}} ShioriJson */
 /** @typedef {{"source-directories" : string[]}} ElmJson */
 
 /**
@@ -137,6 +137,24 @@ const generateBoilerplate = async () => {
 }
 
 /**
+ * @param {string} path
+ * @returns {Promise<void>}
+ */
+const copyAssets = async (path) => {
+  const name = path.split('/').pop()
+  const p_assets = 'shiori/' + name
+  await fse.remove(p_assets)
+
+  try {
+    if (name) {
+      if (!(await fileExists(p_assets))) await fse.copy(path, p_assets)
+    }
+  } catch (err) {
+    console.log(err.toString())
+  }
+}
+
+/**
  * @returns {Promise<void>}
  */
 const copyCodeGen = async () => {
@@ -195,6 +213,7 @@ const main = async (shioriJson) => {
 
 const serve = async () => {
   const shioriJson = await readShioriJson()
+  await copyAssets(shioriJson.assets)
   await copyCodeGen()
   await main(shioriJson)
 
@@ -207,6 +226,10 @@ const serve = async () => {
     await copyCodeGen()
     await main(shioriJson)
   })
+  chokidar
+    .watch(shioriJson.assets)
+    .on('add', async (event, path) => await copyAssets(shioriJson.assets))
+    .on('change', async (event, path) => await copyAssets(shioriJson.assets))
 }
 
 /*

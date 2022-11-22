@@ -3,8 +3,10 @@
         "Element"
     ],
     "root": "examples",
+    "assets": "examples/assets",
     "targets": [
         "Ui",
-        "Button"
+        "Button",
+        "Image"
     ]
 }
