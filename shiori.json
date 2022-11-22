@@ -3,9 +3,8 @@
         "Element"
     ],
     "root": "examples",
-    "tests": [
+    "targets": [
         "Ui",
         "Button"
-    ],
-    "port": 8080
+    ]
 }

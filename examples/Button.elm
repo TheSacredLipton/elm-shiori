@@ -12,8 +12,6 @@ type Msg
 
     :: button
 
-    :: button
-
 -}
 button : Element Msg
 button =

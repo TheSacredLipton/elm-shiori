@@ -12,3 +12,10 @@ shiori serve
 ```
 --dev
 ```
+
+## preinstall
+
+```
+elm install mdgriffith/elm-ui
+elm install elm/url
+```
