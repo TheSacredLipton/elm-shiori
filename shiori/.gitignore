@@ -4,3 +4,4 @@ shiori.js
 assets
 src/*
 !src/View.elm
+!src/Shiori.elm

@@ -10,6 +10,21 @@ const path = require('path')
 const yargs = require('yargs')
 const handler = require('serve-handler')
 const http = require('http')
+const { bold, green, yellow, red, cyan } = require('kleur')
+const assert = require('assert')
+
+/**
+ * NOTE: 簡易アサートテスト
+ * @param {*} a
+ * @param {*} b
+ */
+const equal = (a, b) => {
+  try {
+    assert.equal(a, b)
+  } catch (err) {
+    console.log(red(err.toString()))
+  }
+}
 
 const args = yargs
   .command('* arg', 'arg')
@@ -110,6 +125,7 @@ const copyElmJson = async (root) => {
 const addElmExtension = (filepath) => {
   return filepath.endsWith('.elm') ? filepath : filepath + '.elm'
 }
+equal(addElmExtension('hoge'), 'hoge.elm')
 
 /**
  * @param {ShioriJson} uijson
@@ -118,7 +134,6 @@ const addElmExtension = (filepath) => {
 const configToTmp = async (uijson) => {
   try {
     const newJson = Object.fromEntries(uijson.targets.map((value) => [value, uijson.root + '/' + value + '.elm']))
-
     const result = { imports: uijson.import, targets: await readFiles(newJson) }
     if (!(await fileExists(join('elm-stuff', 'shiori')))) await fs.mkdir(join('elm-stuff', 'shiori'))
     await fs.writeFile(join('elm-stuff', 'shiori', 'tmp.json'), JSON.stringify(result))
@@ -127,9 +142,14 @@ const configToTmp = async (uijson) => {
   }
 }
 
-const generateBoilerplate = async () => {
-  const p_shiori = join('shiori')
+/**
+ * TODO: 本当にOK?みたいな確認欲しい
+ *
+ */
+const init = async () => {
   try {
+    const p_shiori = join('shiori')
+    await fse.remove(p_shiori)
     if (!(await fileExists(p_shiori))) await fse.copy(join(shioriRoot(), 'shiori'), p_shiori)
   } catch (err) {
     console.log(err.toString())
@@ -141,11 +161,11 @@ const generateBoilerplate = async () => {
  * @returns {Promise<void>}
  */
 const copyAssets = async (path) => {
-  const name = path.split('/').pop()
-  const p_assets = 'shiori/' + name
-  await fse.remove(p_assets)
-
   try {
+    const name = path.split('/').pop()
+    const p_assets = 'shiori/' + name
+    await fse.remove(p_assets)
+
     if (name) {
       if (!(await fileExists(p_assets))) await fse.copy(path, p_assets)
     }
@@ -158,10 +178,9 @@ const copyAssets = async (path) => {
  * @returns {Promise<void>}
  */
 const copyCodeGen = async () => {
-  const p_selmstuffCodegen = join('elm-stuff', 'shiori', 'codegen')
   try {
+    const p_selmstuffCodegen = join('elm-stuff', 'shiori', 'codegen')
     await fse.remove(p_selmstuffCodegen)
-
     if (!(await fileExists(p_selmstuffCodegen))) await fse.copy(join(shioriRoot(), 'codegen'), p_selmstuffCodegen)
   } catch (err) {
     console.log(err.toString())
@@ -180,10 +199,11 @@ const codegen = async () => {
     `cd ${p_elmstuff_shioritest} && ${p_nodemodule_codegen} run --output="${p_codegen_output}" --flags-from="${'tmp.json'}"`,
     (err, stdout, stderr) => {
       if (err) {
-        console.log(`stderr: ${stderr}`)
+        console.log(red(`\n===== codegen:err ======\n ${stderr}`))
+        console.log(yellow(`${stdout}`))
         return
       }
-      console.log(`stdout: ${stdout}`)
+      console.log(`codegen: ${stdout}`)
     }
   )
 }
@@ -195,10 +215,11 @@ const codegen = async () => {
 const elmWatch = async () => {
   exec(`cd ${join('shiori')} && ${join('..', 'node_modules', 'elm-watch', 'index.js')} hot`, (err, stdout, stderr) => {
     if (err) {
-      console.log(`stderr: ${stderr}`)
+      console.log(`\n===== elmWatch =====\n`, red(`${stderr}`))
+      console.log(`${stdout}`)
       return
     }
-    console.log(`stdout: ${stdout}`)
+    console.log(`elm-watch: ${stdout}`)
   })
 }
 /**
@@ -236,7 +257,14 @@ const serve = async () => {
  */
 ;(async () => {
   if (args.arg === 'init') {
-    await generateBoilerplate()
+    await init()
+  }
+
+  if (args.arg === 'build') {
+    const shioriJson = await readShioriJson()
+    await copyAssets(shioriJson.assets)
+    await copyCodeGen()
+    await main(shioriJson)
   }
 
   if (args.arg === 'serve') {
@@ -254,7 +282,7 @@ const serve = async () => {
     })
 
     server.listen(3000, () => {
-      console.log('Running at http://localhost:3000')
+      console.log(cyan('\n Running at http://localhost:3000 \n'))
     })
   }
 })()

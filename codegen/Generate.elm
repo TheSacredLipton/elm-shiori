@@ -176,7 +176,7 @@ route elmCode =
             , genTypeRoute elmCode
             , genView elmCode
             , genRouteParser elmCode
-            , Elm.val "Maybe.withDefault NotFound (parse routeParser url)" |> Elm.declaration "toRoute url"
+            , genToRoute
             , genLinks elmCode
             ]
 
@@ -267,13 +267,13 @@ genTypeRoute elmCode =
 genView : ElmCode -> Elm.Declaration
 genView elmCode =
     Elm.declaration "view" <|
-        Elm.fn ( "url", Just (Type.named [ "Url" ] "Url") )
-            -- Elm.fn ( "url", Nothing )
+        Elm.fn ( "url", Just <| Type.named [ "Url" ] "Url" )
             (\url ->
                 Elm.Case.branch0 "NotFound" (Elm.list [])
                     :: toListMap genViewHelper elmCode
                     |> Elm.Case.custom (url |> pipe (Elm.val "toRoute")) (Type.var "Route")
-                    |> pipe (Elm.val "identity")
+                    |> pipe (Elm.val "View.map")
+                    |> Elm.withType (Type.list <| Type.named [ "View" ] "View")
             )
 
 
@@ -291,7 +291,7 @@ helper2 fileName vv =
         { cases =
             toListMap
                 (\functionName codes ->
-                    ( functionName, Elm.list <| List.indexedMap (\i _ -> Elm.withType (Type.namedWith [ "Element" ] "Element" [ Type.unit ]) <| Elm.val <| joinDot [ "Shiori", elmFileName fileName functionName i, "view" ]) codes )
+                    ( functionName, Elm.list <| List.indexedMap (\i _ -> Elm.val <| joinDot [ "Shiori", elmFileName fileName functionName i, "view" ]) codes )
                 )
                 vv
         , otherwise = Elm.list []
@@ -303,15 +303,53 @@ genRouteParser elmCode =
     fromElmCode elmCode
         |> List.map (Elm.val << genRouteParserHelper)
         |> Elm.list
-        |> pipe (Elm.val "oneOf")
+        |> pipe url_oneOf
         |> Elm.declaration "routeParser"
+
+
+url_oneOf : Elm.Expression
+url_oneOf =
+    let
+        parser_a_b =
+            Type.namedWith []
+                "Parser"
+                [ Type.var "a"
+                , Type.var "b"
+                ]
+
+        parser_route_b =
+            Type.namedWith []
+                "Parser"
+                [ Type.function [ Type.named [] "Route" ] <| Type.var "b"
+                , Type.var "b"
+                ]
+    in
+    Elm.value
+        { importFrom = []
+        , name = "oneOf"
+        , annotation =
+            Just
+                (Type.function [ Type.list <| parser_a_b ] parser_route_b)
+        }
 
 
 {-| FIXME:
 -}
 genRouteParserHelper : ElmCodeRecord -> String
-genRouteParserHelper { index, fileName, functionName } =
+genRouteParserHelper { fileName } =
     "map " ++ fileName ++ " <| s \"" ++ fileName ++ "\" </> string"
+
+
+genToRoute : Elm.Declaration
+genToRoute =
+    Elm.declaration "toRoute" <|
+        Elm.fn ( "url", Just <| Type.named [ "Url" ] "Url" )
+            (\url ->
+                url
+                    |> pipe (Elm.val "parse routeParser ")
+                    |> pipe (Elm.val "Maybe.withDefault NotFound")
+                    |> Elm.withType (Type.named [] "Route")
+            )
 
 
 
