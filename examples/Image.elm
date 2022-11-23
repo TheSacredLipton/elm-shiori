@@ -5,8 +5,6 @@ import Element exposing (..)
 
 {-|
 
-    ## img
-
     :: img
 
 -}

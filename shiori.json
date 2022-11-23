@@ -1,7 +1,4 @@
 {
-    "import": [
-        "Element"
-    ],
     "root": "examples",
     "assets": "examples/assets",
     "targets": [

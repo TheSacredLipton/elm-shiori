@@ -70,8 +70,7 @@ main =
 
 
 type alias Flags =
-    { imports : List String
-    , targets : List ( String, String )
+    { targets : List ( String, String )
     }
 
 
@@ -83,8 +82,7 @@ type alias Flags =
 
 decoder : D.Decoder Flags
 decoder =
-    D.map2 Flags
-        (D.field "imports" (D.list D.string))
+    D.map Flags
         (D.field "targets" (D.keyValuePairs D.string))
 
 
@@ -114,7 +112,7 @@ elmParser fileName =
         commentContents s =
             P.succeed identity
                 |= P.oneOf
-                    [ P.succeed (\a -> P.Done <| ( a, s ))
+                    [ P.succeed (\a -> P.Done <| ( a, List.reverse s ))
                         |. P.keyword "-}"
                         |. P.backtrackable P.spaces
                         |= getVal

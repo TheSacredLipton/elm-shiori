@@ -26,15 +26,12 @@ const equal = (a, b) => {
   }
 }
 
+/**
+ * TODO: 表示をおしゃれにしたい
+ */
 const args = yargs
-  .command('* arg', 'arg')
+  .command('* arg', '=== commands === \n\n init \n build \n serve')
   .options({
-    watch: {
-      type: 'boolean',
-      describe: 'watch',
-      demandOption: true,
-      default: false
-    },
     dev: {
       type: 'boolean',
       describe: '開発者用',
@@ -54,7 +51,7 @@ const join = (...args) => {
 }
 
 /** @typedef {{[key:string]: string}} Targets */
-/** @typedef {{root: string,  targets: Targets[], import: string[], assets: string}} ShioriJson */
+/** @typedef {{root: string,  targets: Targets[], assets: string}} ShioriJson */
 /** @typedef {{"source-directories" : string[]}} ElmJson */
 
 /**
@@ -113,7 +110,7 @@ const copyElmJson = async (root) => {
     elmjson['source-directories'] = ['src', '../' + root]
     await fs.writeFile(join('shiori', 'elm.json'), JSON.stringify(elmjson))
   } catch (err) {
-    console.log(err.toString())
+    console.log(red(err.toString()))
   }
 }
 
@@ -134,11 +131,11 @@ equal(addElmExtension('hoge'), 'hoge.elm')
 const configToTmp = async (uijson) => {
   try {
     const newJson = Object.fromEntries(uijson.targets.map((value) => [value, uijson.root + '/' + value + '.elm']))
-    const result = { imports: uijson.import, targets: await readFiles(newJson) }
+    const result = { targets: await readFiles(newJson) }
     if (!(await fileExists(join('elm-stuff', 'shiori')))) await fs.mkdir(join('elm-stuff', 'shiori'))
     await fs.writeFile(join('elm-stuff', 'shiori', 'tmp.json'), JSON.stringify(result))
   } catch (err) {
-    console.log(err.toString())
+    console.log(red(err.toString()))
   }
 }
 
@@ -152,7 +149,7 @@ const init = async () => {
     await fse.remove(p_shiori)
     if (!(await fileExists(p_shiori))) await fse.copy(join(shioriRoot(), 'shiori'), p_shiori)
   } catch (err) {
-    console.log(err.toString())
+    console.log(red(err.toString()))
   }
 }
 
@@ -162,15 +159,19 @@ const init = async () => {
  */
 const copyAssets = async (path) => {
   try {
-    const name = path.split('/').pop()
-    const p_assets = 'shiori/' + name
-    await fse.remove(p_assets)
+    if (path) {
+      const name = path.split('/').pop()
+      const p_assets = 'shiori/' + name
+      await fse.remove(p_assets)
 
-    if (name) {
-      if (!(await fileExists(p_assets))) await fse.copy(path, p_assets)
+      if (name) {
+        if (!(await fileExists(p_assets))) await fse.copy(path, p_assets)
+      }
+    } else {
+      console.log(yellow('assetsが存在しません'))
     }
   } catch (err) {
-    console.log(err.toString())
+    console.log(red(err.toString()))
   }
 }
 
@@ -203,6 +204,10 @@ const codegen = async () => {
         console.log(yellow(`${stdout}`))
         return
       }
+      if (stderr) {
+        console.log(red(`${stderr}`))
+        return
+      }
       console.log(`codegen: ${stdout}`)
     }
   )
@@ -216,7 +221,7 @@ const elmWatch = async () => {
   exec(`cd ${join('shiori')} && ${join('..', 'node_modules', 'elm-watch', 'index.js')} hot`, (err, stdout, stderr) => {
     if (err) {
       console.log(`\n===== elmWatch =====\n`, red(`${stderr}`))
-      console.log(`${stdout}`)
+      console.log(yellow(`${stdout}`))
       return
     }
     console.log(`elm-watch: ${stdout}`)
@@ -233,24 +238,28 @@ const main = async (shioriJson) => {
 }
 
 const serve = async () => {
-  const shioriJson = await readShioriJson()
-  await copyAssets(shioriJson.assets)
-  await copyCodeGen()
-  await main(shioriJson)
-
-  chokidar.watch(shioriJson.root).on('change', async (event, path) => {
-    console.log(event, path)
-    await main(shioriJson)
-  })
-  chokidar.watch(join('codegen')).on('change', async (event, path) => {
-    console.log(event, path)
+  try {
+    const shioriJson = await readShioriJson()
+    await copyAssets(shioriJson.assets)
     await copyCodeGen()
     await main(shioriJson)
-  })
-  chokidar
-    .watch(shioriJson.assets)
-    .on('add', async (event, path) => await copyAssets(shioriJson.assets))
-    .on('change', async (event, path) => await copyAssets(shioriJson.assets))
+
+    chokidar.watch(shioriJson.root).on('change', async (event, path) => {
+      console.log(event, path)
+      await main(shioriJson)
+    })
+    chokidar.watch(join('codegen')).on('change', async (event, path) => {
+      console.log(event, path)
+      await copyCodeGen()
+      await main(shioriJson)
+    })
+    chokidar
+      .watch(shioriJson.assets)
+      .on('add', async (event, path) => await copyAssets(shioriJson.assets))
+      .on('change', async (event, path) => await copyAssets(shioriJson.assets))
+  } catch (err) {
+    console.log(red(err.toString()))
+  }
 }
 
 /*
@@ -261,10 +270,14 @@ const serve = async () => {
   }
 
   if (args.arg === 'build') {
-    const shioriJson = await readShioriJson()
-    await copyAssets(shioriJson.assets)
-    await copyCodeGen()
-    await main(shioriJson)
+    try {
+      const shioriJson = await readShioriJson()
+      await copyAssets(shioriJson.assets)
+      await copyCodeGen()
+      await main(shioriJson)
+    } catch (err) {
+      console.log(red(err.toString()))
+    }
   }
 
   if (args.arg === 'serve') {

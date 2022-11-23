@@ -1,14 +1,22 @@
 module GenerateTest exposing (..)
 
 import Dict
-import Expect exposing (Expectation)
-import Fuzz exposing (Fuzzer, int, list, string)
+import Expect
 import Generate exposing (..)
 import Parser as P
 import Test exposing (..)
 
 
-mock =
+elmParserTest : Test
+elmParserTest =
+    test "elmParserTest" <|
+        \() ->
+            P.run (elmParser "Main") mock2
+                |> Expect.equal (Ok ( "Main", Dict.fromList [ ( "mori", [ "mori colors.red", "mori colors.green" ] ), ( "square", [ "square colors.red", "square colors.green" ] ) ] ))
+
+
+mock1 : String
+mock1 =
     """
 --
 type Msg
@@ -57,28 +65,7 @@ square color =
 """
 
 
-
--- suite2 : Test
--- suite2 =
---     test "elmParser2" <|
---         \() ->
---             P.run elmParser2 mock2
---                 |> Expect.equal (Ok [ ( "mori", [ "mori colors.green", "mori colors.red" ] ), ( "square", [ "square colors.green", "square colors.red" ] ) ])
-
-
-suite3 : Test
-suite3 =
-    test "elmParser3" <|
-        \() ->
-            P.run (elmParser "Main") mock2
-                |> Expect.equal (Ok ( "Main", Dict.fromList [ ( "mori", [ "mori colors.green", "mori colors.red" ] ), ( "square", [ "square colors.green", "square colors.red" ] ) ] ))
-
-
-
--- |> Expect.equal (Ok [ ( "mori", [ "mori colors.green", "mori colors.red" ] ), ( "square", [ "square colors.green", "square colors.red" ] ) ])
--- |> Expect.equal (Err [])
-
-
+mock2 : String
 mock2 =
     """
 {-|
@@ -108,6 +95,7 @@ mori
 """
 
 
+mock3 : String
 mock3 =
     """
 --
