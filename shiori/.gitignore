@@ -3,5 +3,4 @@ elm.json
 shiori.js
 assets
 src/*
-!src/Shiori.elm
-!src/Shiori.elm
+!src/View.elm

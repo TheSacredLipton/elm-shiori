@@ -1,7 +1,8 @@
-module Generate exposing (elmParser, main)
+module Generate exposing (elmFileName, elmParser, genRouteParserHelper, headUpper, joinDot, main, urlName, variantName)
 
 {-| -}
 
+import Dict exposing (Dict)
 import Elm
 import Elm.Annotation as Type
 import Elm.Case
@@ -10,7 +11,48 @@ import Gen.CodeGen.Generate as Generate
 import Json.Decode as D
 import Json.Encode as E
 import List.Extra as List
-import Parser as P exposing ((|.), (|=), Parser, Step)
+import Parser as P exposing ((|.), (|=), Parser)
+import Set
+
+
+type alias ElmCode =
+    Dict
+        FileName
+        (Dict
+            FunctionName
+            (List Code)
+        )
+
+
+type alias ElmCodeRecord =
+    { fileName : FileName, index : Int, functionName : FunctionName, code : Code }
+
+
+fromElmCode : ElmCode -> List ElmCodeRecord
+fromElmCode elmCode =
+    elmCode
+        |> Dict.map
+            (\fileName v ->
+                Dict.map
+                    (\functionName codes ->
+                        List.indexedMap
+                            (\index code ->
+                                { fileName = fileName, index = index, functionName = functionName, code = code }
+                            )
+                            codes
+                    )
+                    v
+                    |> Dict.values
+            )
+        |> Dict.values
+        |> List.concat
+        |> List.concat
+
+
+
+----------
+-- MAIN
+----------
 
 
 main : Program E.Value () ()
@@ -18,19 +60,25 @@ main =
     Generate.fromJson decoder <|
         \flags ->
             let
-                aa =
+                elmCode : ElmCode
+                elmCode =
                     flags.targets
-                        |> List.map (\( name, v ) -> List.indexedMap (\index body -> ( index, name, body )) (P.run elmParser v |> Result.withDefault []))
-                        |> List.concat
+                        |> List.map (\( fileName, v ) -> P.run (elmParser fileName) v |> Result.withDefault ( "", Dict.empty ))
+                        |> Dict.fromList
             in
-            List.map (\( index, name, body ) -> file index name flags.imports body) aa
-                |> List.append [ route (List.map (\( i, n, _ ) -> ( i, n )) aa) ]
+            route elmCode :: files elmCode
 
 
 type alias Flags =
     { imports : List String
     , targets : List ( String, String )
     }
+
+
+
+-------------
+-- DECODER
+-------------
 
 
 decoder : D.Decoder Flags
@@ -46,36 +94,57 @@ decoder =
 ------------
 
 
-elmParser : Parser (List String)
-elmParser =
-    P.map List.concat <|
-        P.succeed (\a -> a)
-            |. P.spaces
-            |. P.chompUntil "{-|"
-            |= P.sequence
-                { start = "{-|"
-                , separator = "\n"
-                , end = "-}"
-                , spaces = P.spaces
-                , item = P.loop [] codeParser
-                , trailing = P.Optional
-                }
-            |. P.spaces
+type alias FileName =
+    String
 
 
-codeParser : List String -> Parser (Step (List String) (List String))
-codeParser revStmts =
-    P.oneOf
-        [ P.succeed (\stmt -> P.Loop (stmt :: revStmts))
-            |. P.spaces
-            |. P.chompUntil "::"
-            |. P.keyword "::"
-            |. P.spaces
-            |= P.getChompedString (P.chompWhile (\c -> c /= '\n'))
-            |. P.spaces
-        , P.succeed ()
-            |> P.map (\_ -> P.Done (List.reverse revStmts))
-        ]
+type alias FunctionName =
+    String
+
+
+type alias Code =
+    String
+
+
+{-| TODO: リファクタしましょう
+-}
+elmParser : FileName -> Parser ( FileName, Dict FunctionName (List Code) )
+elmParser fileName =
+    let
+        commentContents s =
+            P.succeed identity
+                |= P.oneOf
+                    [ P.succeed (\a -> P.Done <| ( a, s ))
+                        |. P.keyword "-}"
+                        |. P.backtrackable P.spaces
+                        |= getVal
+                    , P.succeed (\d -> P.Loop <| d :: s)
+                        |. P.spaces
+                        |. P.chompUntil "::"
+                        |. P.keyword "::"
+                        |. P.spaces
+                        |= P.getChompedString (P.chompWhile (\c -> c /= '\n'))
+                        |. P.spaces
+                    ]
+
+        comments s =
+            P.succeed identity
+                |= P.oneOf
+                    [ P.succeed (\d -> P.Loop <| d :: s)
+                        |. P.chompUntil "{-|"
+                        |= P.loop [] commentContents
+                    , P.succeed (P.Done s)
+                    ]
+    in
+    P.succeed (\a -> ( fileName, a ))
+        |. P.spaces
+        |= (P.map Dict.fromList <| P.loop [] comments)
+        |. P.spaces
+
+
+getVal : Parser String
+getVal =
+    P.variable { start = Char.isLower, inner = Char.isAlphaNum, reserved = Set.fromList [] }
 
 
 
@@ -84,49 +153,192 @@ codeParser revStmts =
 -----------
 
 
-file : Int -> String -> List String -> String -> Elm.File
-file index filename imports body =
-    Elm.file [ "Shiori", filename ++ String.fromInt index ] <|
-        List.append
-            (List.map import_ imports)
-            [ import_ filename
-            , (Elm.val <| body) |> Elm.declaration "view"
-            ]
+files : ElmCode -> List Elm.File
+files elmCode =
+    fromElmCode elmCode
+        |> List.map
+            (\{ fileName, functionName, index, code } ->
+                Elm.file [ "Shiori", elmFileName fileName functionName index ]
+                    [ import_ True fileName
+                    , Elm.val code |> Elm.declaration "view"
+                    ]
+            )
 
 
-route : List ( Int, String ) -> Elm.File
-route ls =
+{-| TODO: elmCodeはletで事前に一度で渡した方が良い
+-}
+route : ElmCode -> Elm.File
+route elmCode =
     Elm.file [ "Shiori", "Route" ] <|
         List.append
-            (List.map (\( i, n ) -> import2_ <| "Shiori." ++ n ++ String.fromInt i) ls)
-            [ import_ "Url.Parser"
-            , typeRoute ls
-            , Elm.Case.custom (Elm.val "toRoute url")
-                (Type.var "Route")
-                (Elm.Case.branch0 "NotFound" (Elm.val "notfound") :: List.map (\( i, n ) -> Elm.Case.branch0 (n ++ "_" ++ String.fromInt i) (Elm.val <| "Shiori." ++ n ++ String.fromInt i ++ ".view")) ls)
-                |> Elm.declaration "view url notfound"
-            , Elm.list (List.map (\( i, n ) -> Elm.val <| ("map " ++ n ++ "_" ++ String.fromInt i ++ "<| s \"" ++ String.toLower n ++ String.fromInt i ++ "\"")) ls)
-                |> pipe (Elm.val "oneOf")
-                |> Elm.declaration "routeParser"
-            , Elm.val "Maybe.withDefault NotFound (parse routeParser url)"
-                |> Elm.declaration "toRoute url"
-            , Elm.list (List.map (\( i, n ) -> Elm.string <| String.toLower n ++ String.fromInt i) ls)
-                |> Elm.declaration "links"
+            (List.map (\{ index, fileName, functionName } -> import_ False <| joinDot [ "Shiori", elmFileName fileName functionName index ]) <| fromElmCode elmCode)
+            [ import_ True "Url.Parser"
+            , genTypeRoute elmCode
+            , genView elmCode
+            , genRouteParser elmCode
+            , Elm.val "Maybe.withDefault NotFound (parse routeParser url)" |> Elm.declaration "toRoute url"
+            , genLinks elmCode
             ]
 
 
-import_ : String -> Elm.Declaration
-import_ name =
-    Elm.unsafe <| "import " ++ name ++ " exposing (..)"
+{-| TODO: 先頭を大文字にする処理を追加すると安全かもしれない
+
+    joinDot [] --> ""
+
+    joinDot [ "Main", "Button" ] --> "Main.Button"
+
+-}
+joinDot : List String -> String
+joinDot =
+    String.join "."
 
 
-import2_ : String -> Elm.Declaration
-import2_ name =
-    Elm.unsafe <| "import " ++ name
+joinScore : List String -> String
+joinScore =
+    String.join "_"
 
 
-typeRoute : List ( Int, String ) -> Elm.Declaration
-typeRoute ls =
-    List.map (\( i, n ) -> Elm.variant (n ++ "_" ++ String.fromInt i)) ls
+{-|
+
+    variantName "Main" 100 --> "Main_100"
+
+    variantName "main" 100 --> "Main_100"
+
+-}
+variantName : String -> Int -> String
+variantName fileName index =
+    joinScore [ headUpper fileName, String.fromInt index ]
+
+
+{-|
+
+    headUpper "tom" --> "Tom"
+
+    headUpper "t" --> "T"
+
+-}
+headUpper : String -> String
+headUpper s =
+    String.toUpper (String.left 1 s) ++ String.dropLeft 1 s
+
+
+{-|
+
+    elmFileName "Main" "button" 100 --> "Main_button_100"
+
+-}
+elmFileName : String -> String -> Int -> String
+elmFileName fileName functionName index =
+    joinScore [ fileName, functionName, String.fromInt index ]
+
+
+{-|
+
+    urlName "Main" "button" 1 --> "main_button_1"
+
+-}
+urlName : String -> String -> Int -> String
+urlName fileName functionName index =
+    joinScore [ String.toLower fileName, functionName, String.fromInt index ]
+
+
+import_ : Bool -> String -> Elm.Declaration
+import_ isExposingAll name =
+    Elm.unsafe <|
+        "import "
+            ++ name
+            ++ (if isExposingAll then
+                    " exposing (..)"
+
+                else
+                    ""
+               )
+
+
+genTypeRoute : ElmCode -> Elm.Declaration
+genTypeRoute elmCode =
+    elmCode
+        |> Dict.map (\fileName _ -> Elm.variantWith fileName [ Type.string ])
+        |> Dict.values
         |> List.append [ Elm.variant "NotFound" ]
         |> Elm.customType "Route"
+
+
+genView : ElmCode -> Elm.Declaration
+genView elmCode =
+    Elm.declaration "view" <|
+        Elm.fn ( "url", Just (Type.named [ "Url" ] "Url") )
+            -- Elm.fn ( "url", Nothing )
+            (\url ->
+                Elm.Case.branch0 "NotFound" (Elm.list [])
+                    :: toListMap genViewHelper elmCode
+                    |> Elm.Case.custom (url |> pipe (Elm.val "toRoute")) (Type.var "Route")
+                    |> pipe (Elm.val "identity")
+            )
+
+
+genViewHelper : FileName -> Dict FunctionName (List Code) -> Elm.Case.Branch
+genViewHelper fileName v =
+    always (helper2 fileName v)
+        |> Elm.Case.branch1 fileName ( "str", Type.string )
+
+
+{-| TODO: RENAME
+-}
+helper2 : FileName -> Dict String (List Code) -> Elm.Expression
+helper2 fileName vv =
+    Elm.Case.string (Elm.val "str")
+        { cases =
+            toListMap
+                (\functionName codes ->
+                    ( functionName, Elm.list <| List.indexedMap (\i _ -> Elm.withType (Type.namedWith [ "Element" ] "Element" [ Type.unit ]) <| Elm.val <| joinDot [ "Shiori", elmFileName fileName functionName i, "view" ]) codes )
+                )
+                vv
+        , otherwise = Elm.list []
+        }
+
+
+genRouteParser : ElmCode -> Elm.Declaration
+genRouteParser elmCode =
+    fromElmCode elmCode
+        |> List.map (Elm.val << genRouteParserHelper)
+        |> Elm.list
+        |> pipe (Elm.val "oneOf")
+        |> Elm.declaration "routeParser"
+
+
+{-| FIXME:
+-}
+genRouteParserHelper : ElmCodeRecord -> String
+genRouteParserHelper { index, fileName, functionName } =
+    "map " ++ fileName ++ " <| s \"" ++ fileName ++ "\" </> string"
+
+
+
+-- map Button <| s "Button" </> string
+
+
+genLinks : ElmCode -> Elm.Declaration
+genLinks elmCode =
+    elmCode
+        |> toListMap (\fileName v -> Elm.tuple (Elm.string fileName) (genLinksHelper fileName v))
+        |> Elm.list
+        |> Elm.declaration "links"
+
+
+genLinksHelper : FileName -> Dict FunctionName (List Code) -> Elm.Expression
+genLinksHelper fileName dictFunctionNameCode =
+    let
+        helper functionName l =
+            List.indexedMap (\index _ -> Elm.string <| urlName fileName functionName index) l
+                |> Elm.list
+                |> Elm.tuple (Elm.string functionName)
+    in
+    toListMap helper dictFunctionNameCode
+        |> Elm.list
+
+
+toListMap : (k -> v -> a) -> Dict k v -> List a
+toListMap fn d =
+    Dict.map fn d
+        |> Dict.values

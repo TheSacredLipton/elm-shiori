@@ -33,3 +33,22 @@ square color =
         , Background.color color
         ]
         none
+
+
+{-|
+
+    :: square2 colors.red
+
+    :: square2 colors.green
+
+    :: square2 colors.blue
+
+-}
+square2 : Color -> Element msg
+square2 color =
+    el
+        [ width <| px 100
+        , height <| px 100
+        , Background.color color
+        ]
+        none

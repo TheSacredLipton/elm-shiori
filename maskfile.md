@@ -14,4 +14,5 @@ npx elm-codegen install
 
 ```sh
 elm-test
+chokidar "codegen/**/*.elm" -c "elm-verify-examples && elm-test"
 ```
