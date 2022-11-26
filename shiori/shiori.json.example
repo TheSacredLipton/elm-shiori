@@ -1,8 +1,6 @@
 {
-    "import": [
-        "Element"
-    ],
     "root": "src",
+    "assets": "assets"
     "targets": [
         "Main"
     ]

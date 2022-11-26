@@ -1,7 +1,8 @@
-module Ui exposing (..)
+module Shape exposing (..)
 
 import Element exposing (..)
 import Element.Background as Background
+import Element.Border as Border
 import Element.Input as Input
 
 
@@ -37,18 +38,19 @@ square color =
 
 {-|
 
-    :: square2 colors.red
+    :: circle colors.red
 
-    :: square2 colors.green
+    :: circle colors.green
 
-    :: square2 colors.blue
+    :: circle colors.blue
 
 -}
-square2 : Color -> Element msg
-square2 color =
+circle : Color -> Element msg
+circle color =
     el
         [ width <| px 100
         , height <| px 100
         , Background.color color
+        , Border.rounded 50
         ]
         none

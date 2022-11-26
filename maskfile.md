@@ -7,6 +7,7 @@ npx nodemon --watch bin -x "node bin/shiori serve --dev"
 ## install
 
 ```sh
+npx flow-typed install
 npx elm-codegen install
 ```
 
@@ -20,5 +21,7 @@ chokidar "codegen/**/*.elm" -c "elm-verify-examples && elm-test"
 ## ci-test
 
 ```sh
-elm-verify-examples && elm-test
+npx flow check
+elm-verify-examples
+elm-test
 ```

@@ -2,7 +2,7 @@
     "root": "examples",
     "assets": "examples/assets",
     "targets": [
-        "Ui",
+        "Shape",
         "Button",
         "Image"
     ]

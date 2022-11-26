@@ -1,0 +1,15 @@
+[ignore]
+.*/node_modules/.*
+./dist/main.js
+./src/type.js
+
+[include]
+
+[libs]
+
+[lints]
+
+[options]
+
+[strict]
+
