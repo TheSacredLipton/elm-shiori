@@ -14,7 +14,8 @@ const http = require('http')
 const { bold, green, yellow, red, cyan } = require('kleur')
 const { fileExists } = require('./trash.js')
 const { produce } = require('immer')
-const { run } = require('elm-codegen/dist/index')
+// const { run } = require('elm-codegen/dist/index')
+const { run_generation_from_cli } = require('elm-codegen/dist/run')
 
 /*::
 type Join = '..' | 'elm-stuff' | 'codegen' | 'elm.json' | 'shiori' | 'shiori' | 'node_modules' | 'elm-codegen' | 'bin' | 'src' | 'tmp.json' | 'shiori.json' |  'elm-watch' | 'index.js' | '.' | 'node_modules/elm-shiori'
@@ -175,12 +176,8 @@ const codegen = async () /*:Promise<void> */ => {
   try {
     if (await fileExists(join('node_modules', 'elm-codegen', 'bin', 'elm-codegen'))) {
       process.chdir('elm-stuff/shiori/')
-      //TODO: これならreadFileしなくても使えそうやなぁ〜って感じる
       const flags = await fs.readFile(join('tmp.json'), 'utf-8')
-      run('./codegen/Generate.elm', {
-        output: 'shiori/src',
-        flags: JSON.parse(flags)
-      })
+      await run_generation_from_cli(null, { output: 'shiori/src', flags: flags })
       process.chdir('../../')
     } else {
       throw new Error('codegen: elm-codegenがインストールされていません')
