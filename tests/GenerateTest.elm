@@ -1,6 +1,5 @@
 module GenerateTest exposing (..)
 
-import Dict
 import Expect
 import Generate exposing (..)
 import Parser as P
@@ -12,7 +11,7 @@ elmParserTest =
     test "elmParserTest" <|
         \() ->
             P.run (elmParser "Main") mock2
-                |> Expect.equal (Ok ( "Main", Dict.fromList [ ( "mori", [ "mori colors.red", "mori colors.green" ] ), ( "square", [ "square colors.red", "square colors.green" ] ) ] ))
+                |> Expect.equal (Ok ( "Main", [ ( "mori", [ "mori colors.red", "mori colors.green" ] ), ( "square", [ "square colors.red", "square colors.green" ] ) ] ))
 
 
 mock1 : String

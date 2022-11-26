@@ -12,38 +12,19 @@ const yargs = require('yargs')
 const handler = require('serve-handler')
 const http = require('http')
 const { bold, green, yellow, red, cyan } = require('kleur')
-const assert = require('assert')
-const trash = require('./trash.js')
-const { Nothing, Just, withDefault, isJust } = require('./maybe.js')
+const { fileExists } = require('./trash.js')
 
 /*::
 import type {Maybe} from './maybe.js'
 type Join = '..' | 'elm-stuff' | 'codegen' | 'elm.json' | 'shiori' | 'shiori' | 'node_modules' | 'elm-codegen' | 'bin' | 'src' | 'tmp.json' | 'shiori.json' |  'elm-watch' | 'index.js' | '.' | 'node_modules/elm-shiori'
-type Targets = {[key:string]: string} 
-type ShioriJson = {root: string,  targets: Targets, assets: string} 
+type ElmFiles = {[key:string]: string} 
+type ShioriJson = {root: string,  files: ElmFiles, assets: string} 
 type ElmJson = {"source-directories": string[]}
 */
-
-/**
- * TODO: 表示をおしゃれにしたい
- */
-const args = yargs
-  .command('* arg', '=== commands === \n\n init \n build \n serve')
-  .options({
-    dev: {
-      type: 'boolean',
-      describe: '開発者用',
-      demandOption: true,
-      default: false
-    }
-  })
-  .parseSync()
 
 const join = (...args /* :Join[] */) => {
   return path.join(...args)
 }
-
-const shioriRoot = () /*:Join */ => (args.dev ? '.' : 'node_modules/elm-shiori')
 
 const readElmJson = async () /*:Promise<ElmJson> */ => {
   return JSON.parse(await fs.readFile('elm.json', 'utf-8'))
@@ -53,7 +34,7 @@ const readShioriJson = async () /*:Promise<ShioriJson>*/ => {
   return JSON.parse(await fs.readFile(join('shiori.json'), 'utf-8'))
 }
 
-const readFiles = async (list /*:Targets*/) /*:Promise<Targets> */ => {
+const readFiles = async (list /*:ElmFiles*/) /*:Promise<ElmFiles> */ => {
   const result = []
   for (const [key, value] of Object.entries(list)) {
     if (typeof value === 'string') {
@@ -64,19 +45,8 @@ const readFiles = async (list /*:Targets*/) /*:Promise<Targets> */ => {
 }
 
 /**
- * HACK: 二重否定でUndefindをfalseに変換
- */
-const fileExists = async (filepath /* :string */) /*:Promise<boolean> */ => {
-  try {
-    return !!(await fs.lstat(filepath))
-  } catch (e) {
-    return false
-  }
-}
-
-/**
  * TODO: let使っているのちょっといや
- * TODO: rootsにして複数受け取れるようにしたい
+ * TODO: rootsにして複数受け取れるようにしたいかも
  */
 const copyElmJson = async (root /*:string */) => {
   try {
@@ -88,14 +58,14 @@ const copyElmJson = async (root /*:string */) => {
   }
 }
 
-const configToTmp = async (uijson /*:ShioriJson */) => {
+const configToTmp = async (shioriJson /*:ShioriJson */) => {
   try {
-    const newJson /*:Targets */ = Object.fromEntries(
-      Object.entries(uijson.targets)
+    const newJson /*:ElmFiles */ = Object.fromEntries(
+      Object.entries(shioriJson.files)
         .filter(([_, value]) => typeof value === 'string')
-        .map(([_, value]) => (typeof value === 'string' ? [value, uijson.root + '/' + value + '.elm'] : ['', '']))
+        .map(([_, value]) => (typeof value === 'string' ? [value, shioriJson.root + '/' + value + '.elm'] : ['', '']))
     )
-    const result = { targets: await readFiles(newJson) }
+    const result = await readFiles(newJson)
     if (!(await fileExists(join('elm-stuff', 'shiori')))) await fs.mkdir(join('elm-stuff', 'shiori'))
     await fs.writeFile(join('elm-stuff', 'shiori', 'tmp.json'), JSON.stringify(result))
   } catch (err) {
@@ -106,7 +76,7 @@ const configToTmp = async (uijson /*:ShioriJson */) => {
 /**
  * TODO: 本当にOK?みたいな確認欲しい
  */
-const init = async () => {
+const init = async () /*:Promise<void> */ => {
   try {
     const p_shiori = join('shiori')
     await fse.remove(p_shiori)
@@ -134,7 +104,7 @@ const copyAssets = async (path /*:string */) => {
   }
 }
 
-const copyCodeGen = async () => {
+const copyCodeGen = async () /*:Promise<void> */ => {
   try {
     const p_selmstuffCodegen = join('elm-stuff', 'shiori', 'codegen')
     await fse.remove(p_selmstuffCodegen)
@@ -147,7 +117,7 @@ const copyCodeGen = async () => {
 /**
  * TODO: なんかexec使ってるのこわいよなぁ
  */
-const codegen = async () => {
+const codegen = async () /*:Promise<void> */ => {
   exec(
     `cd ${join('elm-stuff', 'shiori')} && ${join(
       '..',
@@ -175,7 +145,7 @@ const codegen = async () => {
 /**
  * TODO:
  */
-const elmWatch = async () => {
+const elmWatch = async () /*:Promise<void> */ => {
   exec(`cd ${join('shiori')} && ${join('..', 'node_modules', 'elm-watch', 'index.js')} hot`, (err, stdout, stderr) => {
     if (err) {
       console.log(`\n===== elmWatch =====\n`, red(`${stderr}`))
@@ -192,7 +162,7 @@ const main = async (shioriJson /*:ShioriJson */) => {
   await codegen()
 }
 
-const serve = async () => {
+const serve = async () /*:Promise<void> */ => {
   try {
     const shioriJson = await readShioriJson()
     await copyAssets(shioriJson.assets)
@@ -217,8 +187,23 @@ const serve = async () => {
   }
 }
 
-/*
+/**
+ * TODO: 表示をおしゃれにしたい
  */
+const args = yargs
+  .command('* arg', '=== commands === \n\n init \n build \n serve')
+  .options({
+    dev: {
+      type: 'boolean',
+      describe: '開発者用',
+      demandOption: true,
+      default: false
+    }
+  })
+  .parseSync()
+
+const shioriRoot = () /*:Join */ => (args.dev ? '.' : 'node_modules/elm-shiori')
+
 ;(async () => {
   if (args.arg === 'init') {
     await init()

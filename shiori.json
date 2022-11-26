@@ -1,7 +1,7 @@
 {
     "root": "examples",
     "assets": "examples/assets",
-    "targets": [
+    "files": [
         "Shape",
         "Button",
         "Image"
