@@ -1,5 +1,6 @@
 [ignore]
 .*/node_modules/.*
+!.*/node_modules/immer/.*
 ./dist/main.js
 ./src/type.js
 
