@@ -228,7 +228,7 @@ files elmCode =
                     List.append
                         (List.map Elm.unsafe <| imports)
                         [ import_ True fileName
-                        , Elm.val code |> Elm.declaration "view"
+                        , Elm.val code |> Elm.declaration "view__"
                         ]
             )
 
@@ -359,7 +359,7 @@ helper2 fileName vv =
                         codes =
                             filterByCode codes_
                     in
-                    ( functionName, pipe (Elm.val "Shiori_View.map") <| Elm.list <| List.indexedMap (\i _ -> Elm.val <| joinDot [ "Shiori", elmFileName (toScore fileName) functionName i, "view" ]) codes )
+                    ( functionName, pipe (Elm.val "Shiori_View.map") <| Elm.list <| List.indexedMap (\i _ -> Elm.val <| joinDot [ "Shiori", elmFileName (toScore fileName) functionName i, "view__" ]) codes )
                 )
                 vv
         , otherwise = Elm.list []
