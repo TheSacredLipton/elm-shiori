@@ -9,6 +9,7 @@
         "Button",
         "Image",
         "Pages.Home_",
-        "Pages.Login.Home_"
+        "Pages.Login.Home_",
+        "Empty"
     ]
 }

@@ -16,13 +16,13 @@ const { produce } = require('immer')
 const { run_generation_from_cli } = require('elm-codegen/dist/run')
 
 /*::
-type Join = '..' | 'elm-stuff' | 'codegen' | 'elm.json' | 'shiori' | 'shiori' | 'node_modules' | 'elm-codegen' | 'bin' | 'src' | 'tmp.json' | 'shiori.json' |  'elm-watch' | 'index.js' | '.' | 'node_modules/elm-shiori'
 type ElmFiles = {[key:string]: string} 
 type ShioriJson = {roots: string[],  files: ElmFiles, assets: string} 
 type ElmJson = {"source-directories": string[]}
 */
+const shioriRoot = () /*:string */ => join(__dirname, '..')
 
-const join = (...args /* :Join[] */) /*:string */ => {
+const join = (...args /* :string[] */) /*:string */ => {
   return path.join(...args)
 }
 
@@ -56,7 +56,7 @@ const readShioriJson = async () /*:Promise<ShioriJson | null>*/ => {
   }
 }
 
-const readFiles = async (list /*:ElmFiles*/) /*:Promise<ElmFiles | null> */ => {
+const readElmFiles = async (list /*:ElmFiles*/) /*:Promise<ElmFiles | null> */ => {
   try {
     if (list) {
       const result = []
@@ -101,34 +101,29 @@ const sourceDirectories = (roots /*:string[] */) /*:string[] */ => {
 /* FIXME: 一旦shioriJson.roots[0]にしているので先頭に設定したものしか対象にならない
 分ける需要が不明なので一旦これで
 */
-const configToString = async (shioriJson /*:ShioriJson */) /*:Promise<string | null> */ => {
+const convertShioriJson = async (shioriJson /*:ShioriJson */) /*:Promise<string | null> */ => {
   try {
-    if (Object.entries(shioriJson.files).length === 0) throw new Error('configToString: shiori.jsonのfilesが空です')
+    if (Object.entries(shioriJson.files).length === 0) throw new Error('convertShioriJson: shiori.jsonのfilesが空です')
     const newJson /*:ElmFiles */ = Object.fromEntries(
       Object.entries(shioriJson.files)
         .filter(([_, value]) => typeof value === 'string')
         .map(([_, value]) =>
-          typeof value === 'string' ? [value, shioriJson.roots[0] + '/' + toSlash(value) + '.elm'] : ['', '']
+          typeof value === 'string' ? [value, join(shioriJson.roots[0], toSlash(value) + '.elm')] : ['', '']
         )
     )
-    const result = await readFiles(newJson)
+    const result = await readElmFiles(newJson)
     if (result) {
       return JSON.stringify(result)
     }
-    throw new Error('configToString: resultがnullです')
+    throw new Error('convertShioriJson: resultがnullです')
   } catch (err) {
-    console.log(red('configToString:' + err.toString()))
+    console.log(red('convertShioriJson:' + err.toString()))
     return null
   }
 }
 
 const toSlash = (str /*:string*/) /*:string*/ => str.replaceAll('.', '/')
 
-/**
- * TODO: 本当にOK?みたいな確認欲しい
- * TODO: shiori.jsonのコピー処理追加
- * TODO: gitignoreのコピー処理追加
- */
 const init = async () /*:Promise<void> */ => {
   try {
     const p_shiori = 'shiori'
@@ -145,7 +140,7 @@ const copyAssets = async (path /*:string */) /*:Promise<void> */ => {
     if (path) {
       const obj = produce({ path, name: '', p_assets: '' }, (draft) => {
         draft.name = draft.path.split('/').pop()
-        draft.p_assets = 'shiori/' + draft.name
+        draft.p_assets = join('shiori', draft.name)
       })
       if (obj.name) {
         await fse.copy(path, obj.p_assets, (err) => {})
@@ -158,8 +153,7 @@ const copyAssets = async (path /*:string */) /*:Promise<void> */ => {
   }
 }
 
-/* TODO: 例外処理追加 */
-const copyCodeGen = async () /*:Promise<void> */ => {
+const copyCodegenToElmStuff = async () /*:Promise<void> */ => {
   try {
     const p_selmstuffCodegen = join('elm-stuff', 'shiori', 'codegen')
     await fse.remove(p_selmstuffCodegen)
@@ -169,15 +163,12 @@ const copyCodeGen = async () /*:Promise<void> */ => {
   }
 }
 
-/**
- * TODO: 例外処理再建等
- */
-const codegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
+const runCodegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
   try {
-    const flags = await configToString(shioriJson)
+    const flags = await convertShioriJson(shioriJson)
     if (flags) {
-      process.chdir('elm-stuff/shiori/')
-      await run_generation_from_cli(null, { output: 'shiori/src', flags: flags })
+      process.chdir(join('elm-stuff', 'shiori'))
+      await run_generation_from_cli(null, { output: join('shiori', 'src'), flags: flags })
       process.chdir('../../')
     }
   } catch (error) {
@@ -188,7 +179,7 @@ const codegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
 /**
  * TODO: execをどうにかしたい
  */
-const elmWatch = async () /*:Promise<void> */ => {
+const runElmWatch = async () /*:Promise<void> */ => {
   try {
     exec(
       `cd ${join('shiori')} && ${join('..', 'node_modules', 'elm-watch', 'index.js')} hot`,
@@ -209,20 +200,20 @@ const serve = async () /*:Promise<void> */ => {
     const shioriJson = await readShioriJson()
     if (shioriJson) {
       await copyAssets(shioriJson.assets)
-      await copyCodeGen()
+      await copyCodegenToElmStuff()
       await copyElmJson(shioriJson.roots)
-      await codegen(shioriJson)
+      await runCodegen(shioriJson)
 
       chokidar.watch(shioriJson.roots).on('change', async (event, path) => {
         console.log(event, path)
         await copyElmJson(shioriJson.roots)
-        await codegen(shioriJson)
+        await runCodegen(shioriJson)
       })
       chokidar.watch(join('codegen')).on('change', async (event, path) => {
         console.log(event, path)
-        await copyCodeGen()
+        await copyCodegenToElmStuff()
         await copyElmJson(shioriJson.roots)
-        await codegen(shioriJson)
+        await runCodegen(shioriJson)
       })
       chokidar
         .watch(shioriJson.assets)
@@ -237,19 +228,7 @@ const serve = async () /*:Promise<void> */ => {
 /**
  * TODO: 表示をおしゃれにしたい
  */
-const args = yargs
-  .command('* arg', '=== commands === \n\n init \n build \n serve')
-  .options({
-    dev: {
-      type: 'boolean',
-      describe: '開発者用',
-      demandOption: true,
-      default: false
-    }
-  })
-  .parseSync()
-
-const shioriRoot = () /*:Join */ => (args.dev ? '.' : 'node_modules/elm-shiori')
+const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serve').parseSync()
 
 ;(async () => {
   if (args.arg === 'init') {
@@ -261,9 +240,9 @@ const shioriRoot = () /*:Join */ => (args.dev ? '.' : 'node_modules/elm-shiori')
       const shioriJson = await readShioriJson()
       if (shioriJson) {
         await copyAssets(shioriJson.assets)
-        await copyCodeGen()
+        await copyCodegenToElmStuff()
         await copyElmJson(shioriJson.roots)
-        await codegen(shioriJson)
+        await runCodegen(shioriJson)
       }
     } catch (err) {
       console.log(red(err.toString()))
@@ -275,7 +254,7 @@ const shioriRoot = () /*:Join */ => (args.dev ? '.' : 'node_modules/elm-shiori')
       .watch('shiori.json')
       .on('add', async (event, path) => serve())
       .on('change', async (event, path) => serve())
-    await elmWatch()
+    await runElmWatch()
 
     const server = http.createServer((request, response) => {
       return handler(request, response, {

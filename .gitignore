@@ -8,6 +8,7 @@ flow-typed
 
 shiori/assets
 shiori/shiori.js
+shiori/elm.json
 shiori/src/*
 !shiori/src/Shiori_View.elm
 !shiori/src/Shiori.elm

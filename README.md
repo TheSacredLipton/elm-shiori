@@ -4,32 +4,26 @@
 
 関数単位でなんかいい感じに使えるビューワーとしてお使いください。
 
-## Cli
+## CLI
 
 ```
 npx shiori init
 npx shiori build
-npx shiori serve
+npx shiori serve --port 3000
 ```
 
-## 準備
+## 事前準備
 
-ルートリポジトリ？で事前にインストールしておいてください
+- プロジェクトルートで事前に`mdgriffith/elm-ui`と`elm/url`をインストールしておいてください
+- shiori/src/View.elm, shiori/src/Shiori.elmを編集している場合はelm-uiは必要ないかもしれません
 
-ルートにあるelm.jsonをコピーして使っているので動かないです
+### shiori.json
 
-shiori/src/View.elm, shiori/src/Shiori.elmを編集している場合はelm-uiは必要ないかもしれません
-
-```
-elm install mdgriffith/elm-ui
-elm install elm/url
-```
-
-shiori.jsonをルートリポジトリに用意してください
+プロジェクトルートに用意してください
 
 ```
 {
-    "root": "examples",
+    "roots": ["examples"],
     "assets": "examples/assets",
     "files": [
         "Shape",
@@ -41,13 +35,17 @@ shiori.jsonをルートリポジトリに用意してください
 }
 ```
 
-特にこだわりがなければshioriディレクトごとgitignoreするといいと思います
+### .gitignore
+
+- elm-uiを使っていて特にこだわりがなければshioriディレクトごとgitignoreするといいと思います
 
 
 ## カスタマイズ
 
-- index.html
-- Shiori.elm
-- View.elm
+```
+index.html
+Shiori.elm
+View.elm
+```
 
-を編集するとビューワーをカスタマイズしたり、 CSS読み込ませたり、elm-cssとか使ったりできると思います...多分
+編集するとビューワーをカスタマイズしたり、 CSS読み込ませたり、elm-cssとか使ったりできると思います...多分

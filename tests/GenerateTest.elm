@@ -1,5 +1,6 @@
 module GenerateTest exposing (..)
 
+import Element.Region exposing (description)
 import Expect
 import Generate exposing (..)
 import Parser as P
@@ -8,67 +9,33 @@ import Test exposing (..)
 
 elmParserTest : Test
 elmParserTest =
-    test "elmParserTest" <|
-        \() ->
-            P.run (elmParser "Main") mock2
-                |> Expect.equal (Ok ( "Main", [ ( "mori", [ "mori colors.red", "mori colors.green" ] ), ( "square", [ "square colors.red", "square colors.green" ] ) ] ))
+    describe "elmParser Test"
+        [ test "elmParserTest1" <|
+            \() ->
+                P.run (elmParser "Main") mock1
+                    |> Expect.equal (Ok ( "Main", [ ( "mori", [ Code "mori colors.red", Code "mori colors.green" ] ), ( "square", [ Code "square colors.red", Code "square colors.green" ] ) ] ))
+
+        -- |> Expect.equal (Err [])
+        , test "elmParserTest2" <|
+            \() ->
+                P.run (elmParser "Main") mock2
+                    |> Expect.equal (Ok ( "Main", [ ( "mori", [ Code "mori colors.red", Code "mori colors.green" ] ), ( "square", [ Import "import Element exposing (..) ", Import "import Element exposing (..) ", Code "square colors.red", Code "square colors.green" ] ) ] ))
+
+        -- |> Expect.equal (Err [])
+        , test "elmParserTest3" <|
+            \() ->
+                P.run (elmParser "Main") mock3
+                    |> Expect.equal (Ok ( "Main", [] ))
+
+        -- |> Expect.equal (Err [])
+        ]
 
 
 mock1 : String
 mock1 =
     """
---
-type Msg
-    = ReplaceMe
-
-
-colors =
-    { red = rgb255 255 0 0
-    , green = rgb255 0 255 0
-    , blue = rgb255 0 0 255
-    }
-
-
 {-|
-
-    :: square colors.red
-
-    :: square colors.green
-
-    :: square colors.blue
-
--}
-
-square : Color -> Element msg
-square color =
-    el
-        [ width <| px 100
-        , height <| px 100
-        , Background.color color
-        ]
-        none
-
-aaa
-
-{-| 選択中は変化するボタン
--}
-square : Color -> Element msg
-square color =
-    el
-        [ width <| px 100
-        , height <| px 100
-        , Background.color color
-        ]
-        none
-
-"""
-
-
-mock2 : String
-mock2 =
-    """
-{-|
-    fefwaf
+    square
 
     :: square colors.red
 
@@ -78,7 +45,39 @@ mock2 =
 -}
 
 square
-jfoiejwof
+
+{-|
+
+
+    :: mori colors.red
+
+    :: mori colors.green
+
+
+-}
+
+mori
+"""
+
+
+mock2 : String
+mock2 =
+    """
+{-|
+    a
+    !import Element exposing (..) 
+    !import Element exposing (..) 
+    b
+
+    :: square colors.red
+
+    :: square colors.green
+
+
+-}
+
+square
+a = 1
 
 {-|
 
@@ -97,56 +96,12 @@ mori
 mock3 : String
 mock3 =
     """
---
-type Msg
-    = ReplaceMe
+module Empty exposing (..)
 
-
-colors =
-    { red = rgb255 255 0 0
-    , green = rgb255 0 255 0
-    , blue = rgb255 0 0 255
-    }
-
-
-{-|
-
-
-    :: square colors.red
-
-    :: square colors.green
-
-
+{-| 
 -}
 
-square : Color -> Element msg
-square color =
-    el
-        [ width <| px 100
-        , height <| px 100
-        , Background.color color
-        ]
-        none
-
-aaa
-
-{-|
-
-
-    :: mori colors.red
-
-    :: mori colors.green
-
-
--}
-
-mori : Color -> Element msg
-mori color =
-    el
-        [ width <| px 100
-        , height <| px 100
-        , Background.color color
-        ]
-        none
-
+empty: Element msg
+empty =
+    []
 """
