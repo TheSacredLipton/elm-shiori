@@ -1,7 +1,0 @@
-elm-stuff
-elm.json
-shiori.js
-assets
-src/*
-!src/View.elm
-!src/Shiori.elm

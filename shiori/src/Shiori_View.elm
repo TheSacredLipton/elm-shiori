@@ -1,4 +1,4 @@
-module View exposing (..)
+module Shiori_View exposing (..)
 
 import Element exposing (..)
 

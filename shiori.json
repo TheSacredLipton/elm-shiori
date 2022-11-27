@@ -1,9 +1,14 @@
 {
-    "root": "examples",
+    "roots": [
+        "examples",
+        "codegen"
+    ],
     "assets": "examples/assets",
     "files": [
         "Shape",
         "Button",
-        "Image"
+        "Image",
+        "Pages.Home_",
+        "Pages.Login.Home_"
     ]
 }

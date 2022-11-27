@@ -1,7 +1,0 @@
-{
-    "root": "src",
-    "assets": "assets"
-    "targets": [
-        "Main"
-    ]
-}

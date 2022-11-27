@@ -14,7 +14,7 @@ import Parser as P exposing ((|.), (|=), Parser)
 import Set
 
 
-{-| FIXME: Dictから名前変えなくちゃ
+{-| FIXME: Dictじゃない
 -}
 type alias Dict a b =
     List ( a, b )
@@ -71,8 +71,6 @@ main =
             route elmCode :: files elmCode
 
 
-{-| TODO: targetsいらない気がする、直接ファイル名かな
--}
 type alias Flags =
     List ( String, String )
 
@@ -149,6 +147,11 @@ getKeyword =
     P.variable { start = Char.isLower, inner = Char.isAlphaNum, reserved = Set.fromList [] }
 
 
+toScore : String -> String
+toScore =
+    String.replace "." "_"
+
+
 
 -----------
 -- File
@@ -160,20 +163,18 @@ files elmCode =
     fromElmCode elmCode
         |> List.map
             (\{ fileName, functionName, index, code } ->
-                Elm.file [ "Shiori", elmFileName fileName functionName index ]
+                Elm.file [ "Shiori", elmFileName (toScore fileName) functionName index ]
                     [ import_ True fileName
                     , Elm.val code |> Elm.declaration "view"
                     ]
             )
 
 
-{-| TODO: elmCodeはletで事前に一度で渡した方が良い
--}
 route : ElmCode -> Elm.File
 route elmCode =
     Elm.file [ "Shiori", "Route" ] <|
         List.append
-            (List.map (\{ index, fileName, functionName } -> import_ False <| joinDot [ "Shiori", elmFileName fileName functionName index ]) <| fromElmCode elmCode)
+            (List.map (\{ index, fileName, functionName } -> import_ False <| joinDot [ "Shiori", elmFileName (toScore fileName) functionName index ]) <| fromElmCode elmCode)
             [ import_ True "Url.Parser"
             , genTypeRoute elmCode
             , genView elmCode
@@ -260,7 +261,7 @@ import_ isExposingAll name =
 genTypeRoute : ElmCode -> Elm.Declaration
 genTypeRoute elmCode =
     elmCode
-        |> List.map (\( fileName, _ ) -> Elm.variantWith fileName [ Type.string ])
+        |> List.map (\( fileName, _ ) -> Elm.variantWith (toScore fileName) [ Type.string ])
         |> List.append [ Elm.variant "NotFound" ]
         |> Elm.customType "Route"
 
@@ -273,15 +274,15 @@ genView elmCode =
                 Elm.Case.branch0 "NotFound" (Elm.list [])
                     :: List.map genViewHelper elmCode
                     |> Elm.Case.custom (url |> pipe (Elm.val "toRoute")) (Type.var "Route")
-                    |> pipe (Elm.val "View.map")
-                    |> Elm.withType (Type.list <| Type.named [ "View" ] "View")
+                    |> pipe (Elm.val "Shiori_View.map")
+                    |> Elm.withType (Type.list <| Type.named [ "Shiori_View" ] "View")
             )
 
 
 genViewHelper : ( FileName, Dict FunctionName (List Code) ) -> Elm.Case.Branch
 genViewHelper ( fileName, v ) =
     always (helper2 fileName v)
-        |> Elm.Case.branch1 fileName ( "str", Type.string )
+        |> Elm.Case.branch1 (toScore fileName) ( "str", Type.string )
 
 
 {-| TODO: RENAME
@@ -292,7 +293,7 @@ helper2 fileName vv =
         { cases =
             List.map
                 (\( functionName, codes ) ->
-                    ( functionName, Elm.list <| List.indexedMap (\i _ -> Elm.val <| joinDot [ "Shiori", elmFileName fileName functionName i, "view" ]) codes )
+                    ( functionName, Elm.list <| List.indexedMap (\i _ -> Elm.val <| joinDot [ "Shiori", elmFileName (toScore fileName) functionName i, "view" ]) codes )
                 )
                 vv
         , otherwise = Elm.list []
@@ -301,8 +302,8 @@ helper2 fileName vv =
 
 genRouteParser : ElmCode -> Elm.Declaration
 genRouteParser elmCode =
-    fromElmCode elmCode
-        |> List.map (Elm.val << genRouteParserHelper)
+    elmCode
+        |> List.map (\( fileName, _ ) -> Elm.val <| genRouteParserHelper fileName)
         |> Elm.list
         |> pipe url_oneOf
         |> Elm.declaration "routeParser"
@@ -336,9 +337,9 @@ url_oneOf =
 
 {-| FIXME:
 -}
-genRouteParserHelper : ElmCodeRecord -> String
-genRouteParserHelper { fileName } =
-    "map " ++ fileName ++ " <| s \"" ++ fileName ++ "\" </> string"
+genRouteParserHelper : String -> String
+genRouteParserHelper fileName =
+    "map " ++ toScore fileName ++ " <| s \"" ++ fileName ++ "\" </> string"
 
 
 genToRoute : Elm.Declaration
