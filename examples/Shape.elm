@@ -54,3 +54,18 @@ circle color =
         , Border.rounded 50
         ]
         none
+
+
+{-|
+
+    :: heightTest colors.red
+
+-}
+heightTest : Color -> Element msg
+heightTest color =
+    el
+        [ width <| px 100
+        , height <| px 1000
+        , Background.color color
+        ]
+        none

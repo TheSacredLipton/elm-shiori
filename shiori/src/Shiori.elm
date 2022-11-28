@@ -2,10 +2,10 @@ module Shiori exposing (main)
 
 import Browser
 import Browser.Navigation as Nav
-import Element exposing (..)
-import Element.Background as Background
-import Element.Border as Border
-import Element.Font as Font
+import Origami exposing (property, with, withMedia)
+import Origami.Html exposing (Html, a, div, fromHtml, map, text, toHtmls)
+import Origami.Html.Attributes exposing (css, href)
+import Origami.StyleTag as StyleTag
 import Shiori.Route as Route
 import Url
 import Url.Builder as Builder
@@ -64,72 +64,115 @@ update msg model =
             ( model, Cmd.none )
 
 
-colors =
-    { white = rgb255 255 255 255
-    , lightGray = rgb255 240 240 240
-    , gray = rgb255 150 150 150
-    , dark = rgb255 50 50 50
-    , orange = rgb255 251 146 60
-    }
-
-
 view : Model -> Browser.Document Msg
 view model =
     { title = "elm-shiori"
     , body =
-        [ layout [ width fill, height fill, noto, Font.color colors.dark ] <|
-            column [ width fill, height fill ]
+        toHtmls
+            [ fromHtml <| StyleTag.styleTag_ [ StyleTag.style "body" [ StyleTag.property "margin" "0" ] ]
+            , div
+                [ css
+                    [ property "display" "flex"
+                    , property "flex-direction" "column"
+                    , property "height" "100vh"
+                    , property "align-items" "center"
+                    ]
+                ]
                 [ header
-                , row [ containerWidth, height fill, centerX, spacing 24 ]
-                    [ sideNav
+                , header_
+                , div
+                    [ css
+                        [ property "max-width" "900px"
+                        , property "width" "100%"
+                        , property "display" "flex"
+                        , property "gap" "24px"
+                        ]
+                    ]
+                    [ sideNav 250
+                    , sideNav_ 250
                     , body model.url
                     ]
                 ]
-        ]
+            ]
     }
 
 
-noto : Attribute msg
-noto =
-    Font.family
-        [ Font.external
-            { name = "Noto Sans JP"
-            , url = "https://fonts.googleapis.com/css?family=Noto+Sans+JP"
-            }
-        , Font.sansSerif
-        ]
-
-
-header : Element msg
+header : Html msg
 header =
-    el
-        [ height <| px 48
-        , width fill
-        , Background.color colors.orange
-        , Border.shadow { offset = ( 2, 2 ), size = 2, blur = 2, color = rgba255 0 0 0 0.2 }
+    div
+        [ css
+            [ property "height" "48px"
+            , property "width" "100%"
+            , property "flex-shrink" "0"
+            , property "Background-color" "#FB923C"
+            , property "box-shadow" "0 2px 2px 0 rgba(0, 0, 0, 0.2)"
+            , property "display" "flex"
+            , property "align-items" "center"
+            , property "justify-content" "center"
+            , property "left" "0"
+            , property "position" "fixed"
+            , property "top" "0"
+            , property "z-index" "10"
+            ]
         ]
-    <|
-        row [ containerWidth, height fill, centerX, Font.color colors.white ]
-            [ link [] { url = Builder.absolute [] [], label = text "elm-shiori" } ]
+        [ div
+            [ css
+                [ property "max-width" "900px"
+                , property "width" "100%"
+                , property "padding" "0px 20px"
+                , property "box-sizing" "border-box"
+                , property "color" "#FFFFFF"
+                , property "display" "flex"
+                , property "justify-content" "space-between"
+                ]
+            ]
+            [ div [ css [] ] [ text "elm-shiori" ]
+            , div [ css [ property "display" "block", md [ property "display" "none" ] ] ] [ text "三" ]
+            ]
+        ]
 
 
-containerWidth : Attribute msg
-containerWidth =
-    width <| px 900
+header_ : Html msg
+header_ =
+    div [ css [ property "height" "48px" ] ] []
 
 
-sideNav : Element msg
-sideNav =
-    column
-        [ width <| px 250
-        , height fill
-        , contentsPadding
-        , Border.widthXY 2 0
-        , Border.color colors.lightGray
-        , spacing 24
+md : List Origami.Style -> Origami.Style
+md properties =
+    withMedia "(min-width: 768px)" properties
+
+
+sideNav : Int -> Html msg
+sideNav width =
+    div
+        [ css
+            [ property "width" <| String.fromInt width ++ "px"
+            , property "height" "100%"
+            , property "padding" "30px 20px"
+            , property "box-sizing" "border-box"
+            , property "flex-direction" "column"
+            , property "gap" "24px"
+            , property "border" "1px solid #E0E0E0"
+            , property "position" "fixed"
+            , property "display" "none"
+            , md [ property "display" "flex" ]
+            ]
         ]
     <|
         List.map sideNavLinkGroup Route.links
+
+
+sideNav_ : Int -> Html msg
+sideNav_ width =
+    div
+        [ css
+            [ property "width" <| String.fromInt width ++ "px"
+            , property "flex-shrink" "0"
+            , property "display" "none"
+            , md [ property "display" "flex" ]
+            ]
+        ]
+        []
 
 
 type alias FileName =
@@ -140,26 +183,50 @@ type alias FunctionName =
     String
 
 
-sideNavLinkGroup : ( FileName, List ( FunctionName, List String ) ) -> Element msg
+sideNavLinkGroup : ( FileName, List ( FunctionName, List String ) ) -> Html msg
 sideNavLinkGroup ( fileName, v ) =
-    column [ spacing 8, width fill ]
-        [ el [ Font.size 20 ] <| text fileName
-        , column [ width fill, Font.size 16 ] <| List.map (\( functionName, _ ) -> sideNavLink functionName <| Builder.absolute [ fileName, functionName ] []) v
+    div [ css [ property "gap" "8px", property "width" "100%" ] ]
+        [ div [ css [ property "font-size" "20" ] ] [ text fileName ]
+        , div [ css [ property "width" "100%", property "font-size" "16px" ] ] <| List.map (\( functionName, _ ) -> sideNavLink functionName <| Builder.absolute [ fileName, functionName ] []) v
         ]
 
 
-sideNavLink : String -> String -> Element msg
+sideNavLink : FunctionName -> String -> Html msg
 sideNavLink name url =
-    link [ width fill, paddingXY 10 8, Font.color colors.gray, mouseOver [ Font.color colors.dark ] ]
-        { url = url, label = text name }
+    a
+        [ css
+            [ property "width" "100%"
+            , property "padding" "8px 10px"
+            , property "color" "#969696"
+            , property "display" "block"
+            , property "text-decoration" "none"
+            , property "box-sizing" "border-box"
+            , with ":hover" [ property "color" "#212121" ]
+            ]
+        , href url
+        ]
+        [ text name ]
 
 
-body : Url.Url -> Element Msg
+body : Url.Url -> Html Msg
 body url =
-    column [ width fill, height fill, scrollbars, contentsPadding, spacing 20 ] <|
-        List.map (map (always NoOp)) (Route.view url)
+    div
+        [ css
+            [ property "width" "100%"
+            , property "padding" "30px 10px"
+            , property "box-sizing" "border-box"
+            ]
+        ]
+        [ div
+            [ css
+                [ property "gap" "20px"
 
-
-contentsPadding : Attribute msg
-contentsPadding =
-    paddingXY 10 30
+                -- TODO: elm-ui用...他は未検証
+                , property "height" "0"
+                , property "display" "flex"
+                , property "flex-direction" "column"
+                ]
+            ]
+          <|
+            List.map (map (always NoOp)) (Route.view url)
+        ]

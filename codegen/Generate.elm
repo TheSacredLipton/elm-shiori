@@ -61,14 +61,6 @@ getImports codes =
         codes
 
 
-
--- case code of
---     Code code_ ->
---         { code = code_, import_ = "" }
---     Import i ->
---         { code = "", import_ = import_ }
-
-
 fromElmCode : ElmCode -> List ElmCodeRecord
 fromElmCode elmCode =
     elmCode
@@ -143,11 +135,6 @@ type alias FunctionName =
     String
 
 
-
--- type alias Code =
---     String
-
-
 type Code
     = Code String
     | Import String
@@ -194,7 +181,7 @@ elmParser fileName =
                     [ P.succeed (\d -> P.Loop <| d :: s)
                         |. P.chompUntil "{-|"
                         |= P.loop [] commentContents
-                    , P.succeed (P.Done s)
+                    , P.succeed (P.Done <| List.reverse s)
                     ]
     in
     P.succeed (\a -> ( fileName, a ))
