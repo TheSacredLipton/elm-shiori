@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "chokidar": "^3.5.3",
-    "elm": "^0.19.1-5",
     "elm-codegen": "^0.2.0",
     "elm-watch": "^1.1.0",
     "fs-extra": "^10.1.0",
