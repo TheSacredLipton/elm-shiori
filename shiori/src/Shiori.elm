@@ -1,12 +1,17 @@
 module Shiori exposing (main)
 
 import Browser
+import Browser.Dom exposing (setViewport)
 import Browser.Navigation as Nav
 import Origami exposing (property, with, withMedia)
 import Origami.Html exposing (Html, a, div, fromHtml, map, text, toHtmls)
 import Origami.Html.Attributes exposing (css, href)
+import Origami.Html.Events exposing (onClick)
 import Origami.StyleTag as StyleTag
+import Origami.Svg exposing (rect, svg)
+import Origami.Svg.Attributes as SA
 import Shiori.Route as Route
+import Task
 import Url
 import Url.Builder as Builder
 
@@ -26,6 +31,7 @@ main =
 type alias Model =
     { key : Nav.Key
     , url : Url.Url
+    , isActive : Bool
     }
 
 
@@ -33,6 +39,7 @@ init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
     ( { key = key
       , url = url
+      , isActive = False
       }
     , Cmd.none
     )
@@ -41,6 +48,7 @@ init _ url key =
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url.Url
+    | ToggleMenu
     | NoOp
 
 
@@ -56,9 +64,12 @@ update msg model =
                     ( model, Nav.load href )
 
         UrlChanged url ->
-            ( { model | url = url }
+            ( { model | url = url, isActive = False }
             , Cmd.none
             )
+
+        ToggleMenu ->
+            ( { model | isActive = not model.isActive }, Task.perform (\_ -> NoOp) (setViewport 0 0) )
 
         NoOp ->
             ( model, Cmd.none )
@@ -80,6 +91,7 @@ view model =
                 ]
                 [ header
                 , header_
+                , smNav model.isActive
                 , div
                     [ css
                         [ property "max-width" "900px"
@@ -97,13 +109,12 @@ view model =
     }
 
 
-header : Html msg
+header : Html Msg
 header =
     div
         [ css
             [ property "height" "48px"
             , property "width" "100%"
-            , property "flex-shrink" "0"
             , property "Background-color" "#FB923C"
             , property "box-shadow" "0 2px 2px 0 rgba(0, 0, 0, 0.2)"
             , property "display" "flex"
@@ -119,22 +130,64 @@ header =
             [ css
                 [ property "max-width" "900px"
                 , property "width" "100%"
+                , property "height" "100%"
                 , property "padding" "0px 20px"
                 , property "box-sizing" "border-box"
                 , property "color" "#FFFFFF"
                 , property "display" "flex"
                 , property "justify-content" "space-between"
+                , property "align-items" "center"
                 ]
             ]
-            [ div [ css [] ] [ text "elm-shiori" ]
-            , div [ css [ property "display" "block", md [ property "display" "none" ] ] ] [ text "三" ]
+            [ div
+                []
+                [ a
+                    [ href "/"
+                    , css
+                        [ property "color" "#FFFFFF"
+                        , property "display" "block"
+                        , property "text-decoration" "none"
+                        , property "box-sizing" "border-box"
+                        , with ":hover" [ property "color" "#DDDDDD" ]
+                        ]
+                    ]
+                    [ text "elm-shiori" ]
+                ]
+            , menuButton
+            ]
+        ]
+
+
+menuButton : Html Msg
+menuButton =
+    div
+        [ onClick ToggleMenu
+        , css
+            [ property "padding" "10px 0px"
+            , property "box-sizing" "border-box"
+            , property "display" "block"
+            , md [ property "display" "none" ]
+            , property "fill" "currentColor"
+            , with ":hover" [ property "color" "#DDDDDD" ]
+            ]
+        ]
+        [ svg [ SA.width "24", SA.height "16", SA.viewBox "0 0 24 24" ]
+            [ rect [ SA.x "0", SA.y "2", SA.width "24", SA.height "2" ] []
+            , rect [ SA.x "0", SA.y "12", SA.width "24", SA.height "2" ] []
+            , rect [ SA.x "0", SA.y "22", SA.width "24", SA.height "2" ] []
             ]
         ]
 
 
 header_ : Html msg
 header_ =
-    div [ css [ property "height" "48px" ] ] []
+    div
+        [ css
+            [ property "height" "48px"
+            , property "flex-shrink" "0"
+            ]
+        ]
+        []
 
 
 md : List Origami.Style -> Origami.Style
@@ -147,14 +200,15 @@ sideNav width =
     div
         [ css
             [ property "width" <| String.fromInt width ++ "px"
-            , property "height" "100%"
+            , property "height" "calc(100% - 48px)"
             , property "padding" "30px 20px"
             , property "box-sizing" "border-box"
             , property "flex-direction" "column"
             , property "gap" "24px"
-            , property "border" "1px solid #E0E0E0"
+            , property "border-left" "1px solid #E0E0E0"
             , property "position" "fixed"
             , property "display" "none"
+            , property "overflow-y" "scroll"
             , md [ property "display" "flex" ]
             ]
         ]
@@ -175,6 +229,26 @@ sideNav_ width =
         []
 
 
+smNav : Bool -> Html msg
+smNav isActive =
+    if isActive then
+        div
+            [ css
+                [ property "display" "block"
+                , md [ property "display" "none" ]
+                , property "width" "100%"
+                , property "box-sizing" "border-box"
+                , property "padding" "20px"
+                , property "box-shadow" "0 2px 2px 0 rgba(0, 0, 0, 0.2)"
+                ]
+            ]
+        <|
+            List.map sideNavLinkGroup Route.links
+
+    else
+        text ""
+
+
 type alias FileName =
     String
 
@@ -187,7 +261,7 @@ sideNavLinkGroup : ( FileName, List ( FunctionName, List String ) ) -> Html msg
 sideNavLinkGroup ( fileName, v ) =
     div [ css [ property "gap" "8px", property "width" "100%" ] ]
         [ div [ css [ property "font-size" "20" ] ] [ text fileName ]
-        , div [ css [ property "width" "100%", property "font-size" "16px" ] ] <| List.map (\( functionName, _ ) -> sideNavLink functionName <| Builder.absolute [ fileName, functionName ] []) v
+        , div [ css [ property "width" "100%", property "font-size" "16px" ] ] <| List.map (\( functionName, _ ) -> sideNavLink functionName <| Builder.absolute [ fileName, functionName ] []) <| v
         ]
 
 
@@ -220,9 +294,6 @@ body url =
         [ div
             [ css
                 [ property "gap" "20px"
-
-                -- TODO: elm-ui用...他は未検証
-                , property "height" "0"
                 , property "display" "flex"
                 , property "flex-direction" "column"
                 ]

@@ -30,15 +30,15 @@ init =
 
     import Element exposing (..)
 
-    :: column [] <| .body <| view2 init
+    :: column [] <| .body <| view init
 
-    :: column [] <| .body <| view2 { world = "world" }
+    :: column [] <| .body <| view { world = "world" }
 
-    :: column [] <| .body <| view2 { world = "world2" }
+    :: column [] <| .body <| view { world = "world2" }
 
 -}
-view2 : Model -> { title : String, body : List (Element Msg) }
-view2 model =
+view : Model -> { title : String, body : List (Element Msg) }
+view model =
     { title = "home"
     , body = [ text <| "hello " ++ model.world ]
     }

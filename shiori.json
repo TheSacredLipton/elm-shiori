@@ -1,6 +1,6 @@
 {
     "roots": [
-        "examples",
+        "examples/elm-ui",
         "codegen"
     ],
     "assets": "examples/assets",

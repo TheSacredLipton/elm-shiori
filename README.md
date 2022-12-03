@@ -14,8 +14,7 @@ npx shiori serve --port 3000
 
 ## 事前準備
 
-- プロジェクトルートで事前に`mdgriffith/elm-ui`と`elm/url`をインストールしておいてください
-- shiori/src/View.elm, shiori/src/Shiori.elmを編集している場合はelm-uiは必要ないかもしれません
+- プロジェクトルートで事前に`miyamoen/elm-origami`と`elm/url`をインストールしておいてください
 
 ### shiori.json
 
@@ -37,15 +36,4 @@ npx shiori serve --port 3000
 
 ### .gitignore
 
-- elm-uiを使っていて特にこだわりがなければshioriディレクトごとgitignoreするといいと思います
-
-
-## カスタマイズ
-
-```
-index.html
-Shiori.elm
-View.elm
-```
-
-編集するとビューワーをカスタマイズしたり、 CSS読み込ませたり、elm-cssとか使ったりできると思います...多分
+- 特にこだわりがなければshioriディレクトごとgitignoreするといいと思います

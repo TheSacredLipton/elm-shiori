@@ -38,6 +38,22 @@ square color =
 
 {-|
 
+    :: square2 colors.red
+
+-}
+square2 : Color -> Element msg
+square2 color =
+    el
+        [ width fill
+        , height fill
+        , Background.color color
+        ]
+    <|
+        text "hello"
+
+
+{-|
+
     :: circle colors.red
 
     :: circle colors.green

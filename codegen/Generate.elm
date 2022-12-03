@@ -226,6 +226,7 @@ route elmCode =
         List.append
             (List.map (\{ index, fileName, functionName } -> import_ False <| joinDot [ "Shiori", elmFileName (toScore fileName) functionName index ]) <| fromElmCode elmCode)
             [ import_ True "Url.Parser"
+            , import_ False "Shiori_View"
             , genTypeRoute elmCode
             , genView elmCode
             , genRouteParser elmCode
@@ -321,7 +322,7 @@ genView elmCode =
     Elm.declaration "view" <|
         Elm.fn ( "url", Just <| Type.named [ "Url" ] "Url" )
             (\url ->
-                Elm.withType (Type.list <| Type.named [ "Shiori_View" ] "View") <|
+                Elm.withType (Type.list <| Type.namedWith [ "Origami.Html" ] "Html" [ Type.unit ]) <|
                     Elm.Case.custom (url |> pipe (Elm.val "toRoute")) (Type.var "Route") <|
                         Elm.Case.branch0 "NotFound" (Elm.list [])
                             :: List.map genViewHelper elmCode
