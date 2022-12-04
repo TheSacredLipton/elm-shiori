@@ -85,3 +85,15 @@ heightTest color =
         , Background.color color
         ]
         none
+
+
+{-|
+
+    import Element exposing (..)
+
+    :: column [] [imTest, text "test"]
+
+-}
+imTest : Element msg
+imTest =
+    none

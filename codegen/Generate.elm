@@ -1,4 +1,4 @@
-module Generate exposing (Code(..), elmFileName, elmParser, genRouteParserHelper, headUpper, joinDot, main, urlName, variantName)
+module Generate exposing (elmFileName, functionCommentParser, functionCommentsParser, genRouteParserHelper, headUpper, joinDot, main, urlName, variantName)
 
 {-| -}
 
@@ -10,55 +10,26 @@ import Gen.CodeGen.Generate as Generate
 import Json.Decode as D
 import Json.Encode as E
 import List.Extra as List
-import Parser as P exposing ((|.), (|=), Parser)
+import Parser as P exposing ((|.), (|=), Parser, chompIf)
 import Set
 
 
-{-| FIXME: Dictじゃない
--}
-type alias Dict a b =
-    List ( a, b )
-
-
 type alias ElmCode =
-    Dict
-        FileName
-        (Dict
-            FunctionName
-            (List Code)
+    List
+        ( FileName
+        , List
+            ( FunctionName
+            , Code
+            )
         )
+
+
+type alias Code =
+    { codes : List String, imports : List String }
 
 
 type alias ElmCodeRecord =
     { fileName : FileName, index : Int, functionName : FunctionName, code : String, imports : List String }
-
-
-filterByCode : List Code -> List String
-filterByCode code =
-    List.filterMap
-        (\c ->
-            case c of
-                Code s ->
-                    Just s
-
-                _ ->
-                    Nothing
-        )
-        code
-
-
-getImports : List Code -> List String
-getImports codes =
-    List.filterMap
-        (\code ->
-            case code of
-                Import str ->
-                    Just str
-
-                _ ->
-                    Nothing
-        )
-        codes
 
 
 fromElmCode : ElmCode -> List ElmCodeRecord
@@ -67,17 +38,17 @@ fromElmCode elmCode =
         |> List.map
             (\( fileName, list_functionname_codes ) ->
                 List.map
-                    (\( functionName, codes ) ->
-                        let
-                            imports =
-                                getImports codes
-                        in
+                    (\( functionName, { codes, imports } ) ->
+                        -- let
+                        --     imports =
+                        --         getImports codes
+                        -- in
                         List.indexedMap
                             (\index code ->
                                 { fileName = fileName, index = index, functionName = functionName, code = code, imports = imports }
                             )
                         <|
-                            filterByCode codes
+                            codes
                     )
                     list_functionname_codes
             )
@@ -99,7 +70,7 @@ main =
                 elmCode : ElmCode
                 elmCode =
                     flags
-                        |> List.map (\( fileName, v ) -> P.run (elmParser fileName) v |> Result.withDefault ( "", [] ))
+                        |> List.map (\( fileName, v ) -> ( fileName, P.run functionCommentsParser v |> Result.withDefault [] ))
             in
             route elmCode :: files elmCode
 
@@ -135,61 +106,6 @@ type alias FunctionName =
     String
 
 
-type Code
-    = Code String
-    | Import String
-
-
-{-| TODO: リファクタしましょう
--}
-elmParser : FileName -> Parser ( FileName, Dict FunctionName (List Code) )
-elmParser fileName =
-    let
-        commentContents s =
-            P.succeed identity
-                |= P.oneOf
-                    [ P.succeed (\a -> P.Done <| ( a, List.reverse s ))
-                        |. P.keyword "-}"
-                        |. P.backtrackable P.spaces
-                        |= getKeyword
-                    , P.succeed (\d -> P.Loop <| (Import <| "import " ++ d) :: s)
-                        |. P.spaces
-                        |. P.chompUntil "import"
-                        |. P.keyword "import"
-                        |. P.spaces
-                        |= P.getChompedString (P.chompWhile (\c -> c /= '\n'))
-                        |. P.spaces
-                    , P.succeed (\d -> P.Loop <| Code d :: s)
-                        |. P.spaces
-                        |. P.chompUntil "::"
-                        |. P.keyword "::"
-                        |. P.spaces
-                        |= P.getChompedString (P.chompWhile (\c -> c /= '\n'))
-                        |. P.spaces
-
-                    -- 何もなかった時
-                    -- TODO: MaybeのNothingにしたい
-                    , P.succeed (P.Done <| ( "", [] ))
-                        |. P.chompUntil "-}"
-                        |. P.keyword "-}"
-                        |. P.backtrackable P.spaces
-                    ]
-
-        comments s =
-            P.succeed identity
-                |= P.oneOf
-                    [ P.succeed (\d -> P.Loop <| d :: s)
-                        |. P.chompUntil "{-|"
-                        |= P.loop [] commentContents
-                    , P.succeed (P.Done <| List.reverse s)
-                    ]
-    in
-    P.succeed (\a -> ( fileName, a ))
-        |. P.spaces
-        |= (P.map (\a -> List.filter (\( k, _ ) -> (not << String.isEmpty) k) a) <| P.loop [] comments)
-        |. P.spaces
-
-
 getKeyword : Parser String
 getKeyword =
     P.variable { start = Char.isLower, inner = Char.isAlphaNum, reserved = Set.fromList [] }
@@ -198,6 +114,76 @@ getKeyword =
 toScore : String -> String
 toScore =
     String.replace "." "_"
+
+
+functionCommentParser : Parser (Maybe ( FunctionName, { codes : List String, imports : List String } ))
+functionCommentParser =
+    P.succeed identity
+        |= (P.succeed ()
+                |. P.chompUntil "{-|"
+                |. P.multiComment "{-|" "-}" P.Nestable
+                |. P.spaces
+                |. getKeyword
+                |> P.getChompedString
+           )
+        |> P.andThen
+            (\source ->
+                let
+                    getFunctionName =
+                        P.succeed identity
+                            |. P.chompUntil "-}"
+                            |. P.keyword "-}"
+                            |. P.spaces
+                            |= getKeyword
+                in
+                wrapRun "err" getFunctionName source
+                    |> P.map (\a -> { body = source, functionName = a })
+            )
+        |> P.andThen
+            (\{ body, functionName } ->
+                let
+                    trim =
+                        String.split "\n" body
+                            |> List.map (\a -> String.trim a)
+
+                    imports =
+                        List.filter (\a -> String.startsWith "import" a) trim
+
+                    codes =
+                        List.filter (\a -> String.startsWith "::" a) trim
+                            |> List.map (\a -> String.dropLeft 2 a |> String.trim)
+                in
+                if List.isEmpty codes then
+                    P.succeed Nothing
+
+                else
+                    P.succeed <| Just ( functionName, { codes = codes, imports = imports } )
+            )
+
+
+functionCommentsParser : Parser (List ( FunctionName, { codes : List String, imports : List String } ))
+functionCommentsParser =
+    let
+        helper s =
+            P.succeed identity
+                |= P.oneOf
+                    [ P.succeed (\d -> P.Loop <| d :: s)
+                        |= functionCommentParser
+                    , P.succeed (P.Done <| List.reverse s)
+                    ]
+    in
+    P.loop [] helper
+        |> P.map (List.filterMap identity)
+
+
+wrapRun : String -> Parser a -> String -> Parser a
+wrapRun err parser arg =
+    case P.run parser arg of
+        Ok r ->
+            P.succeed r
+
+        Err _ ->
+            P.problem err
 
 
 
@@ -329,7 +315,7 @@ genView elmCode =
             )
 
 
-genViewHelper : ( FileName, Dict FunctionName (List Code) ) -> Elm.Case.Branch
+genViewHelper : ( FileName, List ( FunctionName, { codes : List String, imports : List String } ) ) -> Elm.Case.Branch
 genViewHelper ( fileName, v ) =
     Elm.Case.branch1 (toScore fileName) ( "str", Type.string ) <|
         always (helper2 fileName v)
@@ -337,19 +323,20 @@ genViewHelper ( fileName, v ) =
 
 {-| TODO: RENAME
 -}
-helper2 : FileName -> Dict String (List Code) -> Elm.Expression
+helper2 : FileName -> List ( FunctionName, { codes : List String, imports : List String } ) -> Elm.Expression
 helper2 fileName vv =
     Elm.Case.string (Elm.val "str")
         { cases =
-            List.map
-                (\( functionName, codes_ ) ->
-                    let
-                        codes =
-                            filterByCode codes_
-                    in
-                    ( functionName, pipe (Elm.val "Shiori_View.map") <| Elm.list <| List.indexedMap (\i _ -> Elm.val <| joinDot [ "Shiori", elmFileName (toScore fileName) functionName i, "view__" ]) codes )
-                )
-                vv
+            vv
+                |> List.map (\( functionName, code ) -> ( functionName, code.codes ))
+                |> List.map
+                    (\( functionName, codes_ ) ->
+                        let
+                            codes =
+                                codes_
+                        in
+                        ( functionName, pipe (Elm.val "Shiori_View.map") <| Elm.list <| List.indexedMap (\i _ -> Elm.val <| joinDot [ "Shiori", elmFileName (toScore fileName) functionName i, "view__" ]) codes )
+                    )
         , otherwise = Elm.list []
         }
 
@@ -416,7 +403,7 @@ genLinks elmCode =
         |> Elm.declaration "links"
 
 
-genLinksHelper : FileName -> Dict FunctionName (List Code) -> Elm.Expression
+genLinksHelper : FileName -> List ( FunctionName, { codes : List String, imports : List String } ) -> Elm.Expression
 genLinksHelper fileName dictFunctionNameCode =
     let
         helper ( functionName, l ) =
@@ -424,5 +411,7 @@ genLinksHelper fileName dictFunctionNameCode =
                 |> Elm.list
                 |> Elm.tuple (Elm.string functionName)
     in
-    List.map helper dictFunctionNameCode
+    dictFunctionNameCode
+        |> List.map (\( functionName, code ) -> ( functionName, code.codes ))
+        |> List.map helper
         |> Elm.list

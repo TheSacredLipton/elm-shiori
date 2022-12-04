@@ -12,29 +12,44 @@ elmParserTest =
     describe "elmParser Test"
         [ test "elmParserTest1" <|
             \() ->
-                P.run (elmParser "Main") mock1
-                    |> Expect.equal (Ok ( "Main", [ ( "mori", [ Code "mori colors.red", Code "mori colors.green" ] ), ( "square", [ Code "square colors.red", Code "square colors.green" ] ) ] ))
+                P.run functionCommentsParser mock1
+                    |> Expect.equal (Ok [ ( "square", { codes = [ "square colors.red", "square colors.green" ], imports = [ "import tomtomtom" ] } ), ( "mori", { codes = [ "mori colors.red", "mori colors.green" ], imports = [ "import tomtomtomtoms" ] } ) ])
 
         -- |> Expect.equal (Err [])
-        , test "elmParserTest2" <|
-            \() ->
-                P.run (elmParser "Main") mock2
-                    |> Expect.equal (Ok ( "Main", [ ( "mori", [ Code "mori colors.red", Code "mori colors.green" ] ), ( "square", [ Import "import Element exposing (..) ", Import "import Element exposing (..) ", Code "square colors.red", Code "square colors.green" ] ) ] ))
-
+        -- , test "elmParserTest2" <|
+        --     \() ->
+        --         P.run (elmParser "Main") mock2
+        --             |> Expect.equal (Ok ( "Main", [ ( "square", [ "import Element exposing (..) ", "import Element exposing (..) ", "square colors.red", "square colors.green" ] ), ( "mori", [ "mori colors.red", "mori colors.green" ] ) ] ))
         -- |> Expect.equal (Err [])
         , test "elmParserTest3" <|
             \() ->
-                P.run (elmParser "Main") mock3
-                    |> Expect.equal (Ok ( "Main", [] ))
+                P.run functionCommentsParser mock3
+                    |> Expect.equal (Ok [])
 
         -- |> Expect.equal (Err [])
+        -- , test "elmParserTest4" <|
+        --     \() ->
+        --         P.run (elmParser "Main") mock4
+        --             -- |> Expect.equal (Ok ( "Main", [] ))
+        --             |> Expect.equal (Err [])
         ]
+
+
+importPasertTest =
+    test "importPasertTest" <|
+        \() ->
+            -- P.run getImport "{-| j import Exposing (.. -} \n test: Tom"
+            P.run functionCommentsParser mock4
+                -- |> Expect.equal (Ok ( "test2", { codes = [ "test2 colors.green", "test2 colors.green" ], imports = [ "import Element exposing (..)", "import Element exposing (..)" ] } ))
+                |> Expect.equal (Ok [ ( "test", { codes = [ "test2 colors.green", "test2 colors.green" ], imports = [ "import Element exposing (..)", "import Element exposing (..)" ] } ), ( "test2", { codes = [ "test2 colors.green" ], imports = [ "import ss" ] } ) ])
 
 
 mock1 : String
 mock1 =
     """
 {-|
+    import tomtomtom
+    
     square
 
     :: square colors.red
@@ -47,7 +62,7 @@ mock1 =
 square
 
 {-|
-
+    import tomtomtomtoms
 
     :: mori colors.red
 
@@ -65,8 +80,8 @@ mock2 =
     """
 {-|
     a
-    !import Element exposing (..) 
-    !import Element exposing (..) 
+    import Element exposing (..) 
+    import Element exposing (..) 
     b
 
     :: square colors.red
@@ -104,4 +119,35 @@ module Empty exposing (..)
 empty: Element msg
 empty =
     []
+"""
+
+
+mock4 : String
+mock4 =
+    """{-|
+    
+    import Element exposing (..)
+
+    import Element exposing (..)
+
+    :: test2 colors.green
+    
+    :: test2 colors.green
+
+
+
+-}
+test
+
+
+{-|
+
+    import ss
+
+    :: test2 colors.green
+
+
+-}
+
+test2
 """
