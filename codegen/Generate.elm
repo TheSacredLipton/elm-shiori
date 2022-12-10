@@ -280,7 +280,7 @@ genTypeRoute elmCode =
         import Elm.ToString exposing (declaration)
 
         declaration <| genView [("", [])]
-        --> { body = "view : Url.Url -> List (Origami.Html.Html ())\nview url =\n    case url |> toRoute of\n        NotFound ->\n            []\n\n         str ->\n            case str of\n                _ ->\n                    []\n\n\n", docs = "", imports = "import Origami.Html\nimport Url", signature = "view : Url.Url -> List (Origami.Html.Html ())" }
+        --> { body = "view : Url.Url -> List (Html.Html ())\nview url =\n    case url |> toRoute of\n        NotFound ->\n            []\n\n         str ->\n            case str of\n                _ ->\n                    []\n\n\n", docs = "", imports = "import Html\nimport Url", signature = "view : Url.Url -> List (Html.Html ())" }
 
 -}
 genView : ElmCode -> Elm.Declaration
@@ -288,7 +288,7 @@ genView elmCode =
     Elm.declaration "view" <|
         Elm.fn ( "url", Just <| Type.named [ "Url" ] "Url" )
             (\url ->
-                Elm.withType (Type.list <| Type.namedWith [ "Origami.Html" ] "Html" [ Type.unit ]) <|
+                Elm.withType (Type.list <| Type.namedWith [ "Html" ] "Html" [ Type.unit ]) <|
                     Elm.Case.custom (url |> pipe (Elm.val "toRoute")) (Type.var "Route") <|
                         Elm.Case.branch0 "NotFound" (Elm.list [])
                             :: List.map genViewHelper elmCode

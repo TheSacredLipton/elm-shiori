@@ -1,30 +1,27 @@
 # elm-shiori
 
-カードゲームのUI確認用に作りました
+カードゲームのUI確認用に作りました。
+
+関数コメントで確認できるビューワーです。
+
+## インストール
 
 ```
 npm i elm-shiori
 ```
 
-## CLI
+## 使い方
 
-```
-npx shiori init
-npx shiori build
-npx shiori serve
-```
-
-## 準備
-
-- プロジェクトルートで事前に`miyamoen/elm-origami`と`elm/url`をインストールしておいてください
+1. 準備
+- プロジェクトルートで事前に`elm/url`をインストールしておいてください
 - `shiori.json`をプロジェクトルートに用意してください
 
 例:
 
 ```
 {
-    "roots": ["examples"],
-    "assets": "examples/assets",
+    "roots": ["src"],
+    "assets": "public",
     "files": [
         "Shape",
         "Button",
@@ -33,6 +30,20 @@ npx shiori serve
         "Pages.Login.Home_"
     ]
 }
+```
+
+2. 初回は`npx shiori init`を実行
+
+3. `shiori/Shiori_View.elm`をプロジェクトに合わせて編集してください
+
+4. `npx shiori serve`
+
+## CLI
+
+```
+npx shiori init
+npx shiori build
+npx shiori serve
 ```
 
 ## ライセンス

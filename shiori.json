@@ -1,15 +1,14 @@
 {
     "roots": [
-        "examples/elm-ui",
+        "examples/html",
         "codegen"
     ],
     "assets": "examples/assets",
     "files": [
-        "Shape",
-        "Button",
         "Image",
+        "Empty",
+        "Button",
         "Pages.Home_",
-        "Pages.Login.Home_",
-        "Empty"
+        "Pages.Login.Home_"
     ]
 }

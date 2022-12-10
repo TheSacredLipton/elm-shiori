@@ -3,13 +3,9 @@ module Shiori exposing (main)
 import Browser
 import Browser.Dom exposing (setViewport)
 import Browser.Navigation as Nav
-import Origami exposing (property, with, withMedia)
-import Origami.Html exposing (Html, a, div, fromHtml, map, text, toHtmls)
-import Origami.Html.Attributes exposing (css, href)
-import Origami.Html.Events exposing (onClick)
-import Origami.StyleTag as StyleTag
-import Origami.Svg exposing (rect, svg)
-import Origami.Svg.Attributes as SA
+import Html exposing (Html, a, div, map, text)
+import Html.Attributes exposing (href, style)
+import Html.Events exposing (onClick)
 import Shiori.Route as Route
 import Task
 import Url
@@ -79,77 +75,64 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "elm-shiori"
     , body =
-        toHtmls
-            [ fromHtml <| StyleTag.styleTag_ [ StyleTag.style "body" [ StyleTag.property "margin" "0" ] ]
+        [ div
+            [ style "display" "flex"
+            , style "flex-direction" "column"
+            , style "height" "100vh"
+            , style "align-items" "center"
+            ]
+            [ header
+            , header_
+            , smNav model.isActive
             , div
-                [ css
-                    [ property "display" "flex"
-                    , property "flex-direction" "column"
-                    , property "height" "100vh"
-                    , property "align-items" "center"
-                    ]
+                [ style "max-width" "900px"
+                , style "width" "100%"
+                , style "display" "flex"
+                , style "gap" "24px"
                 ]
-                [ header
-                , header_
-                , smNav model.isActive
-                , div
-                    [ css
-                        [ property "max-width" "900px"
-                        , property "width" "100%"
-                        , property "display" "flex"
-                        , property "gap" "24px"
-                        ]
-                    ]
-                    [ sideNav 250
-                    , sideNav_ 250
-                    , body model.url
-                    ]
+                [ sideNav 250
+                , sideNav_ 250
+                , body model.url
                 ]
             ]
+        ]
     }
 
 
 header : Html Msg
 header =
     div
-        [ css
-            [ property "height" "48px"
-            , property "width" "100%"
-            , property "Background-color" "#FB923C"
-            , property "box-shadow" "0 2px 2px 0 rgba(0, 0, 0, 0.2)"
-            , property "display" "flex"
-            , property "align-items" "center"
-            , property "justify-content" "center"
-            , property "left" "0"
-            , property "position" "fixed"
-            , property "top" "0"
-            , property "z-index" "10"
-            ]
+        [ style "height" "48px"
+        , style "width" "100%"
+        , style "background-color" "#FB923C"
+        , style "box-shadow" "0 2px 2px 0 rgba(0, 0, 0, 0.2)"
+        , style "display" "flex"
+        , style "align-items" "center"
+        , style "justify-content" "center"
+        , style "left" "0"
+        , style "position" "fixed"
+        , style "top" "0"
+        , style "z-index" "10"
         ]
         [ div
-            [ css
-                [ property "max-width" "900px"
-                , property "width" "100%"
-                , property "height" "100%"
-                , property "padding" "0px 20px"
-                , property "box-sizing" "border-box"
-                , property "color" "#FFFFFF"
-                , property "display" "flex"
-                , property "justify-content" "space-between"
-                , property "align-items" "center"
-                ]
+            [ style "max-width" "900px"
+            , style "width" "100%"
+            , style "height" "100%"
+            , style "padding" "0px 20px"
+            , style "box-sizing" "border-box"
+            , style "color" "#FFFFFF"
+            , style "display" "flex"
+            , style "justify-content" "space-between"
+            , style "align-items" "center"
             ]
             [ div
                 []
                 [ a
                     [ href "/"
-                    , css
-                        [ property "color" "#FFFFFF"
-                        , property "display" "block"
-                        , property "text-decoration" "none"
-                        , property "box-sizing" "border-box"
-                        , with ":hover" [ property "color" "#DDDDDD" ]
-                        ]
+                    , style "color" "#FFFFFF"
+                    , style "display" "block"
+                    , style "text-decoration" "none"
+                    , style "box-sizing" "border-box"
                     ]
                     [ text "elm-shiori" ]
                 ]
@@ -162,55 +145,38 @@ menuButton : Html Msg
 menuButton =
     div
         [ onClick ToggleMenu
-        , css
-            [ property "padding" "10px 0px"
-            , property "box-sizing" "border-box"
-            , property "display" "block"
-            , md [ property "display" "none" ]
-            , property "fill" "currentColor"
-            , with ":hover" [ property "color" "#DDDDDD" ]
-            ]
+        , style "padding" "10px 0px"
+        , style "box-sizing" "border-box"
+        , style "display" "block"
+        , style "display" "flex"
+        , style "fill" "currentColor"
         ]
-        [ svg [ SA.width "24", SA.height "16", SA.viewBox "0 0 24 24" ]
-            [ rect [ SA.x "0", SA.y "2", SA.width "24", SA.height "2" ] []
-            , rect [ SA.x "0", SA.y "12", SA.width "24", SA.height "2" ] []
-            , rect [ SA.x "0", SA.y "22", SA.width "24", SA.height "2" ] []
-            ]
-        ]
+        []
 
 
 header_ : Html msg
 header_ =
     div
-        [ css
-            [ property "height" "48px"
-            , property "flex-shrink" "0"
-            ]
+        [ style "height" "48px"
+        , style "flex-shrink" "0"
         ]
         []
-
-
-md : List Origami.Style -> Origami.Style
-md properties =
-    withMedia "(min-width: 768px)" properties
 
 
 sideNav : Int -> Html msg
 sideNav width =
     div
-        [ css
-            [ property "width" <| String.fromInt width ++ "px"
-            , property "height" "calc(100% - 48px)"
-            , property "padding" "30px 20px"
-            , property "box-sizing" "border-box"
-            , property "flex-direction" "column"
-            , property "gap" "24px"
-            , property "border-left" "1px solid #E0E0E0"
-            , property "position" "fixed"
-            , property "display" "none"
-            , property "overflow-y" "scroll"
-            , md [ property "display" "flex" ]
-            ]
+        [ style "width" <| String.fromInt width ++ "px"
+        , style "height" "calc(100% - 48px)"
+        , style "padding" "30px 20px"
+        , style "box-sizing" "border-box"
+        , style "flex-direction" "column"
+        , style "gap" "24px"
+        , style "border-left" "1px solid #E0E0E0"
+        , style "position" "fixed"
+        , style "display" "none"
+        , style "overflow-y" "scroll"
+        , style "display" "flex"
         ]
     <|
         List.map sideNavLinkGroup Route.links
@@ -219,12 +185,10 @@ sideNav width =
 sideNav_ : Int -> Html msg
 sideNav_ width =
     div
-        [ css
-            [ property "width" <| String.fromInt width ++ "px"
-            , property "flex-shrink" "0"
-            , property "display" "none"
-            , md [ property "display" "flex" ]
-            ]
+        [ style "width" <| String.fromInt width ++ "px"
+        , style "flex-shrink" "0"
+        , style "display" "none"
+        , style "display" "flex"
         ]
         []
 
@@ -233,14 +197,11 @@ smNav : Bool -> Html msg
 smNav isActive =
     if isActive then
         div
-            [ css
-                [ property "display" "block"
-                , md [ property "display" "none" ]
-                , property "width" "100%"
-                , property "box-sizing" "border-box"
-                , property "padding" "20px"
-                , property "box-shadow" "0 2px 2px 0 rgba(0, 0, 0, 0.2)"
-                ]
+            [ style "display" "block"
+            , style "width" "100%"
+            , style "box-sizing" "border-box"
+            , style "padding" "20px"
+            , style "box-shadow" "0 2px 2px 0 rgba(0, 0, 0, 0.2)"
             ]
         <|
             List.map sideNavLinkGroup Route.links
@@ -259,24 +220,21 @@ type alias FunctionName =
 
 sideNavLinkGroup : ( FileName, List ( FunctionName, List String ) ) -> Html msg
 sideNavLinkGroup ( fileName, v ) =
-    div [ css [ property "gap" "8px", property "width" "100%" ] ]
-        [ div [ css [ property "font-size" "20" ] ] [ text fileName ]
-        , div [ css [ property "width" "100%", property "font-size" "16px" ] ] <| List.map (\( functionName, _ ) -> sideNavLink functionName <| Builder.absolute [ fileName, functionName ] []) <| v
+    div [ style "gap" "8px", style "width" "100%" ]
+        [ div [ style "font-size" "20" ] [ text fileName ]
+        , div [ style "width" "100%", style "font-size" "16px" ] <| List.map (\( functionName, _ ) -> sideNavLink functionName <| Builder.absolute [ fileName, functionName ] []) <| v
         ]
 
 
 sideNavLink : FunctionName -> String -> Html msg
 sideNavLink name url =
     a
-        [ css
-            [ property "width" "100%"
-            , property "padding" "8px 10px"
-            , property "color" "#969696"
-            , property "display" "block"
-            , property "text-decoration" "none"
-            , property "box-sizing" "border-box"
-            , with ":hover" [ property "color" "#212121" ]
-            ]
+        [ style "width" "100%"
+        , style "padding" "8px 10px"
+        , style "color" "#969696"
+        , style "display" "block"
+        , style "text-decoration" "none"
+        , style "box-sizing" "border-box"
         , href url
         ]
         [ text name ]
@@ -285,18 +243,14 @@ sideNavLink name url =
 body : Url.Url -> Html Msg
 body url =
     div
-        [ css
-            [ property "width" "100%"
-            , property "padding" "30px 10px"
-            , property "box-sizing" "border-box"
-            ]
+        [ style "width" "100%"
+        , style "padding" "30px 10px"
+        , style "box-sizing" "border-box"
         ]
         [ div
-            [ css
-                [ property "gap" "20px"
-                , property "display" "flex"
-                , property "flex-direction" "column"
-                ]
+            [ style "gap" "20px"
+            , style "display" "flex"
+            , style "flex-direction" "column"
             ]
           <|
             List.map (map (always NoOp)) (Route.view url)
