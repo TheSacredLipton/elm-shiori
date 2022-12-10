@@ -1,4 +1,4 @@
-module Generate exposing (elmFileName, functionCommentParser, functionCommentsParser, genRouteParserHelper, headUpper, joinDot, main, urlName, variantName)
+module Generate exposing (..)
 
 {-| -}
 
@@ -10,8 +10,12 @@ import Gen.CodeGen.Generate as Generate
 import Json.Decode as D
 import Json.Encode as E
 import List.Extra as List
-import Parser as P exposing ((|.), (|=), Parser, chompIf)
+import Parser as P exposing ((|.), (|=), Parser)
 import Set
+
+
+type alias Flags =
+    List ( String, String )
 
 
 type alias ElmCode =
@@ -22,6 +26,14 @@ type alias ElmCode =
             , Code
             )
         )
+
+
+type alias FileName =
+    String
+
+
+type alias FunctionName =
+    String
 
 
 type alias Code =
@@ -37,20 +49,15 @@ fromElmCode elmCode =
     elmCode
         |> List.map
             (\( fileName, list_functionname_codes ) ->
-                List.map
-                    (\( functionName, { codes, imports } ) ->
-                        -- let
-                        --     imports =
-                        --         getImports codes
-                        -- in
-                        List.indexedMap
-                            (\index code ->
-                                { fileName = fileName, index = index, functionName = functionName, code = code, imports = imports }
-                            )
-                        <|
+                list_functionname_codes
+                    |> List.map
+                        (\( functionName, { codes, imports } ) ->
                             codes
-                    )
-                    list_functionname_codes
+                                |> List.indexedMap
+                                    (\index code ->
+                                        { fileName = fileName, index = index, functionName = functionName, code = code, imports = imports }
+                                    )
+                        )
             )
         |> List.concat
         |> List.concat
@@ -75,18 +82,12 @@ main =
             route elmCode :: files elmCode
 
 
-type alias Flags =
-    List ( String, String )
-
-
 
 -------------
 -- DECODER
 -------------
 
 
-{-| FIXME: ここでreverseするの間違ってると思う
--}
 decoder : D.Decoder Flags
 decoder =
     D.keyValuePairs D.string |> D.map List.reverse
@@ -96,69 +97,6 @@ decoder =
 ------------
 -- PARSER
 ------------
-
-
-type alias FileName =
-    String
-
-
-type alias FunctionName =
-    String
-
-
-getKeyword : Parser String
-getKeyword =
-    P.variable { start = Char.isLower, inner = Char.isAlphaNum, reserved = Set.fromList [] }
-
-
-toScore : String -> String
-toScore =
-    String.replace "." "_"
-
-
-functionCommentParser : Parser (Maybe ( FunctionName, { codes : List String, imports : List String } ))
-functionCommentParser =
-    P.succeed identity
-        |= (P.succeed ()
-                |. P.chompUntil "{-|"
-                |. P.multiComment "{-|" "-}" P.Nestable
-                |. P.spaces
-                |. getKeyword
-                |> P.getChompedString
-           )
-        |> P.andThen
-            (\source ->
-                let
-                    getFunctionName =
-                        P.succeed identity
-                            |. P.chompUntil "-}"
-                            |. P.keyword "-}"
-                            |. P.spaces
-                            |= getKeyword
-                in
-                wrapRun "err" getFunctionName source
-                    |> P.map (\a -> { body = source, functionName = a })
-            )
-        |> P.andThen
-            (\{ body, functionName } ->
-                let
-                    trim =
-                        String.split "\n" body
-                            |> List.map (\a -> String.trim a)
-
-                    imports =
-                        List.filter (\a -> String.startsWith "import" a) trim
-
-                    codes =
-                        List.filter (\a -> String.startsWith "::" a) trim
-                            |> List.map (\a -> String.dropLeft 2 a |> String.trim)
-                in
-                if List.isEmpty codes then
-                    P.succeed Nothing
-
-                else
-                    P.succeed <| Just ( functionName, { codes = codes, imports = imports } )
-            )
 
 
 functionCommentsParser : Parser (List ( FunctionName, { codes : List String, imports : List String } ))
@@ -176,9 +114,87 @@ functionCommentsParser =
         |> P.map (List.filterMap identity)
 
 
-wrapRun : String -> Parser a -> String -> Parser a
-wrapRun err parser arg =
-    case P.run parser arg of
+functionCommentParser : Parser (Maybe ( FunctionName, { codes : List String, imports : List String } ))
+functionCommentParser =
+    P.succeed identity
+        |= getCommentWithKeyword
+        |> getFunctionName
+        |> getImportsAndCodes
+
+
+getCommentWithKeyword : Parser String
+getCommentWithKeyword =
+    P.succeed ()
+        |. P.chompUntil "{-|"
+        |. P.multiComment "{-|" "-}" P.Nestable
+        |. P.spaces
+        |. getKeyword
+        |> P.getChompedString
+
+
+getFunctionName : Parser String -> Parser { body : String, functionName : String }
+getFunctionName =
+    let
+        getFunctionName_ =
+            P.succeed identity
+                |. P.chompUntil "-}"
+                |. P.keyword "-}"
+                |. P.spaces
+                |= getKeyword
+    in
+    P.andThen
+        (\source ->
+            andRun "getFunctionNameError" getFunctionName_ source
+                |> P.map (\a -> { body = source, functionName = a })
+        )
+
+
+getImportsAndCodes : Parser { a | body : String, functionName : b } -> Parser (Maybe ( b, { codes : List String, imports : List String } ))
+getImportsAndCodes =
+    P.andThen
+        (\{ body, functionName } ->
+            let
+                trim =
+                    String.split "\n" body
+                        |> List.map (\a -> String.trim a)
+
+                imports =
+                    List.filter (\a -> String.startsWith "import" a) trim
+
+                codes =
+                    List.filter (\a -> String.startsWith "::" a) trim
+                        |> List.map (\a -> String.dropLeft 2 a |> String.trim)
+            in
+            if List.isEmpty codes then
+                P.succeed Nothing
+
+            else
+                P.succeed <| Just ( functionName, { codes = codes, imports = imports } )
+        )
+
+
+{-|
+
+    import Parser as P
+
+    P.run getKeyword "import Html exposing"
+    --> Ok "import"
+
+-}
+getKeyword : Parser String
+getKeyword =
+    P.variable { start = Char.isLower, inner = Char.isAlphaNum, reserved = Set.fromList [] }
+
+
+{-|
+
+    パーサー内で更にrunさせたい時に使う
+    多用はしない方がいいと思う
+
+-}
+andRun : String -> Parser a -> String -> Parser a
+andRun err parser source =
+    case P.run parser source of
         Ok r ->
             P.succeed r
 
@@ -188,7 +204,7 @@ wrapRun err parser arg =
 
 
 -----------
--- File
+-- Files
 -----------
 
 
@@ -221,21 +237,224 @@ route elmCode =
             ]
 
 
-{-| TODO: 先頭を大文字にする処理を追加すると安全かもしれない
+{-|
 
-    joinDot [] --> ""
+    import Elm.ToString exposing (declaration)
 
-    joinDot [ "Main", "Button" ] --> "Main.Button"
+    declaration <| import_ True "Url.Parser"
+    -->  { body = "import Url.Parser exposing (..)\n\n\n", docs = "", imports = "", signature = "" }
 
 -}
-joinDot : List String -> String
-joinDot =
-    String.join "."
+import_ : Bool -> String -> Elm.Declaration
+import_ isExposingAll name =
+    Elm.unsafe <|
+        String.join " "
+            [ "import"
+            , name
+            , if isExposingAll then
+                "exposing (..)"
+
+              else
+                ""
+            ]
 
 
-joinScore : List String -> String
-joinScore =
-    String.join "_"
+{-|
+
+        import Elm.ToString exposing (declaration)
+
+        declaration <| genTypeRoute [("", [])]
+        --> { body = "type Route\n    = NotFound\n    |  String\n\n\n", docs = "", imports = "import\nimport", signature = "" }
+
+-}
+genTypeRoute : ElmCode -> Elm.Declaration
+genTypeRoute elmCode =
+    Elm.customType "Route" <|
+        List.append [ Elm.variant "NotFound" ] <|
+            List.map (\( fileName, _ ) -> Elm.variantWith (toScore fileName) [ Type.string ]) <|
+                elmCode
+
+
+{-|
+
+        import Elm.ToString exposing (declaration)
+
+        declaration <| genView [("", [])]
+        --> { body = "view : Url.Url -> List (Origami.Html.Html ())\nview url =\n    case url |> toRoute of\n        NotFound ->\n            []\n\n         str ->\n            case str of\n                _ ->\n                    []\n\n\n", docs = "", imports = "import Origami.Html\nimport Url", signature = "view : Url.Url -> List (Origami.Html.Html ())" }
+
+-}
+genView : ElmCode -> Elm.Declaration
+genView elmCode =
+    Elm.declaration "view" <|
+        Elm.fn ( "url", Just <| Type.named [ "Url" ] "Url" )
+            (\url ->
+                Elm.withType (Type.list <| Type.namedWith [ "Origami.Html" ] "Html" [ Type.unit ]) <|
+                    Elm.Case.custom (url |> pipe (Elm.val "toRoute")) (Type.var "Route") <|
+                        Elm.Case.branch0 "NotFound" (Elm.list [])
+                            :: List.map genViewHelper elmCode
+            )
+
+
+genViewHelper : ( FileName, List ( FunctionName, { codes : List String, imports : List String } ) ) -> Elm.Case.Branch
+genViewHelper ( fileName, v ) =
+    Elm.Case.branch1 (toScore fileName) ( "str", Type.string ) <|
+        always (helper2 fileName v)
+
+
+{-| TODO: RENAME
+FIXME: テスト失敗してそうな雰囲気
+
+        import Elm.ToString exposing (expression)
+
+        expression <| helper2 "" [("", { codes = [], imports = [] })]
+        --> { body = "case str of\n    \"\" ->\n        [] |> Shiori_View.map\n\n    _ ->\n        []", imports = "import\nimport", signature = "Infinite type inference loop!  Whoops.  This is an issue with elm-codegen.  If you can report this to the elm-codegen repo, that would be appreciated!" }
+
+-}
+helper2 : FileName -> List ( FunctionName, { codes : List String, imports : List String } ) -> Elm.Expression
+helper2 fileName vv =
+    Elm.Case.string (Elm.val "str")
+        { cases =
+            vv
+                |> List.map
+                    (\( functionName, codes ) ->
+                        ( functionName
+                        , pipe (Elm.val "Shiori_View.map") <|
+                            Elm.list <|
+                                List.indexedMap
+                                    (\i _ ->
+                                        Elm.val <|
+                                            joinDot [ "Shiori", elmFileName (toScore fileName) functionName i, "view__" ]
+                                    )
+                                    codes.codes
+                        )
+                    )
+        , otherwise = Elm.list []
+        }
+
+
+{-|
+
+    import Elm.ToString exposing (declaration)
+
+    declaration <| genRouteParser [("", [])]
+    --> { body = "routeParser : Parser (Route -> b) b\nrouteParser =\n    [ map  <| s \"\" </> string ] |> oneOf\n\n\n", docs = "", imports = "import\nimport", signature = "routeParser : Parser (Route -> b) b" }
+
+-}
+genRouteParser : ElmCode -> Elm.Declaration
+genRouteParser elmCode =
+    elmCode
+        |> List.map (\( fileName, _ ) -> Elm.val <| genRouteParserHelper fileName)
+        |> Elm.list
+        |> pipe url_oneOf
+        |> Elm.declaration "routeParser"
+
+
+{-|
+
+    import Elm.ToString exposing (expression)
+
+    expression <| url_oneOf
+    --> { body = "oneOf", imports = "import\nimport", signature = "List (Parser a b) -> Parser (Route -> b) b" }
+
+-}
+url_oneOf : Elm.Expression
+url_oneOf =
+    let
+        parser_a_b =
+            Type.namedWith []
+                "Parser"
+                [ Type.var "a"
+                , Type.var "b"
+                ]
+
+        parser_route_b =
+            Type.namedWith []
+                "Parser"
+                [ Type.function [ Type.named [] "Route" ] <| Type.var "b"
+                , Type.var "b"
+                ]
+    in
+    Elm.value
+        { importFrom = []
+        , name = "oneOf"
+        , annotation =
+            Just
+                (Type.function [ Type.list <| parser_a_b ] parser_route_b)
+        }
+
+
+{-| FIXME:
+
+    genRouteParserHelper "Page.Home" --> "map Page_Home <| s \"Page.Home\" </> string"
+
+-}
+genRouteParserHelper : String -> String
+genRouteParserHelper fileName =
+    "map " ++ toScore fileName ++ " <| s \"" ++ fileName ++ "\" </> string"
+
+
+{-|
+
+        import Elm.ToString exposing (declaration)
+
+        declaration <| genToRoute
+        -->  { body = "toRoute : Url.Url -> Route\ntoRoute url =\n    url |> parse routeParser  |> Maybe.withDefault NotFound\n\n\n", docs = "", imports = "import Url", signature = "toRoute : Url.Url -> Route" }
+
+-}
+genToRoute : Elm.Declaration
+genToRoute =
+    Elm.declaration "toRoute" <|
+        Elm.fn ( "url", Just <| Type.named [ "Url" ] "Url" )
+            (\url ->
+                url
+                    |> pipe (Elm.val "parse routeParser ")
+                    |> pipe (Elm.val "Maybe.withDefault NotFound")
+                    |> Elm.withType (Type.named [] "Route")
+            )
+
+
+{-|
+
+        import Elm.ToString exposing (declaration)
+
+        declaration <| genLinks [("", [])]
+        -->  { body = "links : List ( String, List a )\nlinks =\n    [ ( \"\", [] ) ]\n\n\n", docs = "", imports = "import\nimport", signature = "links : List ( String, List a )" }
+
+-}
+genLinks : ElmCode -> Elm.Declaration
+genLinks elmCode =
+    elmCode
+        |> List.map (\( fileName, v ) -> Elm.tuple (Elm.string fileName) (genLinksHelper fileName v))
+        |> Elm.list
+        |> Elm.declaration "links"
+
+
+{-|
+
+        import Elm.ToString exposing (expression)
+
+        expression <| genLinksHelper "foo" [ ( "bar", { codes = [ "baz" ], imports = [] } ) ]
+        -->   { body = "[ ( \"bar\", [ \"foo_bar_0\" ] ) ]", imports = "import\nimport", signature = "List ( String, List String )" }
+
+-}
+genLinksHelper : FileName -> List ( FunctionName, { codes : List String, imports : List String } ) -> Elm.Expression
+genLinksHelper fileName dictFunctionNameCode =
+    let
+        helper ( functionName, l ) =
+            List.indexedMap (\index _ -> Elm.string <| urlName fileName functionName index) l
+                |> Elm.list
+                |> Elm.tuple (Elm.string functionName)
+    in
+    dictFunctionNameCode
+        |> List.map (\( functionName, code ) -> ( functionName, code.codes ))
+        |> List.map helper
+        |> Elm.list
+
+
+
+------------------
+-- Utility
+------------------
 
 
 {-|
@@ -282,136 +501,35 @@ urlName fileName functionName index =
     joinScore [ String.toLower fileName, functionName, String.fromInt index ]
 
 
-import_ : Bool -> String -> Elm.Declaration
-import_ isExposingAll name =
-    Elm.unsafe <|
-        "import "
-            ++ name
-            ++ (if isExposingAll then
-                    " exposing (..)"
+{-|
 
-                else
-                    ""
-               )
+    toScore "Main.A" --> "Main_A"
 
-
-genTypeRoute : ElmCode -> Elm.Declaration
-genTypeRoute elmCode =
-    elmCode
-        |> List.map (\( fileName, _ ) -> Elm.variantWith (toScore fileName) [ Type.string ])
-        |> List.append [ Elm.variant "NotFound" ]
-        |> Elm.customType "Route"
-
-
-genView : ElmCode -> Elm.Declaration
-genView elmCode =
-    Elm.declaration "view" <|
-        Elm.fn ( "url", Just <| Type.named [ "Url" ] "Url" )
-            (\url ->
-                Elm.withType (Type.list <| Type.namedWith [ "Origami.Html" ] "Html" [ Type.unit ]) <|
-                    Elm.Case.custom (url |> pipe (Elm.val "toRoute")) (Type.var "Route") <|
-                        Elm.Case.branch0 "NotFound" (Elm.list [])
-                            :: List.map genViewHelper elmCode
-            )
-
-
-genViewHelper : ( FileName, List ( FunctionName, { codes : List String, imports : List String } ) ) -> Elm.Case.Branch
-genViewHelper ( fileName, v ) =
-    Elm.Case.branch1 (toScore fileName) ( "str", Type.string ) <|
-        always (helper2 fileName v)
-
-
-{-| TODO: RENAME
 -}
-helper2 : FileName -> List ( FunctionName, { codes : List String, imports : List String } ) -> Elm.Expression
-helper2 fileName vv =
-    Elm.Case.string (Elm.val "str")
-        { cases =
-            vv
-                |> List.map (\( functionName, code ) -> ( functionName, code.codes ))
-                |> List.map
-                    (\( functionName, codes_ ) ->
-                        let
-                            codes =
-                                codes_
-                        in
-                        ( functionName, pipe (Elm.val "Shiori_View.map") <| Elm.list <| List.indexedMap (\i _ -> Elm.val <| joinDot [ "Shiori", elmFileName (toScore fileName) functionName i, "view__" ]) codes )
-                    )
-        , otherwise = Elm.list []
-        }
+toScore : String -> String
+toScore =
+    String.replace "." "_"
 
 
-genRouteParser : ElmCode -> Elm.Declaration
-genRouteParser elmCode =
-    elmCode
-        |> List.map (\( fileName, _ ) -> Elm.val <| genRouteParserHelper fileName)
-        |> Elm.list
-        |> pipe url_oneOf
-        |> Elm.declaration "routeParser"
+{-| TODO: 先頭を大文字にする処理を追加すると安全かもしれない
 
+    joinDot [] --> ""
 
-url_oneOf : Elm.Expression
-url_oneOf =
-    let
-        parser_a_b =
-            Type.namedWith []
-                "Parser"
-                [ Type.var "a"
-                , Type.var "b"
-                ]
+    joinDot [ "Main", "Button" ] --> "Main.Button"
 
-        parser_route_b =
-            Type.namedWith []
-                "Parser"
-                [ Type.function [ Type.named [] "Route" ] <| Type.var "b"
-                , Type.var "b"
-                ]
-    in
-    Elm.value
-        { importFrom = []
-        , name = "oneOf"
-        , annotation =
-            Just
-                (Type.function [ Type.list <| parser_a_b ] parser_route_b)
-        }
-
-
-{-| FIXME:
 -}
-genRouteParserHelper : String -> String
-genRouteParserHelper fileName =
-    "map " ++ toScore fileName ++ " <| s \"" ++ fileName ++ "\" </> string"
+joinDot : List String -> String
+joinDot =
+    String.join "."
 
 
-genToRoute : Elm.Declaration
-genToRoute =
-    Elm.declaration "toRoute" <|
-        Elm.fn ( "url", Just <| Type.named [ "Url" ] "Url" )
-            (\url ->
-                url
-                    |> pipe (Elm.val "parse routeParser ")
-                    |> pipe (Elm.val "Maybe.withDefault NotFound")
-                    |> Elm.withType (Type.named [] "Route")
-            )
+{-|
 
+    joinScore [] --> ""
 
-genLinks : ElmCode -> Elm.Declaration
-genLinks elmCode =
-    elmCode
-        |> List.map (\( fileName, v ) -> Elm.tuple (Elm.string fileName) (genLinksHelper fileName v))
-        |> Elm.list
-        |> Elm.declaration "links"
+    joinScore [ "Main", "Button" ] --> "Main_Button"
 
-
-genLinksHelper : FileName -> List ( FunctionName, { codes : List String, imports : List String } ) -> Elm.Expression
-genLinksHelper fileName dictFunctionNameCode =
-    let
-        helper ( functionName, l ) =
-            List.indexedMap (\index _ -> Elm.string <| urlName fileName functionName index) l
-                |> Elm.list
-                |> Elm.tuple (Elm.string functionName)
-    in
-    dictFunctionNameCode
-        |> List.map (\( functionName, code ) -> ( functionName, code.codes ))
-        |> List.map helper
-        |> Elm.list
+-}
+joinScore : List String -> String
+joinScore =
+    String.join "_"
