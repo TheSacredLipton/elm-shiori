@@ -22,6 +22,7 @@ wait
 ## ci
 
 ```sh
+npm install
 npx flow check
 elm-verify-examples
 elm-test
