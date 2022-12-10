@@ -1,6 +1,5 @@
 module GenerateTest exposing (..)
 
-import Element.Region exposing (description)
 import Expect
 import Generate exposing (..)
 import Parser as P
