@@ -19,7 +19,7 @@ chokidar "tests/*.elm" -c "elm-test" &
 wait
 ```
 
-## ci-test
+## ci
 
 ```sh
 npx flow check
