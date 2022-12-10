@@ -7,7 +7,7 @@
 ```
 npx shiori init
 npx shiori build
-npx shiori serve --port 3000
+npx shiori serve
 ```
 
 ## 事前準備
@@ -17,6 +17,8 @@ npx shiori serve --port 3000
 ### shiori.json
 
 プロジェクトルートに用意してください
+
+例:
 
 ```
 {

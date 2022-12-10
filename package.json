@@ -1,7 +1,16 @@
 {
   "name": "elm-shiori",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheSacredLipton/elm-shiori.git"
+  },
+  "keywords": [
+    "elm-shiori",
+    "shiori"
+  ],
+  "author": "TheSacredLipton",
   "version": "0.0.1",
-  "description": "UI document generator",
+  "description": "UI Viewer",
   "bin": {
     "shiori": "bin/shiori.js"
   },
