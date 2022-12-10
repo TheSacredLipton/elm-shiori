@@ -1,6 +1,12 @@
 [ignore]
 .*/node_modules/.*
 !.*/node_modules/immer/.*
+!.*/node_modules/serve-handler/.*
+!.*/node_modules/kleur/.*
+!.*/node_modules/yargs/.*
+!.*/node_modules/fs-extra/.*
+!.*/node_modules/chokidar/.*
+!.*/node_modules/elm-codegen/.*
 
 [include]
 

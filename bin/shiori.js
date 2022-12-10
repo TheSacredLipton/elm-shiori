@@ -8,7 +8,6 @@ const chokidar = require('chokidar')
 const fse = require('fs-extra')
 const path = require('path')
 const yargs = require('yargs')
-// $FlowFixMe
 const handler = require('serve-handler')
 const http = require('http')
 const { bold, green, yellow, red, cyan } = require('kleur')

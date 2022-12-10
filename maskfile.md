@@ -10,12 +10,6 @@ npx nodemon --watch bin -x "node bin/shiori serve"
 npx elm-codegen install
 ```
 
-## init
-
-```sh
-npx flow-typed install
-```
-
 ## test
 
 ```sh
