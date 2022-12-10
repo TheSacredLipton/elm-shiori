@@ -34,7 +34,7 @@ npm i elm-shiori
 
 2. 初回は`npx shiori init`を実行
 
-3. `shiori/Shiori_View.elm`をプロジェクトに合わせて編集してください
+3. プロジェクトに合わせて`shiori/Shiori_View.elm`を編集してください
 
 4. `npx shiori serve`
 
