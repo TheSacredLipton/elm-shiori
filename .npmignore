@@ -20,5 +20,4 @@ shell.nix
 .flowconfig
 tests
 examples
-elm.json
 shiori.json
