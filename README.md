@@ -2,6 +2,10 @@
 
 カードゲームのUI確認用に作りました
 
+```
+npm i elm-shiori
+```
+
 ## CLI
 
 ```
@@ -10,13 +14,10 @@ npx shiori build
 npx shiori serve
 ```
 
-## 事前準備
+## 準備
 
 - プロジェクトルートで事前に`miyamoen/elm-origami`と`elm/url`をインストールしておいてください
-
-### shiori.json
-
-プロジェクトルートに用意してください
+- `shiori.json`をプロジェクトルートに用意してください
 
 例:
 
@@ -33,3 +34,7 @@ npx shiori serve
     ]
 }
 ```
+
+## ライセンス
+
+MIT license

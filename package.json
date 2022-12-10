@@ -9,8 +9,9 @@
     "shiori"
   ],
   "author": "TheSacredLipton",
-  "version": "0.0.3",
-  "description": "UI Viewer",
+  "version": "0.0.6",
+  "description": "Elm UI Viewer",
+  "license": "MIT",
   "bin": {
     "shiori": "bin/shiori.js"
   },
