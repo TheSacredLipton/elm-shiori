@@ -2,8 +2,6 @@
 
 カードゲームのUI確認用に作りました
 
-関数コメントで確認できるビューワーです
-
 ## インストール
 
 ```sh
@@ -49,6 +47,56 @@ map =
 ```
 
 4. `npx shiori serve`
+
+## コメントの書き方
+
+- 単体
+
+```elm
+{-|
+
+    :: button
+
+-}
+button : Html Msg
+button =
+    div []
+        [ Html.button [ onClick Sample ] [ text "button" ]
+        ]
+```
+
+- 引数有りの場合
+
+```elm
+{-|
+
+    :: button "World"
+
+-}
+button : String -> Html Msg
+button str =
+    div []
+        [ Html.button [ onClick Sample ] [ text <| "Hello " ++ str ]
+        ]
+```
+
+- import
+
+```elm
+{-|
+
+    import Html exposing (div)
+
+    :: div [] <| .body <| view { world = "world" }
+
+-}
+view : Model -> { title : String, body : List (Html Msg) }
+view model =
+    { title = "home"
+    , body = [ text <| "hello " ++ model.world ]
+    }
+
+```
 
 ## CLI
 
