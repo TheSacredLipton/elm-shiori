@@ -8,7 +8,6 @@ import Elm.Case
 import Elm.Op exposing (pipe)
 import Gen.CodeGen.Generate as Generate
 import Json.Decode as D
-import Json.Encode as E
 import List.Extra as List
 import Parser as P exposing ((|.), (|=), Parser)
 import Set
@@ -69,7 +68,7 @@ fromElmCode elmCode =
 ----------
 
 
-main : Program E.Value () ()
+main : Program D.Value () ()
 main =
     Generate.fromJson decoder <|
         \flags ->
