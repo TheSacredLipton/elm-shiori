@@ -14,43 +14,46 @@ npm i -D elm-shiori
 - プロジェクトルートで事前に`elm/url`をインストールしておいてください
 - `shiori.json`をプロジェクトルートに用意してください
 
-例:
+    例:
 
-```json
-{
-    "roots": ["src"],
-    "assets": "public",
-    "files": [
-        "Shape",
-        "Button",
-        "Image",
-        "Pages.Home_",
-        "Pages.Login.Home_"
-    ]
-}
-```
+    ```json
+    {
+        "roots": ["src"],
+        "assets": "public",
+        "files": [
+            "Shape",
+            "Button",
+            "Image",
+            "Pages.Home_",
+            "Pages.Login.Home_"
+        ]
+    }
+    ```
 
 2. 初回は`npx shiori init`を実行
 
 3. プロジェクトに合わせて`shiori/Shiori_View.elm`を編集してください
 
-例: elm-ui
+    例: elm-ui
 
-```elm
-import Html
-import Element exposing (Element, map, layout)
+    ```elm
+    import Html
+    import Element exposing (Element, map, layout)
 
 
-map : List (Element msg) -> List (Html.Html ())
-map =
-    List.map (layout [] >> Html.map (always ()))
-```
+    map : List (Element msg) -> List (Html.Html ())
+    map =
+        List.map (layout [] >> Html.map (always ()))
+    ```
+4. `shiori/index.html`を編集しリセットCSSや任意のCSSを読み込ませてください
 
-4. `npx shiori serve`
+5. `npx shiori serve`で起動
+- ブラウザで`http://localhost:3000`にアクセス
+- 気が向いたらport番号変更できるようにする予定
 
 ## コメントの書き方
 
-- 単体
+単体
 
 ```elm
 {-|
@@ -65,7 +68,7 @@ button =
         ]
 ```
 
-- 引数有りの場合
+引数有りの場合
 
 ```elm
 {-|
@@ -80,7 +83,24 @@ button str =
         ]
 ```
 
-- import
+複数
+
+```elm
+{-|
+
+    :: button "World"
+
+    :: button "World2"
+
+-}
+button : String -> Html Msg
+button str =
+    div []
+        [ Html.button [ onClick Sample ] [ text <| "Hello " ++ str ]
+        ]
+```
+
+import
 
 ```elm
 {-|
@@ -97,6 +117,10 @@ view model =
     }
 
 ```
+
+複数行
+- 現状**非対応**です。1行で書き切ってください。
+- 気が向いたら対応します。
 
 ## CLI
 
