@@ -6,7 +6,7 @@
 
 ## インストール
 
-```
+```sh
 npm i -D elm-shiori
 ```
 
@@ -18,7 +18,7 @@ npm i -D elm-shiori
 
 例:
 
-```
+```json
 {
     "roots": ["src"],
     "assets": "public",
@@ -36,11 +36,23 @@ npm i -D elm-shiori
 
 3. プロジェクトに合わせて`shiori/Shiori_View.elm`を編集してください
 
+例: elm-ui
+
+```elm
+import Html
+import Element exposing (Element, map, layout)
+
+
+map : List (Element msg) -> List (Html.Html ())
+map =
+    List.map (layout [] >> Html.map (always ()))
+```
+
 4. `npx shiori serve`
 
 ## CLI
 
-```
+```sh
 npx shiori init
 npx shiori build
 npx shiori serve
