@@ -1,6 +1,6 @@
 # elm-shiori
 
-カードゲームのUI確認用に作りました
+カードゲームのUI確認用に作りました。
 
 ## インストール
 
@@ -37,18 +37,18 @@ npm i -D elm-shiori
     例: elm-ui
 
     ```elm
-    import Html
-    import Element exposing (Element, map, layout)
+    import Html exposing (Html)
+    import Element exposing (Element, layout)
 
 
-    map : List (Element msg) -> List (Html.Html ())
+    map : List (Element msg) -> List (Html ())
     map =
         List.map (layout [] >> Html.map (always ()))
     ```
-4. `shiori/index.html`を編集しリセットCSSや任意のCSSを読み込ませてください
+4. `shiori/index.html`を編集し任意のCSSを読み込ませてください
 
 5. `npx shiori serve`で起動
-- ブラウザで`http://localhost:3000`にアクセス
+- ブラウザで http://localhost:3000 にアクセス
 - 気が向いたらport番号変更できるようにする予定
 
 ## コメントの書き方
