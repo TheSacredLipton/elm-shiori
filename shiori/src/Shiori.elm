@@ -1,7 +1,8 @@
 module Shiori exposing (main)
 
 import Browser
-import Browser.Dom exposing (setViewport)
+import Browser.Dom exposing (getViewport, setViewport)
+import Browser.Events exposing (onResize)
 import Browser.Navigation as Nav
 import Html exposing (Html, a, div, map, text)
 import Html.Attributes exposing (href, style)
@@ -18,7 +19,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = \_ -> onResize (\w _ -> GetViewport <| Basics.toFloat w)
         , onUrlRequest = UrlRequested
         , onUrlChange = UrlChanged
         }
@@ -28,6 +29,7 @@ type alias Model =
     { key : Nav.Key
     , url : Url.Url
     , isActive : Bool
+    , width : Float
     }
 
 
@@ -36,8 +38,9 @@ init _ url key =
     ( { key = key
       , url = url
       , isActive = False
+      , width = 0
       }
-    , Cmd.none
+    , Task.perform (\v -> GetViewport v.viewport.width) getViewport
     )
 
 
@@ -45,6 +48,7 @@ type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url.Url
     | ToggleMenu
+    | GetViewport Float
     | NoOp
 
 
@@ -67,6 +71,9 @@ update msg model =
         ToggleMenu ->
             ( { model | isActive = not model.isActive }, Task.perform (\_ -> NoOp) (setViewport 0 0) )
 
+        GetViewport w ->
+            ( { model | width = w }, Cmd.none )
+
         NoOp ->
             ( model, Cmd.none )
 
@@ -81,7 +88,7 @@ view model =
             , style "height" "100vh"
             , style "align-items" "center"
             ]
-            [ header
+            [ header model.width
             , header_
             , smNav model.isActive
             , div
@@ -90,8 +97,8 @@ view model =
                 , style "display" "flex"
                 , style "gap" "24px"
                 ]
-                [ sideNav 250
-                , sideNav_ 250
+                [ sideNav model.width 250
+                , sideNav_ model.width 250
                 , body model.url
                 ]
             ]
@@ -99,8 +106,8 @@ view model =
     }
 
 
-header : Html Msg
-header =
+header : Float -> Html Msg
+header w =
     div
         [ style "height" "48px"
         , style "width" "100%"
@@ -136,22 +143,22 @@ header =
                     ]
                     [ text "elm-shiori" ]
                 ]
-            , menuButton
+            , menuButton w
             ]
         ]
 
 
-menuButton : Html Msg
-menuButton =
+menuButton : Float -> Html Msg
+menuButton w =
     div
         [ onClick ToggleMenu
         , style "padding" "10px 0px"
         , style "box-sizing" "border-box"
         , style "display" "block"
-        , style "display" "flex"
+        , md w "display" "none"
         , style "fill" "currentColor"
         ]
-        []
+        [ text "三" ]
 
 
 header_ : Html msg
@@ -163,8 +170,8 @@ header_ =
         []
 
 
-sideNav : Int -> Html msg
-sideNav width =
+sideNav : Float -> Int -> Html msg
+sideNav w width =
     div
         [ style "width" <| String.fromInt width ++ "px"
         , style "height" "calc(100% - 48px)"
@@ -176,19 +183,19 @@ sideNav width =
         , style "position" "fixed"
         , style "display" "none"
         , style "overflow-y" "scroll"
-        , style "display" "flex"
+        , md w "display" "flex"
         ]
     <|
         List.map sideNavLinkGroup Route.links
 
 
-sideNav_ : Int -> Html msg
-sideNav_ width =
+sideNav_ : Float -> Int -> Html msg
+sideNav_ w width =
     div
         [ style "width" <| String.fromInt width ++ "px"
         , style "flex-shrink" "0"
         , style "display" "none"
-        , style "display" "flex"
+        , md w "display" "flex"
         ]
         []
 
@@ -255,3 +262,12 @@ body url =
           <|
             List.map (map (always NoOp)) (Route.view url)
         ]
+
+
+md : Float -> String -> String -> Html.Attribute msg
+md w a b =
+    if w > 768 then
+        style a b
+
+    else
+        style "" ""
