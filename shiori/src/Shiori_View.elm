@@ -1,8 +1,8 @@
 module Shiori_View exposing (..)
 
-import Html
+import Html exposing (Html)
 
 
-map : List (Html.Html msg) -> List (Html.Html ())
+map : List (Html.Html msg) -> List (Html ())
 map =
     List.map <| Html.map (always ())
