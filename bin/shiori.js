@@ -166,10 +166,9 @@ const runCodegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
   try {
     const flags = await convertShioriJson(shioriJson)
     if (flags) {
-      await run_generation_from_cli(join(process.cwd(), 'elm-stuff', 'shiori', 'codegen', 'Generate.elm'), {
-        output: join(process.cwd(), 'shiori', 'src'),
-        flags: flags
-      })
+      process.chdir(join('elm-stuff', 'shiori'))
+      await run_generation_from_cli(null, { output: join(process.cwd(), '..', '..', 'shiori', 'src'), flags: flags })
+      process.chdir('../../')
     }
   } catch (error) {
     console.log(red(error.toString()))
