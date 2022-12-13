@@ -7,6 +7,8 @@
 !.*/node_modules/fs-extra/.*
 !.*/node_modules/chokidar/.*
 !.*/node_modules/elm-codegen/.*
+!.*/node_modules/node-elm-compiler/.*
+!.*/node_modules/elm-hot/.*
 
 [include]
 

@@ -3,7 +3,6 @@
 'use strict'
 
 const fs = require('fs').promises
-const { exec } = require('child_process')
 const chokidar = require('chokidar')
 const fse = require('fs-extra')
 const path = require('path')
@@ -13,6 +12,8 @@ const http = require('http')
 const { bold, green, yellow, red, cyan } = require('kleur')
 const { produce } = require('immer')
 const { run_generation_from_cli } = require('elm-codegen/dist/run')
+const { compile } = require('node-elm-compiler/dist/index')
+const elmHot = require('elm-hot')
 
 /*::
 type ElmFiles = {[key:string]: string} 
@@ -174,22 +175,13 @@ const runCodegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
   }
 }
 
-/**
- * TODO: execをどうにかしたい
- */
-const runElmWatch = async () /*:Promise<void> */ => {
+const runElmCompile = async () /*:Promise<void> */ => {
   try {
-    exec(
-      `cd ${join('shiori')} && ${join('..', 'node_modules', 'elm-watch', 'index.js')} hot`,
-      (err, stdout, stderr) => {
-        if (err) {
-          console.log(`\n===== elmWatch =====\n`, red(`${stderr}`))
-          console.log(yellow(`${stdout}`))
-          return
-        }
-        console.log(`elm-watch: ${stdout}`)
-      }
-    )
+    compile(['./shiori/src/Shiori.elm'], {
+      output: './shiori/shiori.js'
+    }).on('close', function (exitCode) {
+      // console.log('Finished with exit code', exitCode)
+    })
   } catch (error) {}
 }
 
@@ -223,6 +215,8 @@ const serve = async () /*:Promise<void> */ => {
         .watch(shioriJson.assets)
         .on('add', async (event, path) => await copyAssets(shioriJson.assets))
         .on('change', async (event, path) => await copyAssets(shioriJson.assets))
+
+      chokidar.watch('shiori/src/Shiori/Route.elm').on('change', async (event, path) => await runElmCompile())
     }
   } catch (err) {
     console.log(red(err.toString()))
@@ -258,7 +252,6 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
       .watch('shiori.json')
       .on('add', async (event, path) => serve())
       .on('change', async (event, path) => serve())
-    await runElmWatch()
 
     const server = http.createServer((request, response) => {
       return handler(request, response, {
