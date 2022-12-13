@@ -180,14 +180,15 @@ const runCodegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
  */
 const runElmCompile = async () /*:Promise<void> */ => {
   try {
-    compile(['./shiori/src/Shiori.elm'], {
-      output: './shiori/shiori.js'
+    process.chdir(join('shiori'))
+    compile([join('src', 'Shiori.elm')], {
+      output: join('shiori.js')
     }).on('close', function (exitCode) {
       // console.log('Finished with exit code', exitCode)
     })
+    process.chdir('..')
   } catch (error) {}
 }
-
 const serve = async () /*:Promise<void> */ => {
   try {
     const shioriJson = await readShioriJson()
