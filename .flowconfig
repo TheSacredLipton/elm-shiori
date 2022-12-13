@@ -8,7 +8,7 @@
 !.*/node_modules/chokidar/.*
 !.*/node_modules/elm-codegen/.*
 !.*/node_modules/node-elm-compiler/.*
-!.*/node_modules/elm-hot/.*
+!.*/node_modules/ws/.*
 
 [include]
 

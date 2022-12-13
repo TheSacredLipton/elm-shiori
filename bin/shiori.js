@@ -13,7 +13,7 @@ const { bold, green, yellow, red, cyan } = require('kleur')
 const { produce } = require('immer')
 const { run_generation_from_cli } = require('elm-codegen/dist/run')
 const { compile } = require('node-elm-compiler/dist/index')
-const elmHot = require('elm-hot')
+const { WebSocketServer } = require('ws')
 
 /*::
 type ElmFiles = {[key:string]: string} 
@@ -175,6 +175,9 @@ const runCodegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
   }
 }
 
+/**
+ * TODO: HMR対応
+ */
 const runElmCompile = async () /*:Promise<void> */ => {
   try {
     compile(['./shiori/src/Shiori.elm'], {
@@ -262,6 +265,13 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
 
     server.listen(3000, () => {
       console.log(cyan('\n Running at http://localhost:3000 \n'))
+    })
+
+    const wss = new WebSocketServer({ port: 3333 })
+    wss.on('connection', (ws_client) => {
+      chokidar.watch('shiori/shiori.js').on('change', async (event, path) => {
+        ws_client.send('reload')
+      })
     })
   }
 })()

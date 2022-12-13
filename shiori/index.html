@@ -18,7 +18,13 @@
 
 <body>
     <script src="/shiori.js"></script>
-    <script> Elm.Shiori.init({ node: document.body }); </script>
+    <script>
+        Elm.Shiori.init({ node: document.body });
+        const ws = new WebSocket('ws://localhost:3333');
+        ws.onmessage = e => {
+            window.location.reload()
+        }
+    </script>
 </body>
 
 </html>
