@@ -166,9 +166,10 @@ const runCodegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
   try {
     const flags = await convertShioriJson(shioriJson)
     if (flags) {
-      process.chdir(join('elm-stuff', 'shiori'))
-      await run_generation_from_cli(null, { output: join(process.cwd(), '..', '..', 'shiori', 'src'), flags: flags })
-      process.chdir('../../')
+      await run_generation_from_cli(join(process.cwd(), 'elm-stuff', 'shiori', 'codegen', 'Generate.elm'), {
+        output: join(process.cwd(), 'shiori', 'src'),
+        flags: flags
+      })
     }
   } catch (error) {
     console.log(red(error.toString()))
@@ -208,12 +209,18 @@ const serve = async () /*:Promise<void> */ => {
         await copyElmJson(shioriJson.roots)
         await runCodegen(shioriJson)
       })
-      chokidar.watch(join('codegen')).on('change', async (event, path) => {
-        console.log(event, path)
-        await copyCodegenToElmStuff()
-        await copyElmJson(shioriJson.roots)
-        await runCodegen(shioriJson)
-      })
+      chokidar
+        .watch(join('codegen'), {
+          awaitWriteFinish: {
+            stabilityThreshold: 5000,
+            pollInterval: 100
+          }
+        })
+        .on('change', async (event, path) => {
+          await copyCodegenToElmStuff()
+          await copyElmJson(shioriJson.roots)
+          await runCodegen(shioriJson)
+        })
       chokidar
         .watch(shioriJson.assets)
         .on('add', async (event, path) => await copyAssets(shioriJson.assets))
