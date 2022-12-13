@@ -133,4 +133,4 @@ npx shiori serve
 ## ライセンス
 
 - MIT license
-- [elm-codegen](https://github.com/mdgriffith/elm-codegen)で生成されたコードを一部含みます
+- 一部[elm-codegen](https://github.com/mdgriffith/elm-codegen)で生成されたコードを含みます

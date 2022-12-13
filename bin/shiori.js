@@ -133,7 +133,6 @@ const init = async () /*:Promise<void> */ => {
   }
 }
 
-/* HACK: 上書きでエラー出して欲しくなかったのでCopy時のエラーを握りつぶす形式 */
 const copyAssets = async (path /*:string */) /*:Promise<void> */ => {
   try {
     if (path) {

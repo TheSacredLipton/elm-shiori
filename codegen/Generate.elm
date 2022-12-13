@@ -143,7 +143,7 @@ getFunctionName =
     in
     P.andThen
         (\source ->
-            andRun "getFunctionNameError" getFunctionName_ source
+            run_ "getFunctionNameError" getFunctionName_ source
                 |> P.map (\a -> { body = source, functionName = a })
         )
 
@@ -185,14 +185,8 @@ getKeyword =
     P.variable { start = Char.isLower, inner = Char.isAlphaNum, reserved = Set.fromList [] }
 
 
-{-|
-
-    パーサー内で更にrunさせたい時に使う
-    多用はしない方がいいと思う
-
--}
-andRun : String -> Parser a -> String -> Parser a
-andRun err parser source =
+run_ : String -> Parser a -> String -> Parser a
+run_ err parser source =
     case P.run parser source of
         Ok r ->
             P.succeed r
