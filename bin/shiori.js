@@ -3,13 +3,13 @@
 'use strict'
 
 const fs = require('fs').promises
-const chokidar = require('chokidar')
 const fse = require('fs-extra')
-const path = require('path')
+const chokidar = require('chokidar')
+const { join } = require('path')
 const yargs = require('yargs')
 const handler = require('serve-handler')
 const http = require('http')
-const { bold, green, yellow, red, cyan } = require('kleur')
+const { yellow, red, cyan } = require('kleur')
 const { produce } = require('immer')
 const { run_generation_from_cli } = require('elm-codegen/dist/run')
 const { compile } = require('node-elm-compiler/dist/index')
@@ -21,10 +21,6 @@ type ShioriJson = {roots: string[],  files: ElmFiles, assets: string}
 type ElmJson = {"source-directories": string[]}
 */
 const shioriRoot = () /*:string */ => join(__dirname, '..')
-
-const join = (...args /* :string[] */) /*:string */ => {
-  return path.join(...args)
-}
 
 const readElmJson = async () /*:Promise<ElmJson | null> */ => {
   try {
@@ -78,7 +74,6 @@ const readElmFiles = async (list /*:ElmFiles*/) /*:Promise<ElmFiles | null> */ =
   }
 }
 
-/* TODO: 例外処理追加 */
 const copyElmJson = async (roots /*:string[] */) /*:Promise<void> */ => {
   try {
     const elmjson = await readElmJson()
@@ -168,7 +163,7 @@ const runCodegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
     if (flags) {
       process.chdir(join('elm-stuff', 'shiori'))
       await run_generation_from_cli(null, { output: join(process.cwd(), '..', '..', 'shiori', 'src'), flags: flags })
-      process.chdir('../../')
+      process.chdir(join('..', '..'))
     }
   } catch (error) {
     console.log(red(error.toString()))
@@ -181,11 +176,7 @@ const runCodegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
 const runElmCompile = async () /*:Promise<void> */ => {
   try {
     process.chdir(join('shiori'))
-    compile([join('src', 'Shiori.elm')], {
-      output: join('shiori.js')
-    }).on('close', function (exitCode) {
-      // console.log('Finished with exit code', exitCode)
-    })
+    compile([join('src', 'Shiori.elm')], { output: join('shiori.js') })
     process.chdir('..')
   } catch (error) {}
 }
@@ -198,11 +189,11 @@ const serve = async () /*:Promise<void> */ => {
       await copyElmJson(shioriJson.roots)
       await runCodegen(shioriJson)
 
-      chokidar.watch(shioriJson.roots).on('change', async (event, path) => {
-        console.log(event, path)
+      chokidar.watch(shioriJson.roots).on('change', async () => {
         await copyElmJson(shioriJson.roots)
         await runCodegen(shioriJson)
       })
+
       chokidar
         .watch(join('codegen'), {
           awaitWriteFinish: {
@@ -210,17 +201,18 @@ const serve = async () /*:Promise<void> */ => {
             pollInterval: 100
           }
         })
-        .on('change', async (event, path) => {
+        .on('change', async () => {
           await copyCodegenToElmStuff()
           await copyElmJson(shioriJson.roots)
           await runCodegen(shioriJson)
         })
+
       chokidar
         .watch(shioriJson.assets)
-        .on('add', async (event, path) => await copyAssets(shioriJson.assets))
-        .on('change', async (event, path) => await copyAssets(shioriJson.assets))
+        .on('add', async () => await copyAssets(shioriJson.assets))
+        .on('change', async () => await copyAssets(shioriJson.assets))
 
-      chokidar.watch('shiori/src/Shiori/Route.elm').on('change', async (event, path) => await runElmCompile())
+      chokidar.watch('shiori/src/Shiori/Route.elm').on('change', async () => await runElmCompile())
     }
   } catch (err) {
     console.log(red(err.toString()))
@@ -245,6 +237,7 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
         await copyCodegenToElmStuff()
         await copyElmJson(shioriJson.roots)
         await runCodegen(shioriJson)
+        await runElmCompile()
       }
     } catch (err) {
       console.log(red(err.toString()))
@@ -254,23 +247,23 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
   if (args.arg === 'serve') {
     chokidar
       .watch('shiori.json')
-      .on('add', async (event, path) => serve())
-      .on('change', async (event, path) => serve())
+      .on('add', async () => serve())
+      .on('change', async () => serve())
 
-    const server = http.createServer((request, response) => {
-      return handler(request, response, {
-        public: join('shiori'),
-        rewrites: [{ source: '**', destination: '/index.html' }]
+    http
+      .createServer((request, response) => {
+        return handler(request, response, {
+          public: join('shiori'),
+          rewrites: [{ source: '**', destination: '/index.html' }]
+        })
       })
-    })
-
-    server.listen(3000, () => {
-      console.log(cyan('\n Running at http://localhost:3000 \n'))
-    })
+      .listen(3000, () => {
+        console.log(cyan('\n Running at http://localhost:3000 \n'))
+      })
 
     const wss = new WebSocketServer({ port: 3333 })
     wss.on('connection', (ws_client) => {
-      chokidar.watch('shiori/shiori.js').on('change', async (event, path) => {
+      chokidar.watch('shiori/shiori.js').on('change', async () => {
         ws_client.send('reload')
       })
     })
