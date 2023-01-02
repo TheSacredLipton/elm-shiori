@@ -3,10 +3,9 @@ mkShell {
   buildInputs = [
     mask
     nodejs-16_x
+    nodePackages_latest.pnpm
     elmPackages.elm
-    elmPackages.elm-test
     elmPackages.elm-format
-    elmPackages.elm-verify-examples
   ];
   shellHook = ''
   '';

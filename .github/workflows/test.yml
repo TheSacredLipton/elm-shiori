@@ -10,4 +10,5 @@ jobs:
     - uses: cachix/install-nix-action@v18
       with:
         nix_path: nixpkgs=channel:nixos-unstable
+    - run: nix-shell --command "pnpm install"
     - run: nix-shell --command "mask ci"

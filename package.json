@@ -16,7 +16,10 @@
     "shiori": "bin/shiori.js"
   },
   "devDependencies": {
+    "chokidar-cli": "^3.0.0",
     "flow-bin": "^0.193.0",
+    "elm-test": "0.19.1-revision10",
+    "elm-verify-examples": "^5.2.0",
     "nodemon": "^2.0.20"
   },
   "dependencies": {

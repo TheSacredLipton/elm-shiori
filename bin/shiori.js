@@ -7,6 +7,7 @@ const fse = require('fs-extra')
 const chokidar = require('chokidar')
 const { join } = require('path')
 const yargs = require('yargs')
+// $FlowFixMe: pnpmでignore
 const handler = require('serve-handler')
 const http = require('http')
 const { yellow, red, cyan } = require('kleur')
@@ -102,9 +103,7 @@ const convertShioriJson = async (shioriJson /*:ShioriJson */) /*:Promise<string 
     const newJson /*:ElmFiles */ = Object.fromEntries(
       Object.entries(shioriJson.files)
         .filter(([_, value]) => typeof value === 'string')
-        .map(([_, value]) =>
-          typeof value === 'string' ? [value, join(shioriJson.roots[0], toSlash(value) + '.elm')] : ['', '']
-        )
+        .map(([_, value]) => (typeof value === 'string' ? [value, join(shioriJson.roots[0], toSlash(value) + '.elm')] : ['', '']))
     )
     const result = await readElmFiles(newJson)
     if (result) {
@@ -198,8 +197,8 @@ const serve = async () /*:Promise<void> */ => {
         .watch(join('codegen'), {
           awaitWriteFinish: {
             stabilityThreshold: 5000,
-            pollInterval: 100
-          }
+            pollInterval: 100,
+          },
         })
         .on('change', async () => {
           await copyCodegenToElmStuff()
@@ -254,7 +253,7 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
       .createServer((request, response) => {
         return handler(request, response, {
           public: join('shiori'),
-          rewrites: [{ source: '**', destination: '/index.html' }]
+          rewrites: [{ source: '**', destination: '/index.html' }],
         })
       })
       .listen(3000, () => {

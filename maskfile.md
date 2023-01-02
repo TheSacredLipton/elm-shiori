@@ -1,29 +1,28 @@
 ## start
 
 ```sh
-npx nodemon --watch bin -x "node bin/shiori serve"
+pnpm nodemon --watch bin -x "node bin/shiori serve"
 ```
 
 ## install
 
 ```sh
-npx elm-codegen install
+pnpm elm-codegen install
 ```
 
 ## test
 
 ```sh
-elm-test
-chokidar "codegen/**/*.elm" -c "elm-verify-examples && elm-test" &
-chokidar "tests/*.elm" -c "elm-test" &
+pnpm elm-test
+pnpm chokidar "codegen/**/*.elm" -c "elm-verify-examples && elm-test" &
+pnpm chokidar "tests/*.elm" -c "elm-test" &
 wait
 ```
 
 ## ci
 
 ```sh
-npm install
-npx flow check
-elm-verify-examples
-elm-test
+pnpm flow check
+pnpm elm-verify-examples
+pnpm elm-test
 ```
