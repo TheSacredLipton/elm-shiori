@@ -1,6 +1,12 @@
 {
-    "prettier.semi": false,
-    "prettier.printWidth": 200,
-    "prettier.singleQuote": true,
-    "prettier.trailingComma": "es5"
+  "editor.defaultFormatter": "biomejs.biome",
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  }
 }

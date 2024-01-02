@@ -4,10 +4,7 @@
     "type": "git",
     "url": "https://github.com/TheSacredLipton/elm-shiori.git"
   },
-  "keywords": [
-    "elm-shiori",
-    "shiori"
-  ],
+  "keywords": ["elm-shiori", "shiori"],
   "author": "TheSacredLipton",
   "version": "0.3.0",
   "description": "Elm UI Viewer",
@@ -16,6 +13,7 @@
     "shiori": "bin/shiori.js"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.4.1",
     "chokidar-cli": "^3.0.0",
     "elm": "0.19.1-6",
     "elm-test": "0.19.1-revision10",
@@ -39,7 +37,7 @@
     "start": "nodemon --watch bin -x \"node bin/shiori serve\"",
     "install": "elm-codegen install",
     "test:watch": "elm-test && run-pty % chokidar \"codegen/**/*.elm\" -c \"elm-verify-examples && elm-test\" % chokidar \"tests/*.elm\" -c \"elm-test\"",
-    "test": "flow check && elm-verify-examples && elm-test",
+    "test": "biome ci . && flow check && elm-verify-examples && elm-test",
     "publish": "npm publish"
   }
 }

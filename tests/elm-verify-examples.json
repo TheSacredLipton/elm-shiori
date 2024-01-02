@@ -1,6 +1,4 @@
 {
-    "root": "../codegen",
-    "tests": [
-        "Generate"
-    ]
+  "root": "../codegen",
+  "tests": ["Generate"]
 }
