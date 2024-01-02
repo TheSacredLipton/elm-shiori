@@ -5,7 +5,7 @@ import Html exposing (..)
 
 {-|
 
-    :: login_home
+    <shiori> login_home
 
 -}
 login_home : Html msg

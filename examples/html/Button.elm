@@ -10,7 +10,7 @@ type Msg
 
 {-|
 
-    :: button
+    <shiori> button
 
 -}
 button : Html Msg

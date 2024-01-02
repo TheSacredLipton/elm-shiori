@@ -5,7 +5,7 @@ import Html exposing (..)
 
 {-|
 
-    :: home
+    <shiori> home
 
 -}
 home : Html msg
@@ -30,11 +30,11 @@ init =
 
     import Html exposing (div)
 
-    :: div [] <| .body <| view init
+    <shiori> div [] <| .body <| view init
 
-    :: div [] <| .body <| view { world = "world" }
+    <shiori> div [] <| .body <| view { world = "world" }
 
-    :: div [] <| .body <| view { world = "world2" }
+    <shiori> div [] <| .body <| view { world = "world2" }
 
 -}
 view : Model -> { title : String, body : List (Html Msg) }

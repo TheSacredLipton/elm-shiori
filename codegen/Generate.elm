@@ -161,8 +161,8 @@ getImportsAndCodes =
                     List.filter (\a -> String.startsWith "import" a) trim
 
                 codes =
-                    List.filter (\a -> String.startsWith "::" a) trim
-                        |> List.map (\a -> String.dropLeft 2 a |> String.trim)
+                    List.filter (\a -> String.startsWith "<shiori>" a) trim
+                        |> List.map (\a -> String.dropLeft 8 a |> String.trim)
             in
             if List.isEmpty codes then
                 P.succeed Nothing

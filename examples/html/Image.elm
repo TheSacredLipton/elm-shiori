@@ -6,7 +6,7 @@ import Html.Attributes exposing (..)
 
 {-|
 
-    :: image
+    <shiori> image
 
 -}
 image : Html msg

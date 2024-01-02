@@ -58,7 +58,7 @@ npm i -D elm-shiori
 ```elm
 {-|
 
-    :: button
+    <shiori> button
 
 -}
 button : Html Msg
@@ -73,7 +73,7 @@ button =
 ```elm
 {-|
 
-    :: button "World"
+    <shiori> button "World"
 
 -}
 button : String -> Html Msg
@@ -88,9 +88,9 @@ button str =
 ```elm
 {-|
 
-    :: button "World"
+    <shiori> button "World"
 
-    :: button "World2"
+    <shiori> button "World2"
 
 -}
 button : String -> Html Msg
@@ -107,7 +107,7 @@ import
 
     import Html exposing (div)
 
-    :: div [] <| .body <| view { world = "world" }
+    <shiori> div [] <| .body <| view { world = "world" }
 
 -}
 view : Model -> { title : String, body : List (Html Msg) }

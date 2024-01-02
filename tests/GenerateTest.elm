@@ -46,9 +46,9 @@ mock1 =
     
     square
 
-    :: square colors.red
+    <shiori> square colors.red
 
-    :: square colors.green
+    <shiori> square colors.green
 
 
 -}
@@ -58,9 +58,9 @@ square
 {-|
     import tomtomtomtoms
 
-    :: mori colors.red
+    <shiori> mori colors.red
 
-    :: mori colors.green
+    <shiori> mori colors.green
 
 
 -}
@@ -78,9 +78,9 @@ mock2 =
     import Element exposing (..) 
     b
 
-    :: square colors.red
+    <shiori> square colors.red
 
-    :: square colors.green
+    <shiori> square colors.green
 
 
 -}
@@ -91,9 +91,9 @@ a = 1
 {-|
 
 
-    :: mori colors.red
+    <shiori> mori colors.red
 
-    :: mori colors.green
+    <shiori> mori colors.green
 
 
 -}
@@ -124,9 +124,9 @@ mock4 =
 
     import Element exposing (..)
 
-    :: test2 colors.green
+    <shiori> test2 colors.green
     
-    :: test2 colors.green
+    <shiori> test2 colors.green
 
 
 
@@ -138,7 +138,7 @@ test
 
     import ss
 
-    :: test2 colors.green
+    <shiori> test2 colors.green
 
 
 -}
