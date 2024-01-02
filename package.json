@@ -37,8 +37,8 @@
   "scripts": {
     "start": "nodemon --watch bin -x \"node bin/shiori serve\"",
     "install": "elm-codegen install",
-    "test": "elm-test && run-pty % chokidar \"codegen/**/*.elm\" -c \"elm-verify-examples && elm-test\" % chokidar \"tests/*.elm\" -c \"elm-test\"",
-    "ci": "flow check && elm-verify-examples && elm-test",
+    "test:watch": "elm-test && run-pty % chokidar \"codegen/**/*.elm\" -c \"elm-verify-examples && elm-test\" % chokidar \"tests/*.elm\" -c \"elm-test\"",
+    "test": "flow check && elm-verify-examples && elm-test",
     "publish": "npm publish"
   }
 }
