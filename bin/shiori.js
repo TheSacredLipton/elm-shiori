@@ -1,12 +1,11 @@
 #!/usr/bin/env node
-// @flow
+// @ts-check
 
 const fs = require('node:fs').promises;
 const fse = require('fs-extra');
 const chokidar = require('chokidar');
 const { join } = require('node:path');
 const yargs = require('yargs');
-// $FlowFixMe: pnpmでignore
 const handler = require('serve-handler');
 const http = require('node:http');
 const { yellow, red, cyan } = require('kleur');
@@ -15,14 +14,21 @@ const { run_generation_from_cli } = require('elm-codegen/dist/run');
 const { compile } = require('node-elm-compiler/dist/index');
 const { WebSocketServer } = require('ws');
 
-/*::
-type ElmFiles = {[key:string]: string} 
-type ShioriJson = {roots: string[],  files: ElmFiles, assets: string} 
-type ElmJson = {"source-directories": string[]}
-*/
-const shioriRoot = () /*:string */ => join(__dirname, '..');
+/**
+ * @typedef {{[key: string]: string}} ElmFiles
+ * @typedef {{roots: string[], files: ElmFiles, assets: string}} ShioriJson
+ * @typedef {{"source-directories": string[]}} ElmJson
+ */
+/**
+ * @returns {string}
+ */
+const shioriRoot = () => join(__dirname, '..');
 
-const readElmJson = async () /*:Promise<ElmJson | null> */ => {
+/**
+ * Reads and parses the 'elm.json' file, checking for the 'source-directories' property.
+ * @returns {Promise<ElmJson|null>}
+ */
+const readElmJson = async () => {
   try {
     try {
       const json = JSON.parse(await fs.readFile('elm.json', 'utf-8'));
@@ -37,7 +43,11 @@ const readElmJson = async () /*:Promise<ElmJson | null> */ => {
   }
 };
 
-const readShioriJson = async () /*:Promise<ShioriJson | null>*/ => {
+/**
+ * Reads and parses the 'shiori.json' file, ensuring it has both 'files' and 'roots' properties.
+ * @returns {Promise<ShioriJson|null>}
+ */
+const readShioriJson = async () => {
   try {
     try {
       const json = JSON.parse(await fs.readFile(join('shiori.json'), 'utf-8'));
@@ -52,7 +62,12 @@ const readShioriJson = async () /*:Promise<ShioriJson | null>*/ => {
   }
 };
 
-const readElmFiles = async (list /*:ElmFiles*/) /*:Promise<ElmFiles | null> */ => {
+/**
+ * Reads contents of files specified in the list object where each key-value pair corresponds to a filename.
+ * @param {ElmFiles} list An object with keys as file identifiers and values as file paths.
+ * @returns {Promise<ElmFiles|null>} A Promise that resolves to an object with file contents or null if an error occurs.
+ */
+const readElmFiles = async list => {
   try {
     if (list) {
       const result = [];
@@ -74,7 +89,12 @@ const readElmFiles = async (list /*:ElmFiles*/) /*:Promise<ElmFiles | null> */ =
   }
 };
 
-const copyElmJson = async (roots /*:string[] */) /*:Promise<void> */ => {
+/**
+ * Copies and modifies the 'elm.json' file to adjust source directories based on the provided 'roots'.
+ * @param {string[]} roots - Array representing new root directories to be set in 'source-directories'.
+ * @returns {Promise<void>} Resolves when the file has been successfully written or logs an error.
+ */
+const copyElmJson = async roots => {
   try {
     const elmjson = await readElmJson();
     if (elmjson) {
@@ -88,19 +108,33 @@ const copyElmJson = async (roots /*:string[] */) /*:Promise<void> */ => {
   }
 };
 
-const sourceDirectories = (roots /*:string[] */) /*:string[] */ => {
+/**
+ * Generates an array of directories for source files based on provided root directories.
+ * Adds a 'src' directory to the end of the array as a default source directory.
+ * @param {string[]} roots - An array of root directories.
+ * @returns {string[]} An array of directories, prefixed with '../', and ending with 'src'.
+ */
+const sourceDirectories = roots => {
   const r = roots.map(root => `../${root}`);
   return [...r, 'src'];
 };
 
-/* FIXME: 一旦shioriJson.roots[0]にしているので先頭に設定したものしか対象にならない
-分ける需要が不明なので一旦これで
-*/
-const convertShioriJson = async (shioriJson /*:ShioriJson */) /*:Promise<string | null> */ => {
+/**
+ * Converts the `ShioriJson` configuration into a JSON string representation of Elm files,
+ * using only the first root directory specified in `shioriJson.roots`. This includes transforming
+ * file paths into a specific format required for Elm source files.
+ *
+ * FIXME: Currently only the first item in `shioriJson.roots` is used. It's unclear if there's
+ * a need to handle multiple directories. This implementation could potentially be adjusted in the future.
+ *
+ * @param {ShioriJson} shioriJson - The Shiori JSON configuration containing file mappings and roots.
+ * @returns {Promise<string|null>} A JSON string representing Elm files if successful, or null if an error occurs.
+ */
+const convertShioriJson = async shioriJson => {
   try {
     if (Object.entries(shioriJson.files).length === 0)
       throw new Error('convertShioriJson: shiori.jsonのfilesが空です');
-    const newJson /*:ElmFiles */ = Object.fromEntries(
+    const newJson = Object.fromEntries(
       Object.entries(shioriJson.files)
         .filter(([_, value]) => typeof value === 'string')
         .map(([_, value]) =>
@@ -120,8 +154,20 @@ const convertShioriJson = async (shioriJson /*:ShioriJson */) /*:Promise<string 
   }
 };
 
-const toSlash = (str /*:string*/) /*:string*/ => str.replaceAll('.', '/');
+/**
+ * Converts all periods (.) in a given string to slashes (/).
+ * @param {string} str - The string to be transformed.
+ * @returns {string} The transformed string with periods replaced by slashes.
+ */
+const toSlash = str => {
+  return str.replaceAll('.', '/');
+};
 
+/**
+ * Initializes the application by copying the 'shiori' directory from a base to the current working directory.
+ * It first removes any existing 'shiori' directory and then copies the entire content from the source.
+ * @returns {Promise<void>} Resolves when the setup is complete or logs an error if something goes wrong.
+ */
 const init = async () /*:Promise<void> */ => {
   try {
     const p_shiori = 'shiori';
@@ -132,7 +178,12 @@ const init = async () /*:Promise<void> */ => {
   }
 };
 
-const copyAssets = async (path /*:string */) /*:Promise<void> */ => {
+/**
+ * Copies assets from a specified directory to a target directory in 'shiori' based on the assets' names.
+ * @param {string} path - The source path from which assets are to be copied.
+ * @returns {Promise<void>} Resolves when the copy operation is complete or logs any errors.
+ */
+const copyAssets = async path => {
   try {
     if (path) {
       const obj = produce({ path, name: '', p_assets: '' }, draft => {
@@ -150,7 +201,12 @@ const copyAssets = async (path /*:string */) /*:Promise<void> */ => {
   }
 };
 
-const copyCodegenToElmStuff = async () /*:Promise<void> */ => {
+/**
+ * Copies the 'codegen' directory from the 'shioriRoot' directory to a specific location in 'elm-stuff'.
+ * This is useful for setting up the necessary code generation files in the right place.
+ * @returns {Promise<void>} Resolves when the copying is complete, logs any errors that occur.
+ */
+const copyCodegenToElmStuff = async () => {
   try {
     const p_selmstuffCodegen = join('elm-stuff', 'shiori', 'codegen');
     await fse.remove(p_selmstuffCodegen);
@@ -160,7 +216,13 @@ const copyCodegenToElmStuff = async () /*:Promise<void> */ => {
   }
 };
 
-const runCodegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
+/**
+ * Executes code generation based on the provided Shiori JSON configuration.
+ * This includes setting up the directory environment and running generation commands.
+ * @param {ShioriJson} shioriJson - The configuration JSON which contains necessary data for code generation.
+ * @returns {Promise<void>} Resolves when the code generation is complete or logs an error.
+ */
+const runCodegen = async shioriJson => {
   try {
     const flags = await convertShioriJson(shioriJson);
     if (flags) {
@@ -177,15 +239,27 @@ const runCodegen = async (shioriJson /* :ShioriJson */) /*:Promise<void> */ => {
 };
 
 /**
- * TODO: HMR対応
+ * Compiles the Elm source code file 'src/Shiori.elm' into a 'shiori.js' output file.
+ * The function changes the current working directory during the process for the compilation context.
+ * @returns {Promise<void>} Resolves with no value upon the successful completion of the compilation,
+ * or silently handles any errors that occur.
+ * @todo Implement Hot Module Replacement (HMR) capabilities.
  */
-const runElmCompile = async () /*:Promise<void> */ => {
+const runElmCompile = async () => {
   try {
     process.chdir(join('shiori'));
     compile([join('src', 'Shiori.elm')], { output: join('shiori.js') });
     process.chdir('..');
-  } catch (error) {}
+  } catch (error) {
+    console.log(red(error.toString()));
+  }
 };
+
+/**
+ * Sets up and runs a development server environment, watches for changes in certain files,
+ * and performs automated tasks such as copying assets, running code generation, and compiling code.
+ * @returns {Promise<void>} Resolves when the server is successfully set up or logs any caught errors.
+ */
 const serve = async () /*:Promise<void> */ => {
   try {
     const shioriJson = await readShioriJson();
