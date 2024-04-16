@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // @flow
 
-const fs = require('fs').promises;
+const fs = require('node:fs').promises;
 const fse = require('fs-extra');
 const chokidar = require('chokidar');
-const { join } = require('path');
+const { join } = require('node:path');
 const yargs = require('yargs');
 // $FlowFixMe: pnpmでignore
 const handler = require('serve-handler');
-const http = require('http');
+const http = require('node:http');
 const { yellow, red, cyan } = require('kleur');
 const { produce } = require('immer');
 const { run_generation_from_cli } = require('elm-codegen/dist/run');
