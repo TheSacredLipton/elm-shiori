@@ -10,7 +10,9 @@ const handler = require('serve-handler');
 const http = require('node:http');
 const { yellow, red, cyan } = require('kleur');
 const { produce } = require('immer');
+// @ts-ignore
 const { run_generation_from_cli } = require('elm-codegen/dist/run');
+// @ts-ignore
 const { compile } = require('node-elm-compiler/dist/index');
 const { WebSocketServer } = require('ws');
 
@@ -38,7 +40,7 @@ const readElmJson = async () => {
       throw new Error(`${error}elm.jsonが存在しません`);
     }
   } catch (error) {
-    console.log(red(error.toString()));
+    logError(error);
     return null;
   }
 };
@@ -57,7 +59,7 @@ const readShioriJson = async () => {
       throw new Error(`${error}shiori.jsonが存在しません`);
     }
   } catch (error) {
-    console.log(red(error.toString()));
+    logError(error);
     return null;
   }
 };
@@ -84,7 +86,7 @@ const readElmFiles = async list => {
     }
     throw new Error('readFiles: 対象のelmが存在しません');
   } catch (error) {
-    console.log(red(error));
+    logError(error);
     return null;
   }
 };
@@ -103,8 +105,8 @@ const copyElmJson = async roots => {
       });
       await fs.writeFile(join('shiori', 'elm.json'), JSON.stringify(newElmJson));
     }
-  } catch (err) {
-    console.log(red(err.toString()));
+  } catch (error) {
+    logError(error);
   }
 };
 
@@ -149,7 +151,7 @@ const convertShioriJson = async shioriJson => {
     }
     throw new Error('convertShioriJson: resultがnullです');
   } catch (err) {
-    console.log(red(`convertShioriJson:${err.toString()}`));
+    logError(err, 'convertShioriJson');
     return null;
   }
 };
@@ -174,7 +176,7 @@ const init = async () /*:Promise<void> */ => {
     await fse.remove(p_shiori);
     await fse.copy(join(shioriRoot(), 'shiori'), p_shiori);
   } catch (err) {
-    console.log(red(err.toString()));
+    logError(err);
   }
 };
 
@@ -191,13 +193,13 @@ const copyAssets = async path => {
         draft.p_assets = join('shiori', draft.name);
       });
       if (obj.name) {
-        await fse.copy(path, obj.p_assets, err => {});
+        await fse.copy(path, obj.p_assets, _ => {});
       }
     } else {
       console.log(yellow('assetsを設定していません'));
     }
   } catch (err) {
-    console.log(red(err.toString()));
+    logError(err);
   }
 };
 
@@ -212,7 +214,7 @@ const copyCodegenToElmStuff = async () => {
     await fse.remove(p_selmstuffCodegen);
     await fse.copy(join(shioriRoot(), 'codegen'), p_selmstuffCodegen);
   } catch (err) {
-    console.log(err.toString());
+    logError(err);
   }
 };
 
@@ -234,7 +236,7 @@ const runCodegen = async shioriJson => {
       process.chdir(join('..', '..'));
     }
   } catch (error) {
-    console.log(red(error.toString()));
+    logError(error);
   }
 };
 
@@ -251,7 +253,7 @@ const runElmCompile = async () => {
     compile([join('src', 'Shiori.elm')], { output: join('shiori.js') });
     process.chdir('..');
   } catch (error) {
-    console.log(red(error.toString()));
+    logError(error);
   }
 };
 
@@ -295,9 +297,31 @@ const serve = async () /*:Promise<void> */ => {
       chokidar.watch('shiori/src/Shiori/Route.elm').on('change', async () => await runElmCompile());
     }
   } catch (err) {
-    console.log(red(err.toString()));
+    logError(err);
   }
 };
+
+/**
+ * Logs an error message. If the error is an instance of Error, it logs the error's message in red.
+ * Otherwise, it logs a generic unknown error message in red.
+ * @param {unknown} error - The error object or any thrown value to be logged.
+ * @param {string} [prefix] - Optional prefix to prepend to the error message.
+ * @returns {void}
+ */
+function logError(error, prefix) {
+  // Check if the error is an instance of Error
+  if (error instanceof Error) {
+    // If error is an instance of Error, safely call toString() and color it red
+    if (prefix) {
+      console.log(red(`${prefix}: ${error.toString()}`));
+    } else {
+      console.log(red(error.toString()));
+    }
+  } else {
+    // If it's not an instance of Error, log a generic unknown error message
+    console.log(red('An unknown error occurred'));
+  }
+}
 
 /**
  * TODO: 表示をおしゃれにしたい
@@ -319,7 +343,7 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
         await runElmCompile();
       }
     } catch (err) {
-      console.log(red(err.toString()));
+      logError(err);
     }
   }
 

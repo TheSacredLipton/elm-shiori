@@ -14,8 +14,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.7.0",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.12.7",
     "@types/serve-handler": "^6.1.4",
+    "@types/ws": "^8.5.10",
+    "@types/yargs": "^17.0.32",
     "chokidar-cli": "^3.0.0",
     "elm": "0.19.1-6",
     "elm-test": "0.19.1-revision10",
