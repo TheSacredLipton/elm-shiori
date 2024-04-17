@@ -8,13 +8,16 @@ const { join } = require('node:path');
 const yargs = require('yargs');
 const handler = require('serve-handler');
 const http = require('node:http');
-const { yellow, red, cyan } = require('kleur');
+const { red, cyan } = require('kleur');
 const { produce } = require('immer');
+// TODO: d.ts作る
 // @ts-ignore
 const { run_generation_from_cli } = require('elm-codegen/dist/run');
+// TODO: d.ts作る
 // @ts-ignore
 const { compile } = require('node-elm-compiler/dist/index');
 const { WebSocketServer } = require('ws');
+const path = require('node:path');
 
 /**
  * @typedef {{[key: string]: string}} ElmFiles
@@ -182,24 +185,37 @@ const init = async () /*:Promise<void> */ => {
 
 /**
  * Copies assets from a specified directory to a target directory in 'shiori' based on the assets' names.
- * @param {string} path - The source path from which assets are to be copied.
+ * @param {string} sourcePath - The source path from which assets are to be copied.
  * @returns {Promise<void>} Resolves when the copy operation is complete or logs any errors.
  */
-const copyAssets = async path => {
+const copyAssets = async sourcePath => {
   try {
-    if (path) {
-      const obj = produce({ path, name: '', p_assets: '' }, draft => {
-        draft.name = draft.path.split('/').pop();
-        draft.p_assets = join('shiori', draft.name);
-      });
-      if (obj.name) {
-        await fse.copy(path, obj.p_assets, _ => {});
-      }
-    } else {
-      console.log(yellow('assetsを設定していません'));
+    if (!sourcePath) {
+      console.error('No source path specified for assets.');
+      return;
     }
-  } catch (err) {
-    logError(err);
+
+    // Extract the directory name from the input source path
+    const directoryName = sourcePath.split('/').pop();
+
+    // Ensure we have a valid directory name
+    if (!directoryName) {
+      throw new Error('Failed to extract a valid directory name from the source path.');
+    }
+
+    // Target path in 'shiori' directory
+    const targetPath = path.join('shiori', directoryName);
+
+    // Copying the directory and its contents to the target path
+    const copyOptions = {
+      overwrite: true, // Overwrite files at destination if they exist
+      errorOnExist: false
+    };
+    await fse.copy(sourcePath, targetPath, copyOptions);
+
+    console.log(`Assets successfully copied to ${targetPath}`);
+  } catch (error) {
+    logError(error, 'Error copying assets');
   }
 };
 
