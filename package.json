@@ -43,6 +43,6 @@
     "install": "elm-codegen install",
     "test:watch": "elm-test && run-pty % chokidar \"codegen/**/*.elm\" -c \"elm-verify-examples && elm-test\" % chokidar \"tests/*.elm\" -c \"elm-test\"",
     "test": "biome ci . && tsc && elm-verify-examples && elm-test",
-    "publish": "npm publish"
+    "publish": "npm run test && npm publish"
   }
 }
