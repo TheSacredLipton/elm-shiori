@@ -9,7 +9,6 @@ import path from 'node:path';
 import { run_generation_from_cli } from 'elm-codegen/dist/run';
 import { produce } from 'immer';
 import { compile } from 'node-elm-compiler/dist/index';
-import { WebSocketServer } from 'ws';
 import { Elysia } from 'elysia';
 import { staticPlugin } from '@elysiajs/static';
 type ElmFiles = { [key: string]: string };
@@ -271,7 +270,7 @@ const serve = async (): Promise<void> => {
         .watch(join('codegen'), {
           awaitWriteFinish: {
             stabilityThreshold: 5000,
-            pollInterval: 100
+            pollInterval: 200
           }
         })
         .on('change', async () => {
@@ -333,12 +332,21 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
   }
 
   if (args.arg === 'serve') {
+    let ws: { send: (message: string) => void } | null;
+    chokidar.watch('shiori/shiori.js').on('change', async () => {
+      if (ws) ws.send('reload');
+    });
     chokidar
       .watch('shiori.json')
       .on('add', async () => serve())
       .on('change', async () => serve());
-
     const serve_ = new Elysia()
+      .ws('/ws', {
+        open(ws_) {
+          // TODO: なんか嫌
+          ws = ws_;
+        }
+      })
       .use(staticPlugin({ assets: 'shiori' }))
       .get('/shiori.js', () => {
         return new Response(Bun.file('shiori/shiori.js'));
@@ -350,12 +358,5 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
     serve_
       .handle(new Request('http://localhost/'))
       .then(() => console.log(cyan('Running at http://localhost:3000')));
-
-    const wss = new WebSocketServer({ port: 3333 });
-    wss.on('connection', (ws_client: { send: (arg0: string) => void }) => {
-      chokidar.watch('shiori/shiori.js').on('change', async () => {
-        ws_client.send('reload');
-      });
-    });
   }
 })();
