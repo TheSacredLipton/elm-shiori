@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-check
 
 const fs = require('node:fs').promises;
 const fse = require('fs-extra');

@@ -138,6 +138,11 @@ npx shiori serve
 
 ## 開発
 
+global install
+
+- bun
+- elm
+
 ```sh
 npm i -D https://github.com/TheSacredLipton/elm-shiori.git
 ```
