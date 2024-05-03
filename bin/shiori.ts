@@ -1,20 +1,18 @@
 #!/usr/bin/env node
 
-const fs = require('node:fs').promises;
-const fse = require('fs-extra');
-const chokidar = require('chokidar');
-const { join } = require('node:path');
+import fs from 'node:fs/promises';
+import fse from 'fs-extra';
+import chokidar from 'chokidar';
+import { join } from 'node:path';
 const yargs = require('yargs');
-const handler = require('serve-handler');
-const http = require('node:http');
+import handler from 'serve-handler';
+import http from 'node:http';
 const { red, cyan } = require('kleur');
-const { produce } = require('immer');
-// TODO: d.ts作る
-const { run_generation_from_cli } = require('elm-codegen/dist/run');
-// TODO: d.ts作る
-const { compile } = require('node-elm-compiler/dist/index');
-const { WebSocketServer } = require('ws');
-const path = require('node:path');
+import { produce } from 'immer';
+import { run_generation_from_cli } from 'elm-codegen/dist/run';
+import { compile } from 'node-elm-compiler/dist/index';
+import { WebSocketServer } from 'ws';
+import path from 'node:path';
 
 type ElmFiles = { [key: string]: string };
 type ShioriJson = { roots: string[]; files: ElmFiles; assets: string };
@@ -91,7 +89,7 @@ const copyElmJson = async (roots: string[]): Promise<void> => {
   try {
     const elmjson = await readElmJson();
     if (elmjson) {
-      const newElmJson = produce(elmjson, draft => {
+      const newElmJson = produce(elmjson, (draft: { [x: string]: string[] }) => {
         draft['source-directories'] = sourceDirectories(roots);
       });
       await fs.writeFile(join('shiori', 'elm.json'), JSON.stringify(newElmJson));
@@ -352,7 +350,7 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
       });
 
     const wss = new WebSocketServer({ port: 3333 });
-    wss.on('connection', ws_client => {
+    wss.on('connection', (ws_client: { send: (arg0: string) => void }) => {
       chokidar.watch('shiori/shiori.js').on('change', async () => {
         ws_client.send('reload');
       });
