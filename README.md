@@ -2,6 +2,8 @@
 
 カードゲームのUI確認用に作りました。
 
+サンプル: <https://elm-shiori.pages.dev/>
+
 ## インストール
 
 ```sh
@@ -51,7 +53,7 @@ map =
 
 5.`npx shiori serve`で起動
 
-- ブラウザで http://localhost:3000 にアクセス
+- ブラウザで <http://localhost:3000> にアクセス
 - 気が向いたらport番号変更できるようにする予定
 
 ## コメントの書き方
