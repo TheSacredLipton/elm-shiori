@@ -10,6 +10,7 @@ const handler = require('serve-handler');
 const http = require('node:http');
 const { red, cyan } = require('kleur');
 const { produce } = require('immer');
+const { sourceDirectories } = require('./utils');
 // TODO: d.ts作る
 // @ts-ignore
 const { run_generation_from_cli } = require('elm-codegen/dist/run');
@@ -111,17 +112,6 @@ const copyElmJson = async roots => {
   } catch (error) {
     logError(error);
   }
-};
-
-/**
- * Generates an array of directories for source files based on provided root directories.
- * Adds a 'src' directory to the end of the array as a default source directory.
- * @param {string[]} roots - An array of root directories.
- * @returns {string[]} An array of directories, prefixed with '../', and ending with 'src'.
- */
-const sourceDirectories = roots => {
-  const r = roots.map(root => `../${root}`);
-  return [...r, 'src'];
 };
 
 /**

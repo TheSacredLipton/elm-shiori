@@ -29,7 +29,10 @@
     "nodemon": "^2.0.22",
     "run-pty": "^4.1.0",
     "serve-handler": "^6.1.5",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vite-plugin-doctest": "^1.0.0",
+    "vitest": "^1.5.3"
   },
   "dependencies": {
     "chokidar": "^3.6.0",
