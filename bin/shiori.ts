@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import fs from 'node:fs/promises';
 import { join } from 'node:path';
 import chokidar from 'chokidar';
 import fse from 'fs-extra';
@@ -26,7 +25,7 @@ const shioriRoot = (): string => join(__dirname, '..');
 const readElmJson = async (): Promise<ElmJson | null> => {
   try {
     try {
-      const json = JSON.parse(await fs.readFile('elm.json', 'utf-8'));
+      const json = JSON.parse(await Bun.file('elm.json', { type: 'application/json' }).text());
       if (json['source-directories']) return json;
       throw new Error('elm.jsonにsource-directoriesがありません');
     } catch (error) {
@@ -45,7 +44,9 @@ const readElmJson = async (): Promise<ElmJson | null> => {
 const readShioriJson = async () => {
   try {
     try {
-      const json = JSON.parse(await fs.readFile(join('shiori.json'), 'utf-8'));
+      const json = JSON.parse(
+        await Bun.file(join('shiori.json'), { type: 'application/json' }).text()
+      );
       if (json.files && json.roots) return json;
       throw new Error('shiori.jsonにfilesまたはrootがありません');
     } catch (error) {
@@ -67,7 +68,7 @@ const readElmFiles = async (list: ElmFiles): Promise<ElmFiles | null> => {
       for (const [key, value] of Object.entries(list)) {
         if (typeof value === 'string') {
           try {
-            result.push([key, await fs.readFile(value, 'utf-8')]);
+            result.push([key, await Bun.file(value, { type: 'application/json' }).text()]);
           } catch (_) {
             throw new Error(`${value}が存在しません`);
           }
@@ -92,7 +93,7 @@ const copyElmJson = async (roots: string[]): Promise<void> => {
       const newElmJson = produce(elmjson, (draft: { [x: string]: string[] }) => {
         draft['source-directories'] = sourceDirectories(roots);
       });
-      await fs.writeFile(join('shiori', 'elm.json'), JSON.stringify(newElmJson));
+      await Bun.write(join('shiori', 'elm.json'), JSON.stringify(newElmJson));
     }
   } catch (error) {
     logError(error);
