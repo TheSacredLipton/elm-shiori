@@ -4,15 +4,14 @@ import { join } from 'node:path';
 import chokidar from 'chokidar';
 import fse from 'fs-extra';
 const yargs = require('yargs');
-import http from 'node:http';
-import handler from 'serve-handler';
 const { red, cyan } = require('kleur');
 import path from 'node:path';
 import { run_generation_from_cli } from 'elm-codegen/dist/run';
 import { produce } from 'immer';
 import { compile } from 'node-elm-compiler/dist/index';
 import { WebSocketServer } from 'ws';
-
+import { Elysia } from 'elysia';
+import { staticPlugin } from '@elysiajs/static';
 type ElmFiles = { [key: string]: string };
 type ShioriJson = { roots: string[]; files: ElmFiles; assets: string };
 type ElmJson = { 'source-directories': string[] };
@@ -339,16 +338,18 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
       .on('add', async () => serve())
       .on('change', async () => serve());
 
-    http
-      .createServer((request, response) => {
-        return handler(request, response, {
-          public: join('shiori'),
-          rewrites: [{ source: '**', destination: '/index.html' }]
-        });
+    const serve_ = new Elysia()
+      .use(staticPlugin({ assets: 'shiori' }))
+      .get('/shiori.js', () => {
+        return new Response(Bun.file('shiori/shiori.js'));
       })
-      .listen(3000, () => {
-        console.log(cyan('\n Running at http://localhost:3000 \n'));
-      });
+      .get('/*', () => {
+        return new Response(Bun.file('shiori/index.html'));
+      })
+      .listen(3000);
+    serve_
+      .handle(new Request('http://localhost/'))
+      .then(() => console.log(cyan('Running at http://localhost:3000')));
 
     const wss = new WebSocketServer({ port: 3333 });
     wss.on('connection', (ws_client: { send: (arg0: string) => void }) => {

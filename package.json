@@ -17,7 +17,6 @@
     "@types/bun": "latest",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.12.7",
-    "@types/serve-handler": "^6.1.4",
     "@types/ws": "^8.5.10",
     "@types/yargs": "^17.0.32",
     "bun-types": "latest",
@@ -28,15 +27,15 @@
     "run-pty": "^4.1.0"
   },
   "dependencies": {
+    "@elysiajs/static": "^1.0.3",
     "chokidar": "^3.6.0",
     "elm-codegen": "^0.2.0",
+    "elysia": "^1.0.16",
     "fs-extra": "^10.1.0",
     "immer": "^9.0.21",
     "kleur": "^4.1.5",
     "node-elm-compiler": "^5.0.6",
-    "serve": "^14.2.1",
     "ws": "^8.16.0",
-    "serve-handler": "^6.1.5",
     "yargs": "^17.7.2"
   },
   "scripts": {
