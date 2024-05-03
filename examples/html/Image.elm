@@ -11,4 +11,4 @@ import Html.Attributes exposing (..)
 -}
 image : Html msg
 image =
-    img [ src "/assets/shiori.png" ] []
+    img [ src "/shiori.png" ] []

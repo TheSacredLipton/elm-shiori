@@ -185,6 +185,7 @@ const init = async () /*:Promise<void> */ => {
 
 /**
  * Copies assets from a specified directory to a target directory in 'shiori' based on the assets' names.
+ * TODO: copyStaticFileとかでも良さげ
  * @param {string} sourcePath - The source path from which assets are to be copied.
  * @returns {Promise<void>} Resolves when the copy operation is complete or logs any errors.
  */
@@ -204,7 +205,7 @@ const copyAssets = async sourcePath => {
     }
 
     // Target path in 'shiori' directory
-    const targetPath = path.join('shiori', directoryName);
+    const targetPath = path.join('shiori');
 
     // Copying the directory and its contents to the target path
     const copyOptions = {
