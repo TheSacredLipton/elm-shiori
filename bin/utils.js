@@ -9,7 +9,7 @@
  * @param {string[]} roots - An array of root directories.
  * @returns {string[]} An array of directories, prefixed with '../', and ending with 'src'.
  */
-export const sourceDirectories = roots => {
+exports.sourceDirectories = roots => {
   const r = roots.map(root => `../${root}`);
   return [...r, 'src'];
 };
