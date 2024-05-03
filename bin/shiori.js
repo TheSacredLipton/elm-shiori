@@ -339,9 +339,6 @@ function logError(error, prefix) {
   }
 }
 
-/**
- * TODO: 表示をおしゃれにしたい
- */
 const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serve').parseSync();
 (async () => {
   if (args.arg === 'init') {

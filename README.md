@@ -11,43 +11,46 @@ npm i -D elm-shiori
 ## 使い方
 
 1. 準備
+
 - プロジェクトルートで事前に`elm/url`をインストールしておいてください
 - `shiori.json`をプロジェクトルートに用意してください
 
-    例:
+例:
 
-    ```json
-    {
-        "roots": ["src"],
-        "assets": "public",
-        "files": [
-            "Shape",
-            "Button",
-            "Image",
-            "Pages.Home_",
-            "Pages.Login.Home_"
-        ]
-    }
-    ```
+```json
+{
+    "roots": ["src"],
+    "assets": "public",
+    "files": [
+        "Shape",
+        "Button",
+        "Image",
+        "Pages.Home_",
+        "Pages.Login.Home_"
+    ]
+}
+```
 
-2. 初回は`npx shiori init`を実行
+2.初回は`npx shiori init`を実行
 
-3. プロジェクトに合わせて`shiori/Shiori_View.elm`を編集してください
+3.プロジェクトに合わせて`shiori/Shiori_View.elm`を編集してください
 
-    例: elm-ui
+例: elm-ui
 
-    ```elm
-    import Html exposing (Html)
-    import Element exposing (Element, layout)
+```elm
+import Html exposing (Html)
+import Element exposing (Element, layout)
 
 
-    map : List (Element msg) -> List (Html ())
-    map =
-        List.map (layout [] >> Html.map (always ()))
-    ```
-4. `shiori/index.html`を編集し任意のCSSを読み込ませてください
+map : List (Element msg) -> List (Html ())
+map =
+    List.map (layout [] >> Html.map (always ()))
+```
 
-5. `npx shiori serve`で起動
+4.`shiori/index.html`を編集し任意のCSSを読み込ませてください
+
+5.`npx shiori serve`で起動
+
 - ブラウザで http://localhost:3000 にアクセス
 - 気が向いたらport番号変更できるようにする予定
 
@@ -119,6 +122,7 @@ view model =
 ```
 
 複数行
+
 - 現状**非対応**です。1行で書き切ってください。
 - 気が向いたら対応します。
 
