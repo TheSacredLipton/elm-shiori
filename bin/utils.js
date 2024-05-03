@@ -1,7 +1,8 @@
 /**
  * @example
- * ```ts @import.meta.vitest
+ * ```js @import.meta.vitest
  * expect(sourceDirectories([])).toStrictEqual(["src"]);
+ * expect(sourceDirectories(["src", ".elm-land"])).toStrictEqual(["../src", "../.elm-land", "src"]);
  * ```
  * Generates an array of directories for source files based on provided root directories.
  * Adds a 'src' directory to the end of the array as a default source directory.
