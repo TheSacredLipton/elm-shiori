@@ -137,6 +137,10 @@ npx shiori serve
 ## 開発
 
 ```sh
+npm i -D https://github.com/TheSacredLipton/elm-shiori.git
+```
+
+```sh
 pnpm run test
 npm publish
 ```
