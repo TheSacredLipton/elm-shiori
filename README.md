@@ -134,6 +134,13 @@ npx shiori build
 npx shiori serve
 ```
 
+## 開発
+
+```sh
+pnpm run test
+npm publish
+```
+
 ## ライセンス
 
 - MIT license
