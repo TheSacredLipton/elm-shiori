@@ -19,12 +19,10 @@
     "@types/serve-handler": "^6.1.4",
     "@types/ws": "^8.5.10",
     "@types/yargs": "^17.0.32",
-    "bun": "^1.1.7",
     "chokidar-cli": "^3.0.0",
     "elm": "0.19.1-6",
     "elm-test": "0.19.1-revision10",
     "elm-verify-examples": "^5.3.0",
-    "nodemon": "^2.0.22",
     "run-pty": "^4.1.0",
     "@types/bun": "latest"
   },
@@ -41,9 +39,9 @@
     "yargs": "^17.7.2"
   },
   "scripts": {
-    "start": "nodemon --watch bin -x \"node bin/shiori serve\"",
+    "start": "bun --watch bin/shiori.ts serve",
     "install": "elm-codegen install",
-    "build": "node bin/shiori build",
+    "build": "bun bin/shiori.ts build",
     "test:watch": "elm-test && run-pty % chokidar \"codegen/**/*.elm\" -c \"elm-verify-examples && elm-test\" % chokidar \"tests/*.elm\" -c \"elm-test\"",
     "test": "biome ci . && tsc && elm-verify-examples && elm-test"
   },
