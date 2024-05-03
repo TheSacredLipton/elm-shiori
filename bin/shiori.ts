@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs/promises';
-import fse from 'fs-extra';
-import chokidar from 'chokidar';
 import { join } from 'node:path';
+import chokidar from 'chokidar';
+import fse from 'fs-extra';
 const yargs = require('yargs');
-import handler from 'serve-handler';
 import http from 'node:http';
+import handler from 'serve-handler';
 const { red, cyan } = require('kleur');
-import { produce } from 'immer';
+import path from 'node:path';
 import { run_generation_from_cli } from 'elm-codegen/dist/run';
+import { produce } from 'immer';
 import { compile } from 'node-elm-compiler/dist/index';
 import { WebSocketServer } from 'ws';
-import path from 'node:path';
 
 type ElmFiles = { [key: string]: string };
 type ShioriJson = { roots: string[]; files: ElmFiles; assets: string };

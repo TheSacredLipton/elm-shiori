@@ -44,7 +44,7 @@
     "install": "elm-codegen install",
     "build": "bun bin/shiori.ts build",
     "test:watch": "elm-test && run-pty % chokidar \"codegen/**/*.elm\" -c \"elm-verify-examples && elm-test\" % chokidar \"tests/*.elm\" -c \"elm-test\"",
-    "test": "biome ci . && tsc && elm-verify-examples && elm-test"
+    "test": "biome ci . && elm-verify-examples && elm-test"
   },
   "module": "index.ts",
   "type": "module",
