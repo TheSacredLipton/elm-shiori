@@ -42,7 +42,6 @@
     "start": "nodemon --watch bin -x \"node bin/shiori serve\"",
     "install": "elm-codegen install",
     "test:watch": "elm-test && run-pty % chokidar \"codegen/**/*.elm\" -c \"elm-verify-examples && elm-test\" % chokidar \"tests/*.elm\" -c \"elm-test\"",
-    "test": "biome ci . && tsc && elm-verify-examples && elm-test",
-    "publish": "npm run test && npm publish"
+    "test": "biome ci . && tsc && elm-verify-examples && elm-test"
   }
 }
