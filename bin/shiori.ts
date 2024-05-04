@@ -176,10 +176,7 @@ const init = async (): Promise<void> => {
  */
 const copyAssets = async (sourcePath: string): Promise<void> => {
   try {
-    if (!sourcePath) {
-      console.error('No source path specified for assets.');
-      return;
-    }
+    if (!sourcePath) return;
 
     // Extract the directory name from the input source path
     const directoryName = sourcePath.split('/').pop();
