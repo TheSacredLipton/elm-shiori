@@ -5,5 +5,5 @@ declare module 'elm-codegen/dist/run' {
 }
 
 declare module 'node-elm-compiler/dist/index' {
-  export function compile(input: string[], input2: { output: string }): void;
+  export function compile(sourceFiles: string[], options: { output: string }): void;
 }
