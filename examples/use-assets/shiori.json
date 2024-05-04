@@ -1,0 +1,5 @@
+{
+  "roots": ["src"],
+  "assets": "assets",
+  "files": ["Image", "Empty", "Button", "Pages.Home_", "Pages.Login.Home_"]
+}

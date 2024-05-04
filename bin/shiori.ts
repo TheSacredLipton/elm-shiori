@@ -5,7 +5,6 @@ import chokidar from 'chokidar';
 import fse from 'fs-extra';
 const yargs = require('yargs');
 const { red, cyan } = require('kleur');
-import path from 'node:path';
 import { staticPlugin } from '@elysiajs/static';
 import { run_generation_from_cli } from 'elm-codegen/dist/run';
 import { Elysia } from 'elysia';
@@ -15,6 +14,7 @@ type ElmFiles = { [key: string]: string };
 type ShioriJson = { roots: string[]; files: ElmFiles; assets: string };
 type ElmJson = { 'source-directories': string[] };
 
+// パッケージとして使う場合 ./node_modules/elm-shiori になるはず
 const shioriRoot = (): string => join(__dirname, '..');
 
 /**
@@ -155,44 +155,17 @@ const init = async (): Promise<void> => {
   try {
     const p_shiori = 'shiori';
     await fse.remove(p_shiori);
-    await fse.copy(join(shioriRoot(), 'shiori'), p_shiori);
+    await fse.copy(join(shioriRoot(), 'boilerplate', 'shiori'), p_shiori);
+
+    // TODO: shiori.jsonのコピー...存在する場合は無視
+    const shioriJson = Bun.file(join(shioriRoot(), 'boilerplate', 'shiori.json'));
+    await Bun.write('./shiori.json', shioriJson);
+
+    // TODO: .gitignoreのコピー...存在する場合は追加
+    const gitignore = Bun.file(join(shioriRoot(), 'boilerplate', '.gitignore'));
+    await Bun.write('./.gitignore', gitignore);
   } catch (err) {
     logError(err);
-  }
-};
-
-/**
- * Copies assets from a specified directory to a target directory in 'shiori' based on the assets' names.
- * TODO: copyStaticFileとかでも良さげ
- */
-const copyAssets = async (sourcePath: string): Promise<void> => {
-  try {
-    if (!sourcePath) {
-      console.error('No source path specified for assets.');
-      return;
-    }
-
-    // Extract the directory name from the input source path
-    const directoryName = sourcePath.split('/').pop();
-
-    // Ensure we have a valid directory name
-    if (!directoryName) {
-      throw new Error('Failed to extract a valid directory name from the source path.');
-    }
-
-    // Target path in 'shiori' directory
-    const targetPath = path.join('shiori');
-
-    // Copying the directory and its contents to the target path
-    const copyOptions = {
-      overwrite: true, // Overwrite files at destination if they exist
-      errorOnExist: false
-    };
-    await fse.copy(sourcePath, targetPath, copyOptions);
-
-    console.log(`Assets successfully copied to ${targetPath}`);
-  } catch (error) {
-    logError(error, 'Error copying assets');
   }
 };
 
@@ -254,7 +227,6 @@ const serve = async (): Promise<void> => {
   try {
     const shioriJson = await readShioriJson();
     if (shioriJson) {
-      await copyAssets(shioriJson.assets);
       await copyCodegenToElmStuff();
       await copyElmJson(shioriJson.roots);
       await runCodegen(shioriJson);
@@ -276,11 +248,6 @@ const serve = async (): Promise<void> => {
           await copyElmJson(shioriJson.roots);
           await runCodegen(shioriJson);
         });
-
-      chokidar
-        .watch(shioriJson.assets)
-        .on('add', async () => await copyAssets(shioriJson.assets))
-        .on('change', async () => await copyAssets(shioriJson.assets));
 
       chokidar.watch('shiori/src/Shiori/Route.elm').on('change', async () => await runElmCompile());
     }
@@ -318,7 +285,6 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
     try {
       const shioriJson = await readShioriJson();
       if (shioriJson) {
-        await copyAssets(shioriJson.assets);
         await copyCodegenToElmStuff();
         await copyElmJson(shioriJson.roots);
         await runCodegen(shioriJson);
@@ -330,6 +296,7 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
   }
 
   if (args.arg === 'serve') {
+    const shioriJson = await readShioriJson();
     let ws: { send: (message: string) => void } | null;
     chokidar.watch('shiori/shiori.js').on('change', async () => {
       if (ws) ws.send('reload');
@@ -345,12 +312,14 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
           ws = ws_;
         }
       })
-      .use(staticPlugin({ assets: 'shiori' }))
+      .use(staticPlugin({ assets: shioriJson?.assets, prefix: '' }))
       .get('/shiori.js', () => {
         return new Response(Bun.file('shiori/shiori.js'));
       })
-      .get('/*', () => {
-        return new Response(Bun.file('shiori/index.html'));
+      .onError(({ code, error, set }) => {
+        if (code === 'NOT_FOUND') {
+          return new Response(Bun.file('shiori/index.html'));
+        }
       })
       .listen(3000);
     serve_

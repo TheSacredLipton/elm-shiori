@@ -1,11 +1,6 @@
 {
   "type": "application",
-  "source-directories": [
-    "codegen",
-    "examples/01-hello/src",
-    "examples/02-css/src",
-    "examples/use-assets/src"
-  ],
+  "source-directories": ["src"],
   "elm-version": "0.19.1",
   "dependencies": {
     "direct": {
