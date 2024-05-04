@@ -10,7 +10,7 @@
   "description": "Elm UI Viewer",
   "license": "MIT",
   "bin": {
-    "shiori": "bin/shiori.js"
+    "shiori": "bin/shiori.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.7.0",
