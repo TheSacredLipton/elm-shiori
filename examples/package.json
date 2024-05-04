@@ -1,0 +1,10 @@
+{
+  "name": "examples",
+  "version": "1.0.0",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "start": "bun --watch ../bin/shiori.ts serve",
+    "build": "bun bin/shiori.ts build"
+  }
+}

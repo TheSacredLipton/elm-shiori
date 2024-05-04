@@ -37,9 +37,7 @@
     "yargs": "^17.7.2"
   },
   "scripts": {
-    "start": "bun --watch bin/shiori.ts serve",
     "install": "elm-codegen install",
-    "build": "bun bin/shiori.ts build",
     "test:watch": "elm-test && run-pty % chokidar \"codegen/**/*.elm\" -c \"elm-verify-examples && elm-test\" % chokidar \"tests/*.elm\" -c \"elm-test\"",
     "test": "biome ci . && elm-verify-examples && elm-test",
     "biome-apply": "biome check . --apply",

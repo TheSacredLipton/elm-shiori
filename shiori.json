@@ -1,6 +1,0 @@
-{
-  "FIXME: 通常codegenは不要": "",
-  "roots": ["examples/html", "codegen"],
-  "assets": "examples/assets",
-  "files": ["Image", "Empty", "Button", "Pages.Home_", "Pages.Login.Home_"]
-}

@@ -15,6 +15,7 @@ type ElmFiles = { [key: string]: string };
 type ShioriJson = { roots: string[]; files: ElmFiles; assets: string };
 type ElmJson = { 'source-directories': string[] };
 
+// パッケージとして使う場合 ./node_modules/elm-shiori になるはず
 const shioriRoot = (): string => join(__dirname, '..');
 
 /**
