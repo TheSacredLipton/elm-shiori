@@ -17,14 +17,14 @@ npm
 
 ```sh
 npm i -D bun elm-shiori
-npx bun -b elm-shiori init
+npx bun -b shiori init
 ```
 
 pnpm
 
 ```sh
 pnpm i -D bun elm-shiori
-pnpm bun -b elm-shiori init
+pnpm bun -b shiori init
 ```
 
 ## 使い方
