@@ -37,9 +37,8 @@ const readElmJson = async (): Promise<ElmJson | null> => {
 
 /**
  * Reads and parses the 'shiori.json' file, ensuring it has both 'files' and 'roots' properties.
- * @returns {Promise<ShioriJson|null>}
  */
-const readShioriJson = async () => {
+const readShioriJson = async (): Promise<ShioriJson | null> => {
   try {
     try {
       const json = JSON.parse(
@@ -200,9 +199,8 @@ const copyAssets = async (sourcePath: string): Promise<void> => {
 /**
  * Copies the 'codegen' directory from the 'shioriRoot' directory to a specific location in 'elm-stuff'.
  * This is useful for setting up the necessary code generation files in the right place.
- * @returns {Promise<void>} Resolves when the copying is complete, logs any errors that occur.
  */
-const copyCodegenToElmStuff = async () => {
+const copyCodegenToElmStuff = async (): Promise<void> => {
   try {
     const p_selmstuffCodegen = join('elm-stuff', 'shiori', 'codegen');
     await fse.remove(p_selmstuffCodegen);
@@ -236,7 +234,7 @@ const runCodegen = async (shioriJson: ShioriJson): Promise<void> => {
  * Compiles the Elm source code file 'src/Shiori.elm' into a 'shiori.js' output file.
  * The function changes the current working directory during the process for the compilation context.
  * or silently handles any errors that occur.
- * @todo Implement Hot Module Replacement (HMR) capabilities.
+ * TODO: Implement Hot Module Replacement (HMR) capabilities.
  */
 const runElmCompile = async (): Promise<void> => {
   try {
