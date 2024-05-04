@@ -312,7 +312,7 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
           ws = ws_;
         }
       })
-      .use(staticPlugin({ assets: shioriJson?.assets, prefix: '' }))
+      .use(staticPlugin({ assets: shioriJson?.assets || '', prefix: '' }))
       .get('/shiori.js', () => {
         return new Response(Bun.file('shiori/shiori.js'));
       })
