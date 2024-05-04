@@ -3,8 +3,8 @@
   "source-directories": [
     "codegen",
     "examples/shiori",
-    "examples/01-counter/src",
-    "examples/02-simple/src"
+    "examples/01-hello/src",
+    "examples/simple/src"
   ],
   "elm-version": "0.19.1",
   "dependencies": {
