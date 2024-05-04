@@ -336,6 +336,7 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
   }
 
   if (args.arg === 'serve') {
+    const shioriJson = await readShioriJson();
     let ws: { send: (message: string) => void } | null;
     chokidar.watch('shiori/shiori.js').on('change', async () => {
       if (ws) ws.send('reload');
@@ -351,12 +352,14 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
           ws = ws_;
         }
       })
-      .use(staticPlugin({ assets: 'shiori' }))
+      .use(staticPlugin({ assets: shioriJson?.assets, prefix: '' }))
       .get('/shiori.js', () => {
         return new Response(Bun.file('shiori/shiori.js'));
       })
-      .get('/*', () => {
-        return new Response(Bun.file('shiori/index.html'));
+      .onError(({ code, error, set }) => {
+        if (code === 'NOT_FOUND') {
+          return new Response(Bun.file('shiori/index.html'));
+        }
       })
       .listen(3000);
     serve_
