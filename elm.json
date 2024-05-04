@@ -1,11 +1,6 @@
 {
   "type": "application",
-  "source-directories": [
-    "codegen",
-    "examples/shiori",
-    "examples/01-hello/src",
-    "examples/simple/src"
-  ],
+  "source-directories": ["codegen", "examples/01-hello/src", "examples/use-assets/src"],
   "elm-version": "0.19.1",
   "dependencies": {
     "direct": {
