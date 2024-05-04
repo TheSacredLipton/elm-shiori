@@ -4,7 +4,7 @@
     "codegen",
     "examples/01-hello/src",
     "examples/02-css/src",
-    "examples/use-assets/src"
+    "examples/03-elm-ui/src"
   ],
   "elm-version": "0.19.1",
   "dependencies": {
@@ -16,7 +16,8 @@
       "elm/parser": "1.1.0",
       "elm/url": "1.0.0",
       "elm-community/list-extra": "8.6.0",
-      "mdgriffith/elm-codegen": "2.0.0"
+      "mdgriffith/elm-codegen": "2.0.0",
+      "mdgriffith/elm-ui": "1.1.8"
     },
     "indirect": {
       "elm/time": "1.0.0",
