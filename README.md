@@ -33,7 +33,7 @@ bun add -D elm-shiori
 }
 ```
 
-2.初回は`npx shiori init`を実行
+2.初回は`bun -b shiori init`を実行
 
 3.プロジェクトに合わせて`shiori/Shiori_View.elm`を編集してください
 
