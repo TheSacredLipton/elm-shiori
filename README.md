@@ -3,12 +3,12 @@
 - 自作カードゲームのUI確認モチベで作っています
 - storybook + doctest的なツール
 - サンプル: <https://elm-shiori.pages.dev/>
-- 現状bunとelmのglobal install必須、クロスコンパイルは気が向いたら
+- 現状bunの利用必須、クロスコンパイルは気が向いたら
 
 ## インストール
 
 ```sh
-npm i -D elm-shiori
+bun add -D elm-shiori
 ```
 
 ## 使い方
@@ -52,7 +52,7 @@ map =
 
 4.`shiori/index.html`を編集し任意のCSSやjs等読み込ませてください
 
-5.`npx shiori serve`で起動
+5.`bun -b shiori serve`で起動
 
 - <http://localhost:3000>
 - 気が向いたらport変更できるようにする予定
@@ -132,9 +132,9 @@ view model =
 ## CLI
 
 ```sh
-npx shiori init
-npx shiori build
-npx shiori serve
+bun -b shiori init
+bun -b shiori build
+bun -b shiori serve
 ```
 
 ## 開発
@@ -147,7 +147,7 @@ global install必要
 ### 検証
 
 ```sh
-bun i -D https://github.com/TheSacredLipton/elm-shiori.git#branch-name
+bun add -D https://github.com/TheSacredLipton/elm-shiori.git#branch-name
 ```
 
 ### publish
