@@ -1,5 +1,5 @@
 {
   "roots": ["src"],
   "assets": "public",
-  "files": ["Main"]
+  "files": ["Css"]
 }

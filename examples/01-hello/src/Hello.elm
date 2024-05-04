@@ -1,4 +1,4 @@
-module Main exposing (Model, main, view)
+module Hello exposing (Model, main, view)
 
 import Browser
 import Html exposing (..)

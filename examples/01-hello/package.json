@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "elm reactor",
     "shiori": "bun --watch ../../bin/shiori.ts serve"
   },
   "keywords": [],

@@ -5,7 +5,6 @@ import chokidar from 'chokidar';
 import fse from 'fs-extra';
 const yargs = require('yargs');
 const { red, cyan } = require('kleur');
-import path from 'node:path';
 import { staticPlugin } from '@elysiajs/static';
 import { run_generation_from_cli } from 'elm-codegen/dist/run';
 import { Elysia } from 'elysia';
@@ -171,38 +170,6 @@ const init = async (): Promise<void> => {
 };
 
 /**
- * Copies assets from a specified directory to a target directory in 'shiori' based on the assets' names.
- * TODO: copyStaticFileとかでも良さげ
- */
-const copyAssets = async (sourcePath: string): Promise<void> => {
-  try {
-    if (!sourcePath) return;
-
-    // Extract the directory name from the input source path
-    const directoryName = sourcePath.split('/').pop();
-
-    // Ensure we have a valid directory name
-    if (!directoryName) {
-      throw new Error('Failed to extract a valid directory name from the source path.');
-    }
-
-    // Target path in 'shiori' directory
-    const targetPath = path.join('shiori');
-
-    // Copying the directory and its contents to the target path
-    const copyOptions = {
-      overwrite: true, // Overwrite files at destination if they exist
-      errorOnExist: false
-    };
-    await fse.copy(sourcePath, targetPath, copyOptions);
-
-    console.log(`Assets successfully copied to ${targetPath}`);
-  } catch (error) {
-    logError(error, 'Error copying assets');
-  }
-};
-
-/**
  * Copies the 'codegen' directory from the 'shioriRoot' directory to a specific location in 'elm-stuff'.
  * This is useful for setting up the necessary code generation files in the right place.
  */
@@ -260,7 +227,6 @@ const serve = async (): Promise<void> => {
   try {
     const shioriJson = await readShioriJson();
     if (shioriJson) {
-      await copyAssets(shioriJson.assets);
       await copyCodegenToElmStuff();
       await copyElmJson(shioriJson.roots);
       await runCodegen(shioriJson);
@@ -282,11 +248,6 @@ const serve = async (): Promise<void> => {
           await copyElmJson(shioriJson.roots);
           await runCodegen(shioriJson);
         });
-
-      chokidar
-        .watch(shioriJson.assets)
-        .on('add', async () => await copyAssets(shioriJson.assets))
-        .on('change', async () => await copyAssets(shioriJson.assets));
 
       chokidar.watch('shiori/src/Shiori/Route.elm').on('change', async () => await runElmCompile());
     }
@@ -324,7 +285,6 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
     try {
       const shioriJson = await readShioriJson();
       if (shioriJson) {
-        await copyAssets(shioriJson.assets);
         await copyCodegenToElmStuff();
         await copyElmJson(shioriJson.roots);
         await runCodegen(shioriJson);

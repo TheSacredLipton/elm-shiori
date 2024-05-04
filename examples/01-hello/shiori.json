@@ -1,4 +1,4 @@
 {
   "roots": ["src"],
-  "files": ["Main"]
+  "files": ["Hello"]
 }

@@ -1,7 +1,8 @@
-module Main exposing (Model, main, view)
+module Css exposing (Model, main, view)
 
 import Browser
 import Html exposing (..)
+import Html.Attributes exposing (class)
 
 
 main : Program () Model Msg
@@ -46,5 +47,5 @@ update msg model =
 -}
 view : Model -> Html Msg
 view _ =
-    div []
+    div [ class "hello" ]
         [ text "hello" ]
