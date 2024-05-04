@@ -2,7 +2,6 @@
 
 - 自作カードゲームのUI確認モチベで作っています
 - storybook + doctest的なツール
-- サンプル: <https://elm-shiori.pages.dev/>
 - 現状bunの利用必須、クロスコンパイルは気が向いたら
 
 ## インストール
