@@ -1,8 +1,10 @@
 # elm-shiori
 
-カードゲームのUI確認用に作りました。
+カードゲームのUI確認モチベで作りました
 
 サンプル: <https://elm-shiori.pages.dev/>
+
+現状bunとelmのglobal install必須、クロスコンパイルは気が向いたら
 
 ## インストール
 
@@ -53,8 +55,8 @@ map =
 
 5.`npx shiori serve`で起動
 
-- ブラウザで <http://localhost:3000> にアクセス
-- 気が向いたらport番号変更できるようにする予定
+- <http://localhost:3000> 
+- 気が向いたらport変更できるようにする予定
 
 ## コメントの書き方
 
@@ -144,12 +146,11 @@ global install
 - elm
 
 ```sh
-npm i -D https://github.com/TheSacredLipton/elm-shiori.git
+bun i -D https://github.com/TheSacredLipton/elm-shiori.git
 ```
 
 ```sh
-pnpm run test
-npm publish
+bun npm-publish
 ```
 
 ## ライセンス
