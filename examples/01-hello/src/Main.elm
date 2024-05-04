@@ -47,4 +47,4 @@ update msg model =
 view : Model -> Html Msg
 view _ =
     div []
-        [ text "New Sandbox" ]
+        [ text "hello" ]
