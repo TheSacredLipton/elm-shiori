@@ -6,8 +6,25 @@
 
 ## インストール
 
+bun(推奨)
+
 ```sh
 bun add -D elm-shiori
+bun -b shiori init
+```
+
+npm
+
+```sh
+npm i -D bun elm-shiori
+npx bun -b elm-shiori init
+```
+
+pnpm
+
+```sh
+pnpm i -D bun elm-shiori
+pnpm bun -b elm-shiori init
 ```
 
 ## 使い方
