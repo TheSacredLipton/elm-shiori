@@ -156,7 +156,15 @@ const init = async (): Promise<void> => {
   try {
     const p_shiori = 'shiori';
     await fse.remove(p_shiori);
-    await fse.copy(join(shioriRoot(), 'shiori'), p_shiori);
+    await fse.copy(join(shioriRoot(), 'boilerplate', 'shiori'), p_shiori);
+
+    // TODO: shiori.jsonのコピー...存在する場合は無視
+    const shioriJson = Bun.file(join(shioriRoot(), 'boilerplate', 'shiori.json'));
+    await Bun.write('./shiori.json', shioriJson);
+
+    // TODO: .gitignoreのコピー...存在する場合は追加
+    const gitignore = Bun.file(join(shioriRoot(), 'boilerplate', '.gitignore'));
+    await Bun.write('./.gitignore', gitignore);
   } catch (err) {
     logError(err);
   }

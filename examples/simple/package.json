@@ -4,7 +4,8 @@
   "dependencies": {},
   "devDependencies": {},
   "scripts": {
-    "start": "bun --watch ../bin/shiori.ts serve",
-    "build": "bun bin/shiori.ts build"
+    "start": "bun --watch ../../bin/shiori.ts serve",
+    "build": "bun ../../bin/shiori.ts build",
+    "init": "bun ../../bin/shiori.ts init"
   }
 }

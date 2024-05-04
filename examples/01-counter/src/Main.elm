@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Main exposing (Model, main, view)
 
 import Browser
 import Html exposing (..)
@@ -39,6 +39,11 @@ update msg model =
             model
 
 
+{-|
+
+    <shiori> view (Model 0 "modelInitialValue2")
+
+-}
 view : Model -> Html Msg
 view _ =
     div []
