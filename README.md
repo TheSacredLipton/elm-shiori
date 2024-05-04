@@ -51,7 +51,7 @@ map =
     List.map (layout [] >> Html.map (always ()))
 ```
 
-4.`shiori/index.html`を編集し任意のCSSを読み込ませてください
+4.`shiori/index.html`を編集し任意のCSSやjs等読み込ませてください
 
 5.`npx shiori serve`で起動
 
@@ -140,14 +140,18 @@ npx shiori serve
 
 ## 開発
 
-global install
+global install必要
 
 - bun
 - elm
 
+### 検証
+
 ```sh
-bun i -D https://github.com/TheSacredLipton/elm-shiori.git
+bun i -D https://github.com/TheSacredLipton/elm-shiori.git#branch-name
 ```
+
+### publish
 
 ```sh
 bun npm-publish
