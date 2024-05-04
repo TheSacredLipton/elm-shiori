@@ -1,10 +1,9 @@
 # elm-shiori
 
-カードゲームのUI確認モチベで作りました
-
-サンプル: <https://elm-shiori.pages.dev/>
-
-現状bunとelmのglobal install必須、クロスコンパイルは気が向いたら
+- 自作カードゲームのUI確認モチベで作っています
+- storybook + doctest的なツール
+- サンプル: <https://elm-shiori.pages.dev/>
+- 現状bunとelmのglobal install必須、クロスコンパイルは気が向いたら
 
 ## インストール
 
@@ -55,7 +54,7 @@ map =
 
 5.`npx shiori serve`で起動
 
-- <http://localhost:3000> 
+- <http://localhost:3000>
 - 気が向いたらport変更できるようにする予定
 
 ## コメントの書き方
