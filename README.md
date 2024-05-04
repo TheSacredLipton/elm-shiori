@@ -13,7 +13,7 @@ bun add -D elm-shiori
 bun -b shiori init
 ```
 
-npm
+npm(未検証)
 
 ```sh
 npm i -D bun elm-shiori
