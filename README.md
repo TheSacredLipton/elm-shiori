@@ -3,7 +3,7 @@
 - 自作カードゲームのUI確認モチベで作っています
 - storybook + doctest的なツール
 - elmのPATH通す必要あり
-- 現状bunの利用必須、クロスコンパイルは気が向いたら
+- 現状bunの利用必須、[クロスコンパイルは気が向いたら](https://github.com/TheSacredLipton/elm-shiori/issues/9)
 - bunあまりよくわかってないので多分動作不安定
 - 使い方の雰囲気は[examples(作りかけ)](./examples)
 - macでしか動作確認していない
