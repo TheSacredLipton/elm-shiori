@@ -145,6 +145,8 @@ bun add -D https://github.com/TheSacredLipton/elm-shiori.git#branch-name
 
 ### publish
 
+- 気が向いたらgithub actions
+
 ```sh
 bun npm-publish
 ```
