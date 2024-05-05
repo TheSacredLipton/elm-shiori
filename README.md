@@ -4,6 +4,7 @@
 - storybook + doctest的なツール
 - elmのPATH通す必要あり
 - 現状bunの利用必須、クロスコンパイルは気が向いたら
+- bunあまりよくわかってない
 - 使い方の雰囲気は[examples](./examples)
 - macでしか動作確認していない
 
