@@ -132,10 +132,9 @@ bun -b shiori serve
 
 ## 開発
 
-global install必要
-
-- bun
-- elm
+- global install必要
+    - bun
+    - elm
 
 ### 検証
 
