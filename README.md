@@ -2,6 +2,7 @@
 
 - 自作カードゲームのUI確認モチベで作っています
 - storybook + doctest的なツール
+- elmのPATH通す必要あり
 - 現状bunの利用必須、クロスコンパイルは気が向いたら
 - 使い方の雰囲気は[examples](./examples)
 
@@ -21,7 +22,7 @@ npm i -D bun elm-shiori
 npx bun -b shiori init
 ```
 
-pnpm
+pnpm(ちょっとだけ試した)
 
 ```sh
 pnpm i -D bun elm-shiori
@@ -30,46 +31,16 @@ pnpm bun -b shiori init
 
 ## 使い方
 
-1. 準備
 
-- プロジェクトルートで事前に`elm/url`をインストールしておいてください
-- `shiori.json`をプロジェクトルートに用意してください
+1.初回は`bun -b shiori init`を実行
 
-例:
+2.【Optional】プロジェクトに合わせて`shiori/Shiori_View.elm`を編集
 
-```json
-{
-    "roots": ["src"],
-    "assets": "public",
-    "files": [
-        "Shape",
-        "Button",
-        "Image",
-        "Pages.Home_",
-        "Pages.Login.Home_"
-    ]
-}
-```
+- [elm-ui](https://github.com/TheSacredLipton/elm-shiori/blob/main/examples/03-elm-ui/shiori/src/Shiori_View.elm)
 
-2.初回は`bun -b shiori init`を実行
+3.`shiori/index.html`を編集し任意のCSSやjs等読み込ませる
 
-3.プロジェクトに合わせて`shiori/Shiori_View.elm`を編集してください
-
-例: elm-ui
-
-```elm
-import Html exposing (Html)
-import Element exposing (Element, layout)
-
-
-map : List (Element msg) -> List (Html ())
-map =
-    List.map (layout [] >> Html.map (always ()))
-```
-
-4.`shiori/index.html`を編集し任意のCSSやjs等読み込ませてください
-
-5.`bun -b shiori serve`で起動
+4.`bun -b shiori serve`
 
 - <http://localhost:3000>
 - 気が向いたらport変更できるようにする予定
@@ -164,7 +135,7 @@ global install必要
 ### 検証
 
 ```sh
-bun add -D https://github.com/TheSacredLipton/elm-shiori.git#branch-name
+bun add -D https://github.com/TheSacredLipton/elm-shiori.git#main
 ```
 
 ### publish
