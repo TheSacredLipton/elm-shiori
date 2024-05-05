@@ -34,13 +34,17 @@ pnpm bun -b shiori init
 
 1.初回は`bun -b shiori init`を実行
 
-2.【Optional】プロジェクトに合わせて`shiori/Shiori_View.elm`を編集
+2.【Optional】`shiori/Shiori_View.elm`を編集
 
 - [elm-ui](https://github.com/TheSacredLipton/elm-shiori/blob/main/examples/03-elm-ui/shiori/src/Shiori_View.elm)
 
-3.`shiori/index.html`を編集し任意のCSSやjs等読み込ませる
+3.【Optional】`shiori/index.html`を編集し任意のCSSやjs等読み込ませる
 
-4.`bun -b shiori serve`
+4.[examples](./examples)を参考に`shiori.json`を設定
+
+5.[コメント追加](#コメントの書き方)
+
+6.`bun -b shiori serve`
 
 - <http://localhost:3000>
 - 気が向いたらport変更できるようにする予定
@@ -135,7 +139,7 @@ global install必要
 ### 検証
 
 ```sh
-bun add -D https://github.com/TheSacredLipton/elm-shiori.git#main
+bun add -D https://github.com/TheSacredLipton/elm-shiori.git#branch-name
 ```
 
 ### publish
