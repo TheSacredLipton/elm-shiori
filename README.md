@@ -36,7 +36,7 @@ pnpm bun -b shiori init
 
 2.【Optional】`shiori/Shiori_View.elm`を編集
 
-- [elm-ui](https://github.com/TheSacredLipton/elm-shiori/blob/main/examples/03-elm-ui/shiori/src/Shiori_View.elm)
+- [elm-uiの例](https://github.com/TheSacredLipton/elm-shiori/blob/main/examples/03-elm-ui/shiori/src/Shiori_View.elm)
 
 3.【Optional】`shiori/index.html`を編集し任意のCSSやjs等読み込ませる
 
