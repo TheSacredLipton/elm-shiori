@@ -52,6 +52,8 @@ pnpm bun -b shiori init
 - <http://localhost:3000>
 - 気が向いたらport変更できるようにする予定
 
+7.【Optional】`shiori/Shiori.elm`を編集し外観を変更
+
 ## コメントの書き方
 
 単体
@@ -152,7 +154,7 @@ bun add -D https://github.com/TheSacredLipton/elm-shiori.git#branch-name
 bun -b shiori init
 ```
 
-あるいは[インストール](#インストール)参照
+あるいは[インストール](#インストール)
 
 ### npm publish
 
