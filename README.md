@@ -137,14 +137,25 @@ bun -b shiori serve
     - bun
     - elm
 
+### 基本
+
+```sh
+cd examples/【n-任意】
+bun --watch ../../bin/shiori.ts serve
+```
+
 ### 検証
 
 ```sh
 bun add -D https://github.com/TheSacredLipton/elm-shiori.git#branch-name
+bun -b shiori init
 ```
 
-### publish
+あるいは[インストール](#インストール)参照
 
+### npm publish
+
+- とりあえず手動
 - 気が向いたらgithub actions
 
 ```sh
