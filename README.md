@@ -7,6 +7,7 @@
 - bunあまりよくわかってない
 - 使い方の雰囲気は[examples](./examples)
 - macでしか動作確認していない
+- coderabbitaiお試し中
 
 ## インストール
 
