@@ -136,8 +136,8 @@ bun -b shiori serve
 ## 開発
 
 - global install必要
-    - bun
-    - elm
+  - bun
+  - elm
 - coderabbitaiお試し中
 
 ### 基本
