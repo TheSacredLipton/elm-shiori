@@ -2,6 +2,7 @@
   "type": "application",
   "source-directories": [
     "codegen",
+    "boilerplate/shiori/src",
     "examples/01-hello/src",
     "examples/02-css/src",
     "examples/03-elm-ui/src"
