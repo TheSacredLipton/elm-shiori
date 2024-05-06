@@ -250,6 +250,8 @@ const serve = async (): Promise<void> => {
         });
 
       chokidar.watch('shiori/src/Shiori/Route.elm').on('change', async () => await runElmCompile());
+      chokidar.watch('shiori/src/Shiori_View.elm').on('change', async () => await runElmCompile());
+      chokidar.watch('shiori/src/Shiori.elm').on('change', async () => await runElmCompile());
     }
   } catch (err) {
     logError(err);
