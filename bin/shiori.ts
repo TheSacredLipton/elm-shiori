@@ -249,7 +249,15 @@ const serve = async (): Promise<void> => {
           await runCodegen(shioriJson);
         });
 
-      chokidar.watch('shiori/src/Shiori/Route.elm').on('change', async () => await runElmCompile());
+      chokidar
+        .watch(join('shiori', 'src', 'Shiori', 'Route.elm'))
+        .on('change', async () => await runElmCompile());
+      chokidar
+        .watch(join('shiori', 'src', 'Shiori_View.elm'))
+        .on('change', async () => await runElmCompile());
+      chokidar
+        .watch(join('shiori', 'src', 'Shiori.elm'))
+        .on('change', async () => await runElmCompile());
     }
   } catch (err) {
     logError(err);
