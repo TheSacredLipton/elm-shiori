@@ -7,7 +7,6 @@
 - bunあまりよくわかってないので多分動作不安定
 - 使い方の雰囲気は[examples(作りかけ)](./examples)
 - macでしか動作確認していない
-- coderabbitaiお試し中
 
 ## インストール
 
@@ -139,6 +138,7 @@ bun -b shiori serve
 - global install必要
     - bun
     - elm
+- coderabbitaiお試し中
 
 ### 基本
 
