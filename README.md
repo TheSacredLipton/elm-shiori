@@ -13,26 +13,26 @@ bun(推奨)
 
 ```sh
 bun add -D elm-shiori
-bun -b shiori init
+bun shiori init
 ```
 
 npm(未検証)
 
 ```sh
 npm i -D bun elm-shiori
-npx bun -b shiori init
+npx bun shiori init
 ```
 
 pnpm
 
 ```sh
 pnpm add -D bun elm-shiori
-pnpm bun -b shiori init
+pnpm bun shiori init
 ```
 
 ## 使い方
 
-1.初回は`bun -b shiori init`を実行
+1.初回は`bun shiori init`を実行
 
 2.[examples](./examples)を参考に`shiori/src/Shiori_View.elm`を編集
 
@@ -44,7 +44,7 @@ pnpm bun -b shiori init
 
 5.[コメント追加](#コメントの書き方)
 
-6.`bun -b shiori serve`
+6.`bun shiori serve`
 
 - <http://localhost:3000>
 
@@ -125,9 +125,9 @@ view model =
 ## CLI
 
 ```sh
-bun -b shiori init
-bun -b shiori build
-bun -b shiori serve
+bun shiori init
+bun shiori build
+bun shiori serve
 ```
 
 ## 開発
@@ -148,7 +148,7 @@ bun --watch ../../bin/shiori.ts serve
 
 ```sh
 bun add -D https://github.com/TheSacredLipton/elm-shiori.git#branch-name
-bun -b shiori init
+bun shiori init
 ```
 
 ### npm publish
