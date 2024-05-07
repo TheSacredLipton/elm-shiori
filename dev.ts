@@ -1,9 +1,14 @@
 import { join } from 'node:path';
 import chokidar from 'chokidar';
 const { red, cyan } = require('kleur');
-const shioriRoot = (): string => join(__dirname, '..');
+import { readdir } from 'node:fs/promises';
 
-const routeElm = `module Shiori.Route exposing (..)
+console.log(cyan('== running dev.ts =='));
+
+/**
+ * Route.elm
+ */
+const route_elm = `module Shiori.Route exposing (..)
 
 
 links =
@@ -13,12 +18,30 @@ links =
 view _ =
     []
 `;
-await Bun.write(join('boilerplate', 'shiori', 'src', 'Shiori', 'Route.elm'), routeElm);
+await Bun.write(
+  join(import.meta.dir, 'boilerplate', 'shiori', 'src', 'Shiori', 'Route.elm'),
+  route_elm
+);
 
-console.log(cyan('== running dev.ts =='));
-
+/**
+ * white shiori.elm
+ */
 chokidar
-  .watch(join(shioriRoot(), 'boilerplate', 'shiori', 'src', 'Shiori.elm'))
+  .watch(join(import.meta.dir, 'boilerplate', 'shiori', 'src', 'Shiori.elm'))
   .on('change', async () => {
-    console.log('test');
+    // read all the files in the current directory
+    const examples = await readdir(join(import.meta.dir, 'examples'));
+
+    const shiori_elm = Bun.file(
+      join(import.meta.dir, 'boilerplate', 'shiori', 'src', 'Shiori.elm')
+    );
+
+    console.log(cyan('white Shiori.elm'));
+    for (const example of examples) {
+      console.log(example);
+      await Bun.write(
+        join(import.meta.dir, 'examples', example, 'shiori', 'src', 'Shiori.elm'),
+        shiori_elm
+      );
+    }
   });
