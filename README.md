@@ -132,16 +132,16 @@ bun shiori serve
 
 ## 開発
 
-- global install必要
+- Global install推奨
   - bun
   - elm
-- coderabbitaiお試し中
+- CodeRabbitお試し中
 
 ### 基本
 
 ```sh
-cd examples/【n-任意】
-bun --watch ../../bin/shiori.ts serve
+git clone https://github.com/TheSacredLipton/elm-shiori.git
+bun start 01-hello
 ```
 
 ### 検証
