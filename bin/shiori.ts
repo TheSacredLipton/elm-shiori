@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { join } from 'node:path';
 import chokidar from 'chokidar';
 import fse from 'fs-extra';
