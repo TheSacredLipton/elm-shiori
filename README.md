@@ -32,7 +32,6 @@ pnpm bun -b shiori init
 
 ## 使い方
 
-
 1.初回は`bun -b shiori init`を実行
 
 2.[examples](./examples)を参考に`shiori/src/Shiori_View.elm`を編集
