@@ -18,10 +18,14 @@ links =
 view _ =
     []
 `;
-await Bun.write(
-  join(import.meta.dir, 'boilerplate', 'shiori', 'src', 'Shiori', 'Route.elm'),
-  route_elm
-);
+try {
+  await Bun.write(
+    join(import.meta.dir, 'boilerplate', 'shiori', 'src', 'Shiori', 'Route.elm'),
+    route_elm
+  );
+} catch (error) {
+  console.error(red(`Error writing Route.elm: ${error}`));
+}
 
 /**
  * white shiori.elm
