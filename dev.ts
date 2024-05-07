@@ -33,19 +33,18 @@ try {
 chokidar
   .watch(join(import.meta.dir, 'boilerplate', 'shiori', 'src', 'Shiori.elm'))
   .on('change', async () => {
-    // read all the files in the current directory
-    const examples = await readdir(join(import.meta.dir, 'examples'));
-
-    const shiori_elm = Bun.file(
-      join(import.meta.dir, 'boilerplate', 'shiori', 'src', 'Shiori.elm')
-    );
-
-    console.log(cyan('white Shiori.elm'));
-    for (const example of examples) {
-      console.log(example);
-      await Bun.write(
-        join(import.meta.dir, 'examples', example, 'shiori', 'src', 'Shiori.elm'),
-        shiori_elm
+    try {
+      const examples = await readdir(join(import.meta.dir, 'examples'));
+      const shiori_elm = Bun.file(
+        join(import.meta.dir, 'boilerplate', 'shiori', 'src', 'Shiori.elm')
       );
+      for (const example of examples) {
+        await Bun.write(
+          join(import.meta.dir, 'examples', example, 'shiori', 'src', 'Shiori.elm'),
+          shiori_elm
+        );
+      }
+    } catch (error) {
+      console.error(red(`Error during file handling: ${error}`));
     }
   });
