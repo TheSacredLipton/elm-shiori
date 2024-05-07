@@ -38,6 +38,7 @@
   },
   "scripts": {
     "install": "elm-codegen install",
+    "start": "bun --watch dev.ts",
     "test:watch": "elm-test && run-pty % chokidar \"codegen/**/*.elm\" -c \"elm-verify-examples && elm-test\" % chokidar \"tests/*.elm\" -c \"elm-test\"",
     "test": "biome ci . && elm-verify-examples && elm-test",
     "biome-apply": "biome check . --apply",
