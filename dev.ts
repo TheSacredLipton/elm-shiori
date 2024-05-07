@@ -52,27 +52,34 @@ const writeShioriElm = () => {
     });
 };
 
-// TODO: examplesの情報取得
 const runShioriTs = async (name: string) => {
   const examplePath = join('examples', name);
-  await $`(cd ${examplePath} && bun --watch ../../bin/shiori.ts serve)`;
+  try {
+    await $`(cd ${examplePath} && bun --watch ../../bin/shiori.ts serve)`;
+  } catch (error) {
+    console.error(red(`Error during file handling: ${error}`));
+  }
 };
 
-const args = yargs
+const args: { example: string } = yargs
   .command('* <example>', '=== commands === \n\n init \n start')
   .positional('example', {
     describe: 'example',
     type: 'string',
     demandOption: true
   })
-  // TODO: checkの追加
   .parseSync();
 (async () => {
-  console.log(cyan('== running dev.ts =='));
-  console.log(args.example);
-  if (args.example) {
-    await writeRouteElm();
-    writeShioriElm();
-    await runShioriTs(args.example);
+  const examples = await readdir(join(import.meta.dir, 'examples'));
+  console.log(examples);
+  if (examples.includes(args.example)) {
+    console.log(cyan('== running dev.ts =='));
+    if (args.example) {
+      await writeRouteElm();
+      writeShioriElm();
+      await runShioriTs(args.example);
+    }
+  } else {
+    console.error(red(`${args.example}はありません`));
   }
 })();
