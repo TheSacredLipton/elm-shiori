@@ -71,7 +71,6 @@ const args: { example: string } = yargs
   .parseSync();
 (async () => {
   const examples = await readdir(join(import.meta.dir, 'examples'));
-  console.log(examples);
   if (examples.includes(args.example)) {
     console.log(cyan('== running dev.ts =='));
     if (args.example) {
@@ -80,6 +79,7 @@ const args: { example: string } = yargs
       await runShioriTs(args.example);
     }
   } else {
+    console.log(examples);
     console.error(red(`${args.example}はありません`));
   }
 })();
