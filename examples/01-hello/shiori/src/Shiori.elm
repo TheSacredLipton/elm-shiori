@@ -92,8 +92,7 @@ view model =
             , header_
             , smNav model.isActive
             , div
-                [ style "max-width" "900px"
-                , style "width" "100%"
+                [ style "width" "100%"
                 , style "display" "flex"
                 , style "gap" "24px"
                 ]
@@ -122,8 +121,7 @@ header w =
         , style "z-index" "10"
         ]
         [ div
-            [ style "max-width" "900px"
-            , style "width" "100%"
+            [ style "width" "100%"
             , style "height" "100%"
             , style "padding" "0px 20px"
             , style "box-sizing" "border-box"
@@ -253,9 +251,12 @@ body url =
         [ style "width" "100%"
         , style "padding" "30px 10px"
         , style "box-sizing" "border-box"
+        , style "overflow" "scroll"
+        , style "min-height" "calc(100vh - 48px)"
         ]
         [ div
             [ style "gap" "20px"
+            , style "width" "100%"
             , style "display" "flex"
             , style "flex-direction" "column"
             ]

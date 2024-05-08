@@ -1,4 +1,4 @@
-module Tailwind exposing (Model, main, view)
+module Tailwind exposing (Model, main, view, widthTest)
 
 import Browser
 import Html exposing (..)
@@ -49,3 +49,13 @@ view : Model -> Html Msg
 view _ =
     div [ class "bg-slate-100" ]
         [ text "hello" ]
+
+
+{-|
+
+    <shiori> widthTest
+
+-}
+widthTest : Html msg
+widthTest =
+    div [ class "bg-orange-400 w-[2000px]" ] []
