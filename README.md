@@ -137,21 +137,19 @@ bun shiori serve
   - elm
 - CodeRabbitお試し中
 
-### 基本
-
 ```sh
 git clone https://github.com/TheSacredLipton/elm-shiori.git
 bun start 01-hello
 ```
 
-### 検証
+### npm publish
+
+確認
 
 ```sh
-bun add -D https://github.com/TheSacredLipton/elm-shiori.git#branch-name
+bun add -D https://github.com/TheSacredLipton/elm-shiori.git
 bun shiori init
 ```
-
-### npm publish
 
 - とりあえず手動
 
