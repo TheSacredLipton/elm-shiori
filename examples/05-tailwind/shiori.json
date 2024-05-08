@@ -1,5 +1,4 @@
 {
   "roots": ["src"],
-  "assets": "public",
   "files": ["Tailwind"]
 }

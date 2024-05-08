@@ -58,4 +58,4 @@ view _ =
 -}
 widthTest : Html msg
 widthTest =
-    div [ class "bg-orange-400 w-[2000px]" ] []
+    div [ class "bg-orange-400 w-[2000px] h-10" ] []
