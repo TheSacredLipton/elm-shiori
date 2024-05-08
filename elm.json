@@ -5,7 +5,8 @@
     "boilerplate/shiori/src",
     "examples/01-hello/src",
     "examples/02-css/src",
-    "examples/03-elm-ui/src"
+    "examples/03-elm-ui/src",
+    "examples/05-tailwind/src"
   ],
   "elm-version": "0.19.1",
   "dependencies": {
