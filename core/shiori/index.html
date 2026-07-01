@@ -7,11 +7,64 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
     <title>elm-shiori</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         html,
         body {
             margin: 0;
             height: 100%;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1c1917;
+            background-color: #fafaf9;
+        }
+
+        /* iframeプレビューエリアのスタイル */
+        .shiori-preview-iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e7e5e4;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d6d3d1;
+        }
+
+        /* リンクのホバー・アクティブスタイル */
+        .shiori-link {
+            transition: all 0.2s ease-in-out;
+            border-radius: 8px;
+        }
+        .shiori-link:hover {
+            background-color: #f5f5f4 !important;
+            color: #1c1917 !important;
+            transform: translateX(2px);
+        }
+        .shiori-link-active {
+            background-color: #ffedd5 !important;
+            color: #ea580c !important;
+            font-weight: 500;
+        }
+        .shiori-link-active:hover {
+            background-color: #ffedd5 !important;
+            color: #ea580c !important;
+            transform: none;
         }
     </style>
 </head>

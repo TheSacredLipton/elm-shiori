@@ -53,6 +53,21 @@ const writeShioriElm = example => {
       console.error(red(`Error during file handling: ${error}`));
     }
   });
+
+  chokidar.watch(join(__dirname, 'core', 'shiori', 'index.html')).on('change', async () => {
+    try {
+      const index_html = await readFile(
+        join(__dirname, 'core', 'shiori', 'index.html'),
+        'utf-8'
+      );
+      await writeFile(
+        join(__dirname, 'examples', example, 'elm-stuff', 'shiori', 'index.html'),
+        index_html
+      );
+    } catch (error) {
+      console.error(red(`Error during index.html handling: ${error}`));
+    }
+  });
 };
 
 /**
