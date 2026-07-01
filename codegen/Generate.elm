@@ -273,7 +273,7 @@ genTypeRoute elmCode =
         import Elm.ToString exposing (declaration)
 
         declaration <| genView [("", [])]
-        --> { body = "view : Url.Url -> List (Html.Html ())\nview url =\n    case url |> toRoute of\n        NotFound ->\n            []\n\n         str ->\n            case str of\n                _ ->\n                    []\n\n\n", docs = "", imports = "import Html\nimport Url", signature = "view : Url.Url -> List (Html.Html ())" }
+        --> { body = "view : Url.Url -> List (Html.Html ())\nview url =\n    case url |> toRoute of\n        NotFound ->\n            []\n    \n         str ->\n            case str of\n                _ ->\n                    []\n\n\n", docs = "", imports = "import Html\nimport Url", signature = "view : Url.Url -> List (Html.Html ())" }
 
 -}
 genView : ElmCode -> Elm.Declaration

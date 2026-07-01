@@ -9,30 +9,14 @@
 
 ## インストール
 
-bun(推奨)
-
 ```sh
-bun add -D elm-shiori
-bun shiori init
-```
-
-npm(未検証)
-
-```sh
-npm i -D bun elm-shiori
-npx bun shiori init
-```
-
-pnpm
-
-```sh
-pnpm add -D bun elm-shiori
-pnpm bun shiori init
+npm i -D elm-shiori
+npx shiori init
 ```
 
 ## 使い方
 
-1.初回は`bun shiori init`を実行
+1.初回は`npx shiori init`を実行
 
 2.[examples](./examples)を参考に`shiori/src/Shiori_View.elm`を編集
 
@@ -44,7 +28,7 @@ pnpm bun shiori init
 
 5.[コメント追加](#コメントの書き方)
 
-6.`bun shiori serve`
+6.`npx shiori serve`
 
 - <http://localhost:3000>
 
@@ -125,21 +109,21 @@ view model =
 ## CLI
 
 ```sh
-bun shiori init
-bun shiori build
-bun shiori serve
+npx shiori init
+npx shiori build
+npx shiori serve
 ```
 
 ## 開発
 
 - Global install推奨
-  - bun
+  - node
   - elm
 - CodeRabbitお試し中
 
 ```sh
 git clone https://github.com/TheSacredLipton/elm-shiori.git
-bun start 01-hello
+npm start 01-hello
 ```
 
 ### npm publish
@@ -147,17 +131,18 @@ bun start 01-hello
 確認
 
 ```sh
-bun add -D https://github.com/TheSacredLipton/elm-shiori.git
-bun shiori init
+npm i -D https://github.com/TheSacredLipton/elm-shiori.git
+npx shiori init
 ```
 
 - とりあえず手動
 
 ```sh
-bun npm-publish
+npm run npm-publish
 ```
 
 ## ライセンス
 
 - MIT license
 - 一部[elm-codegen](https://github.com/mdgriffith/elm-codegen)で生成されたコードを含みます
+

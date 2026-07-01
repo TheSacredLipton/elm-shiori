@@ -1,29 +1,47 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { serve as honoServe } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
 import chokidar from 'chokidar';
+import { run_generation_from_cli } from 'elm-codegen/dist/run.js';
 import fse from 'fs-extra';
-const yargs = require('yargs');
-const { red, cyan } = require('kleur');
-import { staticPlugin } from '@elysiajs/static';
-import { run_generation_from_cli } from 'elm-codegen/dist/run';
-import { Elysia } from 'elysia';
+import { Hono } from 'hono';
 import { produce } from 'immer';
-import { compile } from 'node-elm-compiler/dist/index';
-type ElmFiles = { [key: string]: string };
-type ShioriJson = { roots: string[]; files: ElmFiles; assets: string };
-type ElmJson = { 'source-directories': string[] };
+import kleur from 'kleur';
+import compiler from 'node-elm-compiler';
+import { WebSocketServer } from 'ws';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+
+const { compile } = compiler;
+const { red, cyan } = kleur;
+
+/**
+ * @typedef {Object.<string, string>} ElmFiles
+ * @typedef {Object} ShioriJson
+ * @property {string[]} roots
+ * @property {ElmFiles} files
+ * @property {string} assets
+ * @typedef {Object} ElmJson
+ * @property {string[]} source-directories
+ */
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 // パッケージとして使う場合 ./node_modules/elm-shiori になるはず
-const shioriRoot = (): string => join(__dirname, '..');
+const shioriRoot = () => join(__dirname, '..');
 
 /**
  * Reads and parses the 'elm.json' file, checking for the 'source-directories' property.
+ * @returns {Promise<ElmJson | null>}
  */
-const readElmJson = async (): Promise<ElmJson | null> => {
+const readElmJson = async () => {
   try {
     try {
-      const json = JSON.parse(await Bun.file('elm.json', { type: 'application/json' }).text());
+      const json = JSON.parse(await readFile('elm.json', 'utf-8'));
       if (json['source-directories']) return json;
       throw new Error('elm.jsonにsource-directoriesがありません');
     } catch (error) {
@@ -37,13 +55,12 @@ const readElmJson = async (): Promise<ElmJson | null> => {
 
 /**
  * Reads and parses the 'shiori.json' file, ensuring it has both 'files' and 'roots' properties.
+ * @returns {Promise<ShioriJson | null>}
  */
-const readShioriJson = async (): Promise<ShioriJson | null> => {
+const readShioriJson = async () => {
   try {
     try {
-      const json = JSON.parse(
-        await Bun.file(join('shiori.json'), { type: 'application/json' }).text()
-      );
+      const json = JSON.parse(await readFile('shiori.json', 'utf-8'));
       if (json.files && json.roots) return json;
       throw new Error('shiori.jsonにfilesまたはrootがありません');
     } catch (error) {
@@ -57,15 +74,17 @@ const readShioriJson = async (): Promise<ShioriJson | null> => {
 
 /**
  * Reads contents of files specified in the list object where each key-value pair corresponds to a filename.
+ * @param {ElmFiles} list
+ * @returns {Promise<ElmFiles | null>}
  */
-const readElmFiles = async (list: ElmFiles): Promise<ElmFiles | null> => {
+const readElmFiles = async list => {
   try {
     if (list) {
       const result = [];
       for (const [key, value] of Object.entries(list)) {
         if (typeof value === 'string') {
           try {
-            result.push([key, await Bun.file(value, { type: 'application/json' }).text()]);
+            result.push([key, await readFile(value, 'utf-8')]);
           } catch (_) {
             throw new Error(`${value}が存在しません`);
           }
@@ -82,15 +101,17 @@ const readElmFiles = async (list: ElmFiles): Promise<ElmFiles | null> => {
 
 /**
  * Copies and modifies the 'elm.json' file to adjust source directories based on the provided 'roots'.
+ * @param {string[]} roots
+ * @returns {Promise<void>}
  */
-const copyElmJson = async (roots: string[]): Promise<void> => {
+const copyElmJson = async roots => {
   try {
     const elmjson = await readElmJson();
     if (elmjson) {
-      const newElmJson = produce(elmjson, (draft: { [x: string]: string[] }) => {
+      const newElmJson = produce(elmjson, draft => {
         draft['source-directories'] = sourceDirectories(roots);
       });
-      await Bun.write(join('shiori', 'elm.json'), JSON.stringify(newElmJson));
+      await writeFile(join('shiori', 'elm.json'), JSON.stringify(newElmJson, null, 2));
     }
   } catch (error) {
     logError(error);
@@ -98,25 +119,20 @@ const copyElmJson = async (roots: string[]): Promise<void> => {
 };
 
 /**
- * TODO: expect(sourceDirectories([])).toStrictEqual(["src"]);
- * TODO: expect(sourceDirectories(["src", ".elm-land"])).toStrictEqual(["../src", "../.elm-land", "src"]);
  * Generates an array of directories for source files based on provided root directories.
- * Adds a 'src' directory to the end of the array as a default source directory.
+ * @param {string[]} roots
+ * @returns {string[]}
  */
-const sourceDirectories = (roots: string[]): string[] => {
+const sourceDirectories = roots => {
   const r = roots.map(root => `../${root}`);
   return [...r, 'src'];
 };
 
 /**
- * Converts the `ShioriJson` configuration into a JSON string representation of Elm files,
- * using only the first root directory specified in `shioriJson.roots`. This includes transforming
- * file paths into a specific format required for Elm source files.
- *
- * FIXME: Currently only the first item in `shioriJson.roots` is used. It's unclear if there's
- * a need to handle multiple directories. This implementation could potentially be adjusted in the future.
+ * @param {ShioriJson} shioriJson
+ * @returns {Promise<string | null>}
  */
-const convertShioriJson = async (shioriJson: ShioriJson): Promise<string | null> => {
+const convertShioriJson = async shioriJson => {
   try {
     if (Object.entries(shioriJson.files).length === 0)
       throw new Error('convertShioriJson: shiori.jsonのfilesが空です');
@@ -142,28 +158,28 @@ const convertShioriJson = async (shioriJson: ShioriJson): Promise<string | null>
 
 /**
  * Converts all periods (.) in a given string to slashes (/).
+ * @param {string} str
+ * @returns {string}
  */
-const toSlash = (str: string): string => {
+const toSlash = str => {
   return str.replaceAll('.', '/');
 };
 
 /**
  * Initializes the application by copying the 'shiori' directory from a base to the current working directory.
- * It first removes any existing 'shiori' directory and then copies the entire content from the source.
+ * @returns {Promise<void>}
  */
-const init = async (): Promise<void> => {
+const init = async () => {
   try {
     const p_shiori = 'shiori';
     await fse.remove(p_shiori);
     await fse.copy(join(shioriRoot(), 'boilerplate', 'shiori'), p_shiori);
 
-    // TODO: shiori.jsonのコピー...存在する場合は無視
-    const shioriJson = Bun.file(join(shioriRoot(), 'boilerplate', 'shiori.json'));
-    await Bun.write('./shiori.json', shioriJson);
+    const shioriJson = await readFile(join(shioriRoot(), 'boilerplate', 'shiori.json'), 'utf-8');
+    await writeFile('./shiori.json', shioriJson);
 
-    // TODO: .gitignoreのコピー...存在する場合は追加
-    const gitignore = Bun.file(join(shioriRoot(), 'boilerplate', '.gitignore'));
-    await Bun.write('./.gitignore', gitignore);
+    const gitignore = await readFile(join(shioriRoot(), 'boilerplate', '.gitignore'), 'utf-8');
+    await writeFile('./.gitignore', gitignore);
   } catch (err) {
     logError(err);
   }
@@ -171,9 +187,9 @@ const init = async (): Promise<void> => {
 
 /**
  * Copies the 'codegen' directory from the 'shioriRoot' directory to a specific location in 'elm-stuff'.
- * This is useful for setting up the necessary code generation files in the right place.
+ * @returns {Promise<void>}
  */
-const copyCodegenToElmStuff = async (): Promise<void> => {
+const copyCodegenToElmStuff = async () => {
   try {
     const p_selmstuffCodegen = join('elm-stuff', 'shiori', 'codegen');
     await fse.remove(p_selmstuffCodegen);
@@ -185,9 +201,10 @@ const copyCodegenToElmStuff = async (): Promise<void> => {
 
 /**
  * Executes code generation based on the provided Shiori JSON configuration.
- * This includes setting up the directory environment and running generation commands.
+ * @param {ShioriJson} shioriJson
+ * @returns {Promise<void>}
  */
-const runCodegen = async (shioriJson: ShioriJson): Promise<void> => {
+const runCodegen = async shioriJson => {
   try {
     const flags = await convertShioriJson(shioriJson);
     if (flags) {
@@ -205,11 +222,9 @@ const runCodegen = async (shioriJson: ShioriJson): Promise<void> => {
 
 /**
  * Compiles the Elm source code file 'src/Shiori.elm' into a 'shiori.js' output file.
- * The function changes the current working directory during the process for the compilation context.
- * or silently handles any errors that occur.
- * TODO: Implement Hot Module Replacement (HMR) capabilities.
+ * @returns {Promise<void>}
  */
-const runElmCompile = async (): Promise<void> => {
+const runElmCompile = async () => {
   try {
     process.chdir(join('shiori'));
     compile([join('src', 'Shiori.elm')], { output: join('shiori.js') });
@@ -220,10 +235,10 @@ const runElmCompile = async (): Promise<void> => {
 };
 
 /**
- * Sets up and runs a development server environment, watches for changes in certain files,
- * and performs automated tasks such as copying assets, running code generation, and compiling code.
+ * Sets up and runs a development server environment, watches for changes in certain files.
+ * @returns {Promise<void>}
  */
-const serve = async (): Promise<void> => {
+const serve = async () => {
   try {
     const shioriJson = await readShioriJson();
     if (shioriJson) {
@@ -265,31 +280,33 @@ const serve = async (): Promise<void> => {
 };
 
 /**
- * Logs an error message. If the error is an instance of Error, it logs the error's message in red.
- * Otherwise, it logs a generic unknown error message in red.
+ * Logs an error message.
+ * @param {unknown} error
+ * @param {string} [prefix]
  */
-function logError(error: unknown, prefix?: string): void {
-  // Check if the error is an instance of Error
+function logError(error, prefix) {
   if (error instanceof Error) {
-    // If error is an instance of Error, safely call toString() and color it red
     if (prefix) {
       console.log(red(`${prefix}: ${error.toString()}`));
     } else {
       console.log(red(error.toString()));
     }
   } else {
-    // If it's not an instance of Error, log a generic unknown error message
     console.log(red('An unknown error occurred'));
   }
 }
 
-const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serve').parseSync();
+const argv = yargs(hideBin(process.argv))
+  .command('* [arg]', '=== commands === \n\n init \n build \n serve')
+  .parseSync();
+
 (async () => {
-  if (args.arg === 'init') {
+  const arg = argv.arg;
+  if (arg === 'init') {
     await init();
   }
 
-  if (args.arg === 'build') {
+  if (arg === 'build') {
     try {
       const shioriJson = await readShioriJson();
       if (shioriJson) {
@@ -303,36 +320,63 @@ const args = yargs.command('* arg', '=== commands === \n\n init \n build \n serv
     }
   }
 
-  if (args.arg === 'serve') {
+  if (arg === 'serve') {
     const shioriJson = await readShioriJson();
-    let ws: { send: (message: string) => void } | null;
+
+    // WebSocket 接続クライアントの管理
+    /** @type {Set<import('ws').WebSocket>} */
+    const wsClients = new Set();
+
     chokidar.watch('shiori/shiori.js').on('change', async () => {
-      if (ws) ws.send('reload');
+      for (const client of wsClients) {
+        if (client.readyState === 1) {
+          // OPEN
+          client.send('reload');
+        }
+      }
     });
+
     chokidar
-      .watch('shiori.json')
+      .watch('shiori.json', { ignoreInitial: true })
       .on('add', async () => serve())
       .on('change', async () => serve());
-    const serve_ = new Elysia()
-      .ws('/ws', {
-        open(ws_) {
-          // TODO: なんか嫌
-          ws = ws_;
-        }
-      })
-      .use(staticPlugin({ assets: shioriJson?.assets || '', prefix: '' }))
-      .get('/', () => Bun.file('shiori/index.html'))
-      .get('/shiori.js', () => {
-        return new Response(Bun.file('shiori/shiori.js'));
-      })
-      .onError(({ code, error, set }) => {
-        if (code === 'NOT_FOUND') {
-          return new Response(Bun.file('shiori/index.html'));
-        }
-      })
-      .listen(3000);
-    serve_
-      .handle(new Request('http://localhost/'))
-      .then(() => console.log(cyan('Running at http://localhost:3000')));
+
+    // Hono アプリケーションの作成
+    const app = new Hono();
+
+    app.get('/shiori.js', serveStatic({ path: './shiori/shiori.js' }));
+
+    if (shioriJson?.assets) {
+      app.use('/*', serveStatic({ root: shioriJson.assets }));
+    }
+
+    app.get('/', serveStatic({ path: './shiori/index.html' }));
+    app.notFound(async c => {
+      const res = await serveStatic({ path: './shiori/index.html' })(c, async () => {});
+      return res || c.text('Not Found', 404);
+    });
+
+    // Hono アプリの起動
+    const server = honoServe(
+      {
+        fetch: app.fetch,
+        port: 3000
+      },
+      info => {
+        console.log(cyan(`Running at http://localhost:${info.port}`));
+      }
+    );
+
+    // WebSocket Server を Hono サーバーに統合
+    // @ts-expect-error - honoServe returns ServerType which might mismatch with ws.WebSocketServer's server option.
+    const wss = new WebSocketServer({ server });
+    wss.on('connection', ws => {
+      wsClients.add(ws);
+      ws.on('close', () => {
+        wsClients.delete(ws);
+      });
+    });
+
+    await serve();
   }
 })();
