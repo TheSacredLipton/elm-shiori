@@ -12,7 +12,7 @@ for (const example of examples) {
   const previews = JSON.parse(readFileSync(previewsPath, 'utf-8'));
 
   test.describe(`Shiori VRT - ${example}`, () => {
-    test.beforeEach(async ({}, testInfo) => {
+    test.beforeEach(async ({ page }, testInfo) => {
       test.skip(testInfo.project.name !== example, 'Skip other examples');
     });
 

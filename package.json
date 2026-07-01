@@ -38,8 +38,10 @@
   "scripts": {
     "start": "node --watch dev.js",
     "test": "biome ci . && tsc -p jsconfig.json --noEmit && elm-test && node --test",
+    "test:vrt": "playwright test",
+    "test:vrt:update": "playwright test --update-snapshots",
     "biome-apply": "biome check . --apply",
-    "npm-publish": "npm run test && npm publish"
+    "npm-publish": "npm run test && npm run test:vrt && npm publish"
   },
   "type": "module"
 }

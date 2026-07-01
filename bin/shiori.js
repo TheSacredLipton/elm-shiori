@@ -36,6 +36,9 @@ const { red, cyan } = kleur;
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
+/** @type {import('chokidar').FSWatcher[]} */
+let activeWatchers = [];
+
 // パッケージとして使う場合 ./node_modules/elm-shiori になるはず
 const shioriRoot = () => join(__dirname, '..');
 
@@ -523,25 +526,34 @@ const runElmCompile = async () => {
 
 const serve = async () => {
   try {
+    for (const w of activeWatchers) {
+      await w.close();
+    }
+    activeWatchers = [];
+
     const shioriJson = await readShioriJson();
     if (shioriJson) {
       await copyElmJson(shioriJson.roots);
       await runCodegen(shioriJson);
 
-      chokidar.watch(shioriJson.roots).on('change', async () => {
+      const w1 = chokidar.watch(shioriJson.roots);
+      w1.on('change', async () => {
         await copyElmJson(shioriJson.roots);
         await runCodegen(shioriJson);
       });
+      activeWatchers.push(w1);
 
-      chokidar
-        .watch(join('elm-stuff', 'shiori', 'src', 'Shiori', 'Route.elm'))
-        .on('change', async () => await runElmCompile());
-      chokidar
-        .watch(join('elm-stuff', 'shiori', 'src', 'Shiori_View.elm'))
-        .on('change', async () => await runElmCompile());
-      chokidar
-        .watch(join('elm-stuff', 'shiori', 'src', 'Shiori.elm'))
-        .on('change', async () => await runElmCompile());
+      const w2 = chokidar.watch(join('elm-stuff', 'shiori', 'src', 'Shiori', 'Route.elm'));
+      w2.on('change', async () => await runElmCompile());
+      activeWatchers.push(w2);
+
+      const w3 = chokidar.watch(join('elm-stuff', 'shiori', 'src', 'Shiori_View.elm'));
+      w3.on('change', async () => await runElmCompile());
+      activeWatchers.push(w3);
+
+      const w4 = chokidar.watch(join('elm-stuff', 'shiori', 'src', 'Shiori.elm'));
+      w4.on('change', async () => await runElmCompile());
+      activeWatchers.push(w4);
     }
   } catch (err) {
     logError(err);
