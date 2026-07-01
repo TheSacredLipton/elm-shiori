@@ -88,14 +88,14 @@ buttons =
         ]
         [ button
             [ style "padding" "10px 20px"
-            , style "background" "linear-gradient(135deg, #f97316 0%, #ea580c 100%)"
+            , style "background" "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)"
             , style "color" "#ffffff"
             , style "border" "none"
             , style "border-radius" "8px"
             , style "font-weight" "600"
             , style "font-size" "14px"
             , style "cursor" "pointer"
-            , style "box-shadow" "0 4px 6px -1px rgba(249, 115, 22, 0.2)"
+            , style "box-shadow" "0 4px 6px -1px rgba(14, 165, 233, 0.2)"
             ]
             [ text "Primary Action" ]
         , button
@@ -112,7 +112,7 @@ buttons =
         , button
             [ style "padding" "10px 20px"
             , style "background" "transparent"
-            , style "color" "#ea580c"
+            , style "color" "#0284c7"
             , style "border" "none"
             , style "border-radius" "8px"
             , style "font-weight" "600"

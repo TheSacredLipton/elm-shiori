@@ -4,8 +4,8 @@ import Browser
 import Browser.Dom exposing (getViewport, setViewport)
 import Browser.Events exposing (onResize)
 import Browser.Navigation as Nav
-import Html exposing (Html, a, div, iframe, map, text)
-import Html.Attributes exposing (class, href, src, style, target)
+import Html exposing (Html, a, div, iframe, img, map, text, node)
+import Html.Attributes exposing (class, href, src, style, target, attribute)
 import Html.Events exposing (onClick)
 import Shiori.Route as Route
 import Task
@@ -174,18 +174,17 @@ header w url =
                 []
                 [ a
                     [ href "/"
-                    , style "color" "#f97316"
+                    , style "color" "#1c1917"
                     , style "display" "flex"
                     , style "align-items" "center"
-                    , style "gap" "4px"
                     , style "font-weight" "700"
                     , style "font-size" "18px"
                     , style "text-decoration" "none"
                     , style "box-sizing" "border-box"
                     , style "letter-spacing" "-0.025em"
                     ]
-                    [ text "elm-shiori"
-                    , div [ style "width" "6px", style "height" "6px", style "border-radius" "50%", style "background-color" "#f97316" ] []
+                    [ logoIcon
+                    , text "elm-shiori"
                     ]
                 ]
             , div
@@ -209,16 +208,16 @@ previewLink url =
         a
             [ href ("/preview" ++ url.path)
             , target "_blank"
-            , style "color" "#f97316"
+            , style "color" "#0ea5e9"
             , style "font-size" "13px"
             , style "text-decoration" "none"
             , style "display" "flex"
             , style "align-items" "center"
             , style "gap" "4px"
             , style "padding" "6px 12px"
-            , style "border" "1px solid #ffedd5"
+            , style "border" "1px solid #e0f2fe"
             , style "border-radius" "6px"
-            , style "background-color" "#fff7ed"
+            , style "background-color" "#f0f9ff"
             , class "shiori-link"
             ]
             [ text "Open Preview ↗" ]
@@ -387,3 +386,16 @@ md w a b =
 
     else
         style "" ""
+
+
+logoIcon : Html msg
+logoIcon =
+    img
+        [ src "/logo.svg"
+        , style "width" "20px"
+        , style "height" "20px"
+        , style "margin-right" "8px"
+        , style "display" "inline-block"
+        , style "vertical-align" "middle"
+        ]
+        []

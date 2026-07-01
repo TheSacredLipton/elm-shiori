@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+  </defs>
+  <!-- Drop Shadow -->
+  <path d="M7.5 3h7l4.5 4.5v12c0 .8-.7 1.5-1.5 1.5h-10c-.8 0-1.5-.7-1.5-1.5v-15c0-.8.7-1.5 1.5-1.5z" fill="#0284c7" opacity="0.1" transform="translate(0.5, 1)" />
+  
+  <!-- Bookmark Body -->
+  <path d="M7.5 3h7l4.5 4.5v12c0 .8-.7 1.5-1.5 1.5h-10c-.8 0-1.5-.7-1.5-1.5v-15c0-.8.7-1.5 1.5-1.5z" fill="url(#bodyGrad)" />
+  
+  <!-- Top Right Folded Corner (3D Origami Style) -->
+  <path d="M14.5 3v4.5H19z" fill="#014f7a" opacity="0.3" />
+  <path d="M14.5 3v3.5c0 .55.45 1 1 1H19z" fill="#ffffff" />
+  
+  <!-- Eyelet hole (Centered) -->
+  <circle cx="12" cy="5.5" r="1.2" fill="#ffffff" opacity="0.8" />
+</svg>

@@ -38,7 +38,33 @@ view _ =
  * write shiori.elm
  * @param {string} example
  */
-const writeShioriElm = example => {
+const writeShioriElm = async example => {
+  // Initial copy
+  try {
+    const shiori_elm = await readFile(
+      join(__dirname, 'core', 'shiori', 'src', 'Shiori.elm'),
+      'utf-8'
+    );
+    await writeFile(
+      join(__dirname, 'examples', example, 'elm-stuff', 'shiori', 'src', 'Shiori.elm'),
+      shiori_elm
+    );
+
+    const index_html = await readFile(join(__dirname, 'core', 'shiori', 'index.html'), 'utf-8');
+    await writeFile(
+      join(__dirname, 'examples', example, 'elm-stuff', 'shiori', 'index.html'),
+      index_html
+    );
+
+    const logo_svg = await readFile(join(__dirname, 'core', 'shiori', 'logo.svg'), 'utf-8');
+    await writeFile(
+      join(__dirname, 'examples', example, 'elm-stuff', 'shiori', 'logo.svg'),
+      logo_svg
+    );
+  } catch (error) {
+    console.error(red(`Error during initial file handling: ${error}`));
+  }
+
   chokidar.watch(join(__dirname, 'core', 'shiori', 'src', 'Shiori.elm')).on('change', async () => {
     try {
       const shiori_elm = await readFile(
@@ -63,6 +89,18 @@ const writeShioriElm = example => {
       );
     } catch (error) {
       console.error(red(`Error during index.html handling: ${error}`));
+    }
+  });
+
+  chokidar.watch(join(__dirname, 'core', 'shiori', 'logo.svg')).on('change', async () => {
+    try {
+      const logo_svg = await readFile(join(__dirname, 'core', 'shiori', 'logo.svg'), 'utf-8');
+      await writeFile(
+        join(__dirname, 'examples', example, 'elm-stuff', 'shiori', 'logo.svg'),
+        logo_svg
+      );
+    } catch (error) {
+      console.error(red(`Error during logo.svg handling: ${error}`));
     }
   });
 };
@@ -105,7 +143,7 @@ const argv = yargs(hideBin(process.argv))
   if (typeof example === 'string' && examples.includes(example)) {
     console.log(cyan('== running dev.js =='));
     await writeRouteElm();
-    writeShioriElm(example);
+    await writeShioriElm(example);
     await runShioriJs(example);
   } else {
     console.log(examples);

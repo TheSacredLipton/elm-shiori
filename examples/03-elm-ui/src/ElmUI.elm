@@ -59,13 +59,13 @@ view _ =
 button : String -> Element msg
 button str =
     Input.button
-        [ Background.color (rgb255 249 115 22)
+        [ Background.color (rgb255 14 165 233)
         , Font.color (rgb255 255 255 255)
         , paddingXY 24 14
         , Border.rounded 8
         , Font.size 14
         , Font.bold
-        , Border.shadow { offset = (0, 4), size = 0, blur = 6, color = rgba255 249 115 22 0.2 }
+        , Border.shadow { offset = (0, 4), size = 0, blur = 6, color = rgba255 14 165 233 0.2 }
         ]
         { label = text str, onPress = Nothing }
 
@@ -90,7 +90,7 @@ productCard =
             [ el [ Font.size 11, Font.bold, Font.color (rgb255 156 163 175) ] (text "GADGET")
             , paragraph [ Font.size 16, Font.bold, Font.color (rgb255 31 41 55) ] [ text "Minimalist Smart Watch" ]
             , row [ width fill, spaceEvenly ]
-                [ el [ Font.size 18, Font.bold, Font.color (rgb255 249 115 22) ] (text "$199.00")
+                [ el [ Font.size 18, Font.bold, Font.color (rgb255 14 165 233) ] (text "$199.00")
                 , Input.button
                     [ Background.color (rgb255 31 41 55)
                     , Font.color (rgb255 255 255 255)
