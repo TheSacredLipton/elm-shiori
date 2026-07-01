@@ -39,22 +39,20 @@ view _ =
  * @param {string} example
  */
 const writeShioriElm = example => {
-  chokidar
-    .watch(join(__dirname, 'core', 'shiori', 'src', 'Shiori.elm'))
-    .on('change', async () => {
-      try {
-        const shiori_elm = await readFile(
-          join(__dirname, 'core', 'shiori', 'src', 'Shiori.elm'),
-          'utf-8'
-        );
-        await writeFile(
-          join(__dirname, 'examples', example, 'elm-stuff', 'shiori', 'src', 'Shiori.elm'),
-          shiori_elm
-        );
-      } catch (error) {
-        console.error(red(`Error during file handling: ${error}`));
-      }
-    });
+  chokidar.watch(join(__dirname, 'core', 'shiori', 'src', 'Shiori.elm')).on('change', async () => {
+    try {
+      const shiori_elm = await readFile(
+        join(__dirname, 'core', 'shiori', 'src', 'Shiori.elm'),
+        'utf-8'
+      );
+      await writeFile(
+        join(__dirname, 'examples', example, 'elm-stuff', 'shiori', 'src', 'Shiori.elm'),
+        shiori_elm
+      );
+    } catch (error) {
+      console.error(red(`Error during file handling: ${error}`));
+    }
+  });
 };
 
 /**

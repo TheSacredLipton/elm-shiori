@@ -53,11 +53,10 @@ view _ =
 
 
 {-|
+    import Element
+    <shiori> Element.layout [] (button "button")
 
-    <shiori> button "button"
-
-    <shiori> button "button2"
-
+    <shiori> Element.layout [] (button "button2")
 -}
 button : String -> Element msg
 button str =

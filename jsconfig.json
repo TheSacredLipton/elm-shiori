@@ -7,7 +7,9 @@
     "allowJs": true,
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "maxNodeModuleJsDepth": 0
   },
-  "include": ["bin/**/*.js", "dev.js"]
+  "include": ["bin/**/*.js", "bin/**/*.d.ts", "dev.js"],
+  "exclude": ["node_modules"]
 }

@@ -1,12 +1,11 @@
-#!/usr/bin/env node
-
+import { exec } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import { serve as honoServe } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import chokidar from 'chokidar';
-import { run_generation_from_cli } from 'elm-codegen/dist/run.js';
 import fse from 'fs-extra';
 import { Hono } from 'hono';
 import { produce } from 'immer';
@@ -15,6 +14,8 @@ import compiler from 'node-elm-compiler';
 import { WebSocketServer } from 'ws';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+
+const execAsync = promisify(exec);
 
 const { compile } = compiler;
 const { red, cyan } = kleur;
@@ -129,40 +130,222 @@ const sourceDirectories = roots => {
 };
 
 /**
- * @param {ShioriJson} shioriJson
- * @returns {Promise<string | null>}
+ * @typedef {Object} ModuleMetadata
+ * @property {string[]} codes
+ * @property {string[]} imports
  */
-const convertShioriJson = async shioriJson => {
-  try {
-    if (Object.entries(shioriJson.files).length === 0)
-      throw new Error('convertShioriJson: shiori.jsonのfilesが空です');
-    const newJson = Object.fromEntries(
-      Object.entries(shioriJson.files)
-        .filter(([_, value]) => typeof value === 'string')
-        .map(([_, value]) =>
-          typeof value === 'string'
-            ? [value, join(shioriJson.roots[0], `${toSlash(value)}.elm`)]
-            : ['', '']
-        )
-    );
-    const result = await readElmFiles(newJson);
-    if (result) {
-      return JSON.stringify(result);
+
+/**
+ * @typedef {Object.<string, Object.<string, ModuleMetadata>>} ModulesMetadata
+ */
+
+/**
+ * Builds the Shiori.Route module source code.
+ * @param {ModulesMetadata} modules
+ * @returns {string}
+ */
+const buildRouteElm = modules => {
+  const moduleNames = Object.keys(modules).sort();
+
+  const importsSection = moduleNames.map(m => `import ${m} exposing (..)`).join('\n');
+
+  // 重複を排除したカスタムインポート
+  const customImports = new Set();
+  for (const m of moduleNames) {
+    for (const f of Object.keys(modules[m])) {
+      for (const imp of modules[m][f].imports) {
+        customImports.add(imp);
+      }
     }
-    throw new Error('convertShioriJson: resultがnullです');
-  } catch (err) {
-    logError(err, 'convertShioriJson');
-    return null;
   }
+  const customImportsSection = Array.from(customImports).sort().join('\n');
+
+  // Route型定義
+  const routeVariants = ['NotFound'];
+  for (const m of moduleNames) {
+    const variant = m.replace(/\./g, '_');
+    routeVariants.push(`${variant} String`);
+  }
+  const routeTypeSection = `type Route\n    = ${routeVariants.join('\n    | ')}`;
+
+  // routeParser
+  const parserItems = [];
+  for (const m of moduleNames) {
+    const variant = m.replace(/\./g, '_');
+    parserItems.push(`map ${variant} (s "${m}" </> string)`);
+  }
+  const parserSection = `routeParser : Parser (Route -> b) b
+routeParser =
+    oneOf
+        [ ${parserItems.join('\n        , ')}
+        ]`;
+
+  // view
+  const viewBranches = [];
+  viewBranches.push('        NotFound ->\n            []');
+
+  for (const m of moduleNames) {
+    const variant = m.replace(/\./g, '_');
+    const funcBranches = [];
+    for (const f of Object.keys(modules[m])) {
+      const codesJoined = modules[m][f].codes.join(', ');
+      funcBranches.push(
+        `                "${f}" ->\n                    [ ${codesJoined} ] |> Shiori_View.map`
+      );
+    }
+
+    viewBranches.push(`        ${variant} str ->
+            case str of
+${funcBranches.join('\n')}
+                _ ->
+                    []`);
+  }
+
+  const viewSection = `view : Url.Url -> List (Html.Html ())
+view url =
+    case url |> toRoute of
+${viewBranches.join('\n\n')}`;
+
+  // links
+  const linksItems = [];
+  for (const m of moduleNames) {
+    const funcItems = [];
+    for (const f of Object.keys(modules[m])) {
+      const ids = modules[m][f].codes
+        .map((_, i) => `"${m.replace(/\./g, '_')}_${f}_${i}"`)
+        .join(', ');
+      funcItems.push(`( "${f}", [ ${ids} ] )`);
+    }
+    linksItems.push(`( "${m}", [ ${funcItems.join(', ')} ] )`);
+  }
+
+  const linksSection = `links : List ( String, List ( String, List String ) )
+links =
+    [ ${linksItems.join('\n    , ')}
+    ]`;
+
+  return `module Shiori.Route exposing (Route(..), links, routeParser, toRoute, view)
+
+import Html exposing (Html)
+import Url
+import Url.Parser exposing ((</>), Parser, map, oneOf, parse, s, string)
+import Shiori_View
+
+${importsSection}
+
+${customImportsSection}
+
+${routeTypeSection}
+
+${parserSection}
+
+toRoute : Url.Url -> Route
+toRoute url =
+    url
+        |> parse routeParser
+        |> Maybe.withDefault NotFound
+
+${viewSection}
+
+${linksSection}
+`;
 };
 
 /**
- * Converts all periods (.) in a given string to slashes (/).
- * @param {string} str
- * @returns {string}
+ * Executes code generation by running elm-review to extract metadata
+ * and generating Route.elm dynamically.
+ * @param {ShioriJson} shioriJson
+ * @returns {Promise<void>}
  */
-const toSlash = str => {
-  return str.replaceAll('.', '/');
+const runCodegen = async shioriJson => {
+  try {
+    const configPath = join(shioriRoot(), 'core', 'review');
+    let stdout = '';
+    try {
+      const result = await execAsync(`npx elm-review --config ${configPath} --report json`);
+      stdout = result.stdout;
+    } catch (err) {
+      stdout = /** @type {*} */ (err).stdout || '';
+    }
+
+    if (!stdout.trim()) {
+      throw new Error('elm-review の出力が空です');
+    }
+
+    const data = JSON.parse(stdout);
+    /** @type {ModulesMetadata} */
+    const modules = {};
+
+    const errors = data.errors || [];
+    for (const fileError of errors) {
+      const filePath = fileError.path;
+      let matchedRoot = '';
+      for (const root of shioriJson.roots) {
+        if (filePath.startsWith(`${root}/`)) {
+          matchedRoot = `${root}/`;
+          break;
+        }
+      }
+      const relPath = matchedRoot ? filePath.slice(matchedRoot.length) : filePath;
+      const moduleName = relPath.replace(/\.elm$/, '').replace(/\//g, '.');
+
+      for (const err of fileError.errors) {
+        if (err.rule === 'ShioriExtractor' && err.message.startsWith('SHIORI_EXTRACT:')) {
+          const match = err.message.match(/^SHIORI_EXTRACT:([^:]+):([\s\S]+)$/);
+          if (match) {
+            const funcName = match[1];
+            const commentStr = match[2];
+
+            const lines = commentStr.split('\n');
+            const importLines = [];
+            const shioriCodes = [];
+            for (let line of lines) {
+              line = line.trim();
+              if (line.startsWith('import ')) {
+                importLines.push(line);
+              } else if (line.startsWith('<shiori>')) {
+                const code = line.replace('<shiori>', '').trim();
+                if (code) {
+                  shioriCodes.push(code);
+                }
+              }
+            }
+
+            if (shioriCodes.length > 0) {
+              if (!modules[moduleName]) {
+                modules[moduleName] = {};
+              }
+              if (!modules[moduleName][funcName]) {
+                modules[moduleName][funcName] = { codes: [], imports: [] };
+              }
+              const resolvedCodes = shioriCodes.map(code => {
+                const escapedFuncName = funcName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const regex = new RegExp(
+                  `"[^"\\\\\\n]*(?:\\\\.[^"\\\\\\n]*)*"|'[^'\\\\\\n]*(?:\\\\.[^'\\\\\\n]*)*'|\\b${escapedFuncName}\\b`,
+                  'g'
+                );
+                return code.replace(regex, (/** @type {string} */ m) => {
+                  if (m.startsWith('"') || m.startsWith("'")) {
+                    return m;
+                  }
+                  return `${moduleName}.${funcName}`;
+                });
+              });
+              modules[moduleName][funcName].codes.push(...resolvedCodes);
+              modules[moduleName][funcName].imports.push(...importLines);
+            }
+          }
+        }
+      }
+    }
+
+    const routeElmContent = buildRouteElm(modules);
+    const routeElmPath = join('elm-stuff', 'shiori', 'src', 'Shiori', 'Route.elm');
+    await fse.ensureDir(join('elm-stuff', 'shiori', 'src', 'Shiori'));
+    await writeFile(routeElmPath, routeElmContent);
+  } catch (error) {
+    logError(error);
+  }
 };
 
 /**
@@ -194,41 +377,6 @@ const init = async () => {
 };
 
 /**
- * Copies the 'codegen' directory from the 'shioriRoot' directory to a specific location in 'elm-stuff'.
- * @returns {Promise<void>}
- */
-const copyCodegenToElmStuff = async () => {
-  try {
-    const p_selmstuffCodegen = join('elm-stuff', 'shiori', 'codegen');
-    await fse.remove(p_selmstuffCodegen);
-    await fse.copy(join(shioriRoot(), 'codegen'), p_selmstuffCodegen);
-  } catch (err) {
-    logError(err);
-  }
-};
-
-/**
- * Executes code generation based on the provided Shiori JSON configuration.
- * @param {ShioriJson} shioriJson
- * @returns {Promise<void>}
- */
-const runCodegen = async shioriJson => {
-  try {
-    const flags = await convertShioriJson(shioriJson);
-    if (flags) {
-      process.chdir(join('elm-stuff', 'shiori'));
-      await run_generation_from_cli(null, {
-        output: join(process.cwd(), 'src'),
-        flags: flags
-      });
-      process.chdir(join('..', '..'));
-    }
-  } catch (error) {
-    logError(error);
-  }
-};
-
-/**
  * Compiles the Elm source code file 'src/Shiori.elm' into a 'shiori.js' output file.
  * @returns {Promise<void>}
  */
@@ -242,15 +390,10 @@ const runElmCompile = async () => {
   }
 };
 
-/**
- * Sets up and runs a development server environment, watches for changes in certain files.
- * @returns {Promise<void>}
- */
 const serve = async () => {
   try {
     const shioriJson = await readShioriJson();
     if (shioriJson) {
-      await copyCodegenToElmStuff();
       await copyElmJson(shioriJson.roots);
       await runCodegen(shioriJson);
 
@@ -258,19 +401,6 @@ const serve = async () => {
         await copyElmJson(shioriJson.roots);
         await runCodegen(shioriJson);
       });
-
-      chokidar
-        .watch(join('codegen'), {
-          awaitWriteFinish: {
-            stabilityThreshold: 5000,
-            pollInterval: 200
-          }
-        })
-        .on('change', async () => {
-          await copyCodegenToElmStuff();
-          await copyElmJson(shioriJson.roots);
-          await runCodegen(shioriJson);
-        });
 
       chokidar
         .watch(join('elm-stuff', 'shiori', 'src', 'Shiori', 'Route.elm'))
@@ -319,7 +449,6 @@ const argv = yargs(hideBin(process.argv))
       const shioriJson = await readShioriJson();
       if (shioriJson) {
         await prepareWorkDir();
-        await copyCodegenToElmStuff();
         await copyElmJson(shioriJson.roots);
         await runCodegen(shioriJson);
         await runElmCompile();
@@ -356,7 +485,12 @@ const argv = yargs(hideBin(process.argv))
     app.get('/shiori.js', serveStatic({ path: './elm-stuff/shiori/shiori.js' }));
 
     if (shioriJson?.assets) {
-      app.use('/*', serveStatic({ root: shioriJson.assets }));
+      app.get('/*', async (c, next) => {
+        if (c.req.path === '/shiori.js' || c.req.path === '/') {
+          return next();
+        }
+        return serveStatic({ root: shioriJson.assets })(c, next);
+      });
     }
 
     app.get('/', serveStatic({ path: './elm-stuff/shiori/index.html' }));
