@@ -188,9 +188,10 @@ const runCodegen = async shioriJson => {
     const cwd = join('elm-stuff', 'shiori');
 
     // 0. コード生成前に Route.elm をプレースホルダーでリセットする（これにより常に最新のタグ情報で再生成されるようになります）
-    const placeholderRoutePath = join(shioriRoot(), 'core', 'shiori', 'src', 'Shiori', 'Route.elm');
     const targetRoutePath = join('elm-stuff', 'shiori', 'src', 'Shiori', 'Route.elm');
-    await fse.copy(placeholderRoutePath, targetRoutePath);
+    const placeholderContent = 'module Shiori.Route exposing (..)\n';
+    await fse.ensureDir(join('elm-stuff', 'shiori', 'src', 'Shiori'));
+    await writeFile(targetRoutePath, placeholderContent);
 
     // 1. 自動修正を適用して Route.elm を生成/更新する
     try {
