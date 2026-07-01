@@ -54,7 +54,9 @@ view _ =
 
 {-|
     import Element
-    <shiori> Element.layout [] (ElmUI.button "button") </shiori>
+    <shiori name="Primary Button"> Element.layout [] (ElmUI.button "Primary") </shiori>
+    <shiori name="Success Button"> Element.layout [] (ElmUI.button "Success") </shiori>
+    <shiori name="Danger Button"> Element.layout [] (ElmUI.button "Danger") </shiori>
 -}
 button : String -> Element msg
 button str =
@@ -72,7 +74,8 @@ button str =
 
 {-|
     import Element
-    <shiori> Element.layout [] ElmUI.productCard </shiori>
+    <shiori name="Product Card A"> Element.layout [] ElmUI.productCard </shiori>
+    <shiori name="Product Card B"> Element.layout [] ElmUI.productCard </shiori>
 -}
 productCard : Element msg
 productCard =
@@ -107,7 +110,7 @@ productCard =
 
 {-|
     import Element
-    <shiori> Element.layout [] ElmUI.badgeList </shiori>
+    <shiori name="Status Badges"> Element.layout [] ElmUI.badgeList </shiori>
 -}
 badgeList : Element msg
 badgeList =

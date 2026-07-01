@@ -42,34 +42,36 @@ update msg model =
 
 {-|
 
-    <shiori> view (Model 0 "modelInitialValue2") </shiori>
+    <shiori name="Sandbox Header A"> view (Model 0 "modelInitialValue2") </shiori>
+    <shiori name="Sandbox Header B"> view (Model 10 "modelInitialValue2") </shiori>
 
 -}
 view : Model -> Html Msg
-view _ =
+view model =
     div [ class "p-8 text-center bg-slate-50 rounded-2xl border border-slate-100" ]
-        [ h1 [ class "text-2xl font-bold text-slate-800 mb-2" ] [ text "Tailwind CSS Components Catalog" ]
+        [ h1 [ class "text-2xl font-bold text-slate-800 mb-2" ] [ text ("Tailwind CSS Components Catalog (Count: " ++ String.fromInt model.property ++ ")") ]
         , p [ class "text-sm text-slate-500" ] [ text "Select one of the components from the sidebar navigation to preview them." ]
         ]
 
 
 {-|
 
-    <shiori> profileCard </shiori>
+    <shiori name="Profile Card A"> profileCard "Sarah Jenkins" "Lead Frontend Engineer" "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" </shiori>
+    <shiori name="Profile Card B"> profileCard "Alex Rivera" "Product Designer" "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" </shiori>
 
 -}
-profileCard : Html msg
-profileCard =
+profileCard : String -> String -> String -> Html msg
+profileCard userName role avatarUrl =
     div [ class "flex items-center justify-center p-6 bg-slate-50" ]
         [ div [ class "w-full max-w-xs bg-white rounded-2xl shadow-md overflow-hidden border border-slate-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1" ]
             [ div [ class "h-24 bg-gradient-to-r from-sky-400 to-blue-500" ] []
             , div [ class "px-6 pb-6 text-center" ]
                 [ div [ class "relative -mt-12 mb-3 inline-block" ]
-                    [ img [ class "w-24 h-24 rounded-full border-4 border-white object-cover shadow-sm", src "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" ] []
+                    [ img [ class "w-24 h-24 rounded-full border-4 border-white object-cover shadow-sm", src avatarUrl ] []
                     , span [ class "absolute bottom-1 right-1 block h-4 w-4 rounded-full bg-emerald-400 border-2 border-white" ] []
                     ]
-                , h3 [ class "text-lg font-bold text-slate-800" ] [ text "Sarah Jenkins" ]
-                , p [ class "text-xs text-slate-400 font-medium mb-4" ] [ text "Lead Frontend Engineer" ]
+                , h3 [ class "text-lg font-bold text-slate-800" ] [ text userName ]
+                , p [ class "text-xs text-slate-400 font-medium mb-4" ] [ text role ]
                 , div [ class "flex flex-wrap justify-center gap-1.5 mb-6" ]
                     [ span [ class "px-2 py-0.5 text-[10px] font-semibold bg-sky-50 text-sky-600 rounded-full" ] [ text "Elm" ]
                     , span [ class "px-2 py-0.5 text-[10px] font-semibold bg-blue-50 text-blue-600 rounded-full" ] [ text "Tailwind" ]
@@ -84,7 +86,7 @@ profileCard =
 
 {-|
 
-    <shiori> articleCard </shiori>
+    <shiori name="Article Card"> articleCard </shiori>
 
 -}
 articleCard : Html msg
@@ -115,7 +117,7 @@ articleCard =
 
 {-|
 
-    <shiori> pricingSection </shiori>
+    <shiori name="Pricing Section"> pricingSection </shiori>
 
 -}
 pricingSection : Html msg
@@ -171,7 +173,7 @@ pricingSection =
 
 {-|
 
-    <shiori> widthTest </shiori>
+    <shiori name="Width Test"> widthTest </shiori>
 
 -}
 widthTest : Html msg

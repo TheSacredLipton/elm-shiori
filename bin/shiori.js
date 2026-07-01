@@ -134,8 +134,12 @@ const sourceDirectories = roots => {
 };
 
 /**
+ * @typedef {Object} PreviewCode
+ * @property {string} name
+ * @property {string} code
+ *
  * @typedef {Object} ModuleMetadata
- * @property {string[]} codes
+ * @property {PreviewCode[]} codes
  * @property {string[]} imports
  */
 
@@ -200,7 +204,7 @@ const buildRouteElm = (modules, shioriJson) => {
   const routeVariants = ['NotFound'];
   for (const m of moduleNames) {
     const variant = m.replace(/\./g, '_');
-    routeVariants.push(`${variant} String`);
+    routeVariants.push(`${variant} String (Maybe Int)`);
   }
   const routeTypeSection = `type Route\n    = ${routeVariants.join('\n    | ')}`;
 
@@ -208,7 +212,10 @@ const buildRouteElm = (modules, shioriJson) => {
   const parserItems = [];
   for (const m of moduleNames) {
     const variant = m.replace(/\./g, '_');
-    parserItems.push(`Url.Parser.map ${variant} (s "${m}" </> string)`);
+    parserItems.push(
+      `Url.Parser.map (\\f idx -> ${variant} f (Just idx)) (s "${m}" </> string </> Url.Parser.int)`
+    );
+    parserItems.push(`Url.Parser.map (\\f -> ${variant} f Nothing) (s "${m}" </> string)`);
   }
   const parserSection = `routeParser : Parser (Route -> b) b
 routeParser =
@@ -224,9 +231,12 @@ routeParser =
     const variant = m.replace(/\./g, '_');
     const funcBranches = [];
     for (const f of Object.keys(modules[m])) {
-      const indentCode = (/** @type {string} */ code) => {
+      const codes = modules[m][f].codes; // Array of { name, code }
+
+      const indentCode = (/** @type {string} */ code, /** @type {number} */ spaces) => {
         const lines = code.split('\n');
-        if (lines.length <= 1) return code;
+        const pad = ' '.repeat(spaces);
+        if (lines.length <= 1) return pad + code;
         let minIndent = Number.POSITIVE_INFINITY;
         for (const line of lines) {
           if (line.trim() === '') continue;
@@ -238,21 +248,51 @@ routeParser =
         }
         if (minIndent === Number.POSITIVE_INFINITY) minIndent = 0;
         return lines
-          .map((/** @type {string} */ line, /** @type {number} */ idx) => {
+          .map((/** @type {string} */ line) => {
             const stripped = line.slice(minIndent);
-            if (idx === 0) return stripped;
-            return `                        ${stripped}`;
+            return stripped.trim() === '' ? '' : pad + stripped;
           })
           .join('\n');
       };
-      const codesWithIndent = modules[m][f].codes.map(indentCode);
-      const codesJoined = codesWithIndent.join(', ');
+
+      const letBindings = codes
+        .map((c, i) => {
+          const indented = indentCode(c.code, 28);
+          return `                        preview_${i} =\n${indented}`;
+        })
+        .join('\n\n');
+
+      const cardCodes = codes.map((c, i) => {
+        const displayName = c.name || `Preview ${i}`;
+        return `Shiori_View.card "${displayName}" preview_${i}`;
+      });
+      const cardsJoined = cardCodes.join('\n                            , ');
+
+      const soloBranches = codes
+        .map((c, i) => {
+          return `                                ${i} ->\n                                    [ Shiori_View.solo preview_${i} ] |> Shiori_View.map`;
+        })
+        .join('\n\n');
+
       funcBranches.push(
-        `                "${f}" ->\n                    [ ${codesJoined} ] |> Shiori_View.map`
+        `                "${f}" ->
+                    let
+${letBindings}
+                    in
+                    case maybeIdx of
+                        Just idx ->
+                            case idx of
+${soloBranches}
+
+                                _ ->
+                                    []
+                        Nothing ->
+                            [ ${cardsJoined}
+                            ] |> Shiori_View.map`
       );
     }
 
-    viewBranches.push(`        ${variant} str ->
+    viewBranches.push(`        ${variant} str maybeIdx ->
             case str of
 ${funcBranches.join('\n')}
                 _ ->
@@ -269,15 +309,18 @@ ${viewBranches.join('\n\n')}`;
   for (const m of moduleNames) {
     const funcItems = [];
     for (const f of Object.keys(modules[m])) {
-      const ids = modules[m][f].codes
-        .map((_, i) => `"${m.replace(/\./g, '_')}_${f}_${i}"`)
-        .join(', ');
-      funcItems.push(`( "${f}", [ ${ids} ] )`);
+      const codes = modules[m][f].codes;
+      const subItems = codes.map((c, i) => {
+        const displayName = c.name || `Preview ${i}`;
+        const path = `/${m}/${f}/${i}`;
+        return `( "${displayName}", "${path}" )`;
+      });
+      funcItems.push(`( "${f}", [ ${subItems.join(', ')} ] )`);
     }
-    linksItems.push(`( "${m}", [ ${funcItems.join(', ')} ] )`);
+    linksItems.push(`( "${m}", [ ${funcItems.join('\n      , ')} ] )`);
   }
 
-  const linksSection = `links : List ( String, List ( String, List String ) )
+  const linksSection = `links : List ( String, List ( String, List ( String, String ) ) )
 links =
     [ ${linksItems.join('\n    , ')}
     ]`;
@@ -359,25 +402,29 @@ const runCodegen = async shioriJson => {
               if (!modules[moduleName][funcName]) {
                 modules[moduleName][funcName] = { codes: [], imports: [] };
               }
-              const resolvedCodes = shioriCodes.map((/** @type {string} */ code) => {
-                const escapedFuncName = funcName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                const regex = new RegExp(
-                  `"[^"\\\\\\n]*(?:\\\\.[^"\\\\\\n]*)*"|'[^'\\\\\\n]*(?:\\\\.[^'\\\\\\n]*)*'|(?<!\\.)\\b${escapedFuncName}\\b|(?<!\\.)\\b[A-Z][a-zA-Z0-9_]*\\b(?!\\.)`,
-                  'g'
-                );
-                return code.replace(regex, (/** @type {string} */ m) => {
-                  if (m.startsWith('"') || m.startsWith("'")) {
-                    return m;
-                  }
-                  if (ELM_BUILTINS.has(m)) {
-                    return m;
-                  }
-                  if (m === funcName) {
-                    return `${moduleName}.${funcName}`;
-                  }
-                  return `${moduleName}.${m}`;
-                });
-              });
+              const resolvedCodes = shioriCodes.map(
+                (/** @type {{name: string, code: string}} */ c) => {
+                  const code = c.code;
+                  const escapedFuncName = funcName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                  const regex = new RegExp(
+                    `"[^"\\\\\\n]*(?:\\\\.[^"\\\\\\n]*)*"|'[^'\\\\\\n]*(?:\\\\.[^'\\\\\\n]*)*'|(?<!\\.)\\b${escapedFuncName}\\b|(?<!\\.)\\b[A-Z][a-zA-Z0-9_]*\\b(?!\\.)`,
+                    'g'
+                  );
+                  const resolved = code.replace(regex, (/** @type {string} */ m) => {
+                    if (m.startsWith('"') || m.startsWith("'")) {
+                      return m;
+                    }
+                    if (ELM_BUILTINS.has(m)) {
+                      return m;
+                    }
+                    if (m === funcName) {
+                      return `${moduleName}.${funcName}`;
+                    }
+                    return `${moduleName}.${m}`;
+                  });
+                  return { name: c.name, code: resolved };
+                }
+              );
               modules[moduleName][funcName].codes.push(...resolvedCodes);
               modules[moduleName][funcName].imports.push(...importLines);
             }

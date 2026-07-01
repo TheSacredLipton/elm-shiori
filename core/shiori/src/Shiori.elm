@@ -306,7 +306,7 @@ type alias FunctionName =
     String
 
 
-sideNavLinkGroup : Url.Url -> ( FileName, List ( FunctionName, List String ) ) -> Html msg
+sideNavLinkGroup : Url.Url -> ( FileName, List ( FunctionName, List ( String, String ) ) ) -> Html msg
 sideNavLinkGroup url ( fileName, v ) =
     div [ style "display" "flex", style "flex-direction" "column", style "gap" "4px", style "width" "100%" ]
         [ div
@@ -320,12 +320,19 @@ sideNavLinkGroup url ( fileName, v ) =
             ]
             [ text fileName ]
         , div [ style "width" "100%", style "display" "flex", style "flex-direction" "column", style "gap" "2px" ] <|
-            List.map (\( functionName, _ ) ->
+            List.concatMap (\( functionName, subLinks ) ->
                 let
                     linkUrl = Builder.absolute [ fileName, functionName ] []
                     isActive = url.path == linkUrl
+                    subItems =
+                        List.map (\( previewName, path ) ->
+                            let
+                                subIsActive = url.path == path
+                            in
+                            sideNavSubLink previewName path subIsActive
+                        ) subLinks
                 in
-                sideNavLink functionName linkUrl isActive
+                sideNavLink functionName linkUrl isActive :: subItems
             ) v
         ]
 
@@ -335,11 +342,33 @@ sideNavLink name url isActive =
     a
         [ style "width" "100%"
         , style "padding" "8px 12px"
-        , style "color" "#57534e"
+        , style "color" "#1c1917"
         , style "display" "block"
         , style "text-decoration" "none"
         , style "box-sizing" "border-box"
-        , style "font-size" "14px"
+        , style "font-size" "13px"
+        , style "font-weight" "600"
+        , href url
+        , class <|
+            if isActive then
+                "shiori-link shiori-link-active"
+
+            else
+                "shiori-link"
+        ]
+        [ text name ]
+
+
+sideNavSubLink : String -> String -> Bool -> Html msg
+sideNavSubLink name url isActive =
+    a
+        [ style "width" "100%"
+        , style "padding" "6px 12px 6px 24px"
+        , style "color" "#78716c"
+        , style "display" "block"
+        , style "text-decoration" "none"
+        , style "box-sizing" "border-box"
+        , style "font-size" "12px"
         , href url
         , class <|
             if isActive then
@@ -373,6 +402,7 @@ body url =
           else
             iframe
                 [ src ("/preview" ++ url.path)
+                , attribute "key" url.path
                 , class "shiori-preview-iframe"
                 ]
                 []

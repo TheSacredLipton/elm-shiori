@@ -44,7 +44,9 @@ update msg model =
 {-|
 
     import Html.Styled
-    <shiori> Html.Styled.toUnstyled (ElmCss.styledButton "Click me") </shiori>
+    <shiori name="Indigo Button"> Html.Styled.toUnstyled (ElmCss.styledButton "Click me") </shiori>
+    <shiori name="Pink Button"> Html.Styled.toUnstyled (ElmCss.styledButton "Submit") </shiori>
+    <shiori name="Gray Button"> Html.Styled.toUnstyled (ElmCss.styledButton "Cancel") </shiori>
 
 -}
 styledButton : String -> Html msg
@@ -69,7 +71,8 @@ styledButton label =
 {-|
 
     import Html.Styled
-    <shiori> Html.Styled.toUnstyled ElmCss.infoCard </shiori>
+    <shiori name="Info Card A"> Html.Styled.toUnstyled ElmCss.infoCard </shiori>
+    <shiori name="Info Card B"> Html.Styled.toUnstyled ElmCss.infoCard </shiori>
 
 -}
 infoCard : Html msg

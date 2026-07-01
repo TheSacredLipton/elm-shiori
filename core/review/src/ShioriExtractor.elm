@@ -15,8 +15,13 @@ rule =
         |> Rule.withDeclarationEnterVisitor declarationVisitor
         |> Rule.fromModuleRuleSchema
 
+type alias ExtractedCode =
+    { name : String
+    , code : String
+    }
+
 type alias Extracted =
-    { codes : List String
+    { codes : List ExtractedCode
     , imports : List String
     }
 
@@ -35,8 +40,8 @@ extract commentStr =
     parseLines lines { currentBlock = Nothing, codes = [], imports = [] }
 
 type alias ParseState =
-    { currentBlock : Maybe (List String)
-    , codes : List String
+    { currentBlock : Maybe ( String, List String )
+    , codes : List ExtractedCode
     , imports : List String
     }
 
@@ -47,10 +52,10 @@ parseLines lines state =
             let
                 finalCodes =
                     case state.currentBlock of
-                        Just block ->
+                        Just ( name, block ) ->
                             case block of
                                 [] -> state.codes
-                                first :: _ -> (String.trim first) :: state.codes
+                                first :: _ -> { name = name, code = String.trim first } :: state.codes
                         Nothing ->
                             state.codes
             in
@@ -64,7 +69,7 @@ parseLines lines state =
                 parseLines rest { state | imports = trimmed :: state.imports }
             else
                 case state.currentBlock of
-                    Just block ->
+                    Just ( name, block ) ->
                         if String.contains "</shiori>" line then
                             let
                                 beforeClose =
@@ -79,19 +84,40 @@ parseLines lines state =
                             parseLines rest
                                 { state
                                     | currentBlock = Nothing
-                                    , codes = if String.isEmpty fullBlock then state.codes else fullBlock :: state.codes
+                                    , codes = if String.isEmpty fullBlock then state.codes else { name = name, code = fullBlock } :: state.codes
                                 }
                         else
-                            parseLines rest { state | currentBlock = Just (line :: block) }
+                            parseLines rest { state | currentBlock = Just ( name, line :: block ) }
 
                     Nothing ->
-                        if String.contains "<shiori>" line then
+                        if String.contains "<shiori" line then
                             let
-                                afterStart =
-                                    case String.split "<shiori>" line of
-                                        _ :: after :: _ -> after
-                                        _ :: [] -> ""
+                                after =
+                                    case String.split "<shiori" line of
+                                        _ :: restPart -> String.join "<shiori" restPart
                                         [] -> ""
+
+                                idx =
+                                    case String.indexes ">" after of
+                                        firstIdx :: _ -> firstIdx
+                                        [] -> 0
+
+                                afterStart =
+                                    String.dropLeft (idx + 1) after
+
+                                tagContent =
+                                    String.left idx after
+
+                                name =
+                                    if String.contains "name=\"" tagContent then
+                                        case String.split "name=\"" tagContent of
+                                            _ :: namePart :: _ ->
+                                                case String.split "\"" namePart of
+                                                    actualName :: _ -> actualName
+                                                    [] -> ""
+                                            _ -> ""
+                                    else
+                                        ""
                             in
                             if String.contains "</shiori>" afterStart then
                                 let
@@ -100,16 +126,16 @@ parseLines lines state =
                                             before :: _ -> String.trim before
                                             [] -> ""
                                     newCodes =
-                                        if String.isEmpty code then state.codes else code :: state.codes
+                                        if String.isEmpty code then state.codes else { name = name, code = code } :: state.codes
                                 in
                                 parseLines rest { state | codes = newCodes }
-                             else
+                            else
                                 let
                                     hasClose =
                                         List.any (String.contains "</shiori>") rest
                                 in
                                 if hasClose then
-                                    parseLines rest { state | currentBlock = Just [afterStart] }
+                                    parseLines rest { state | currentBlock = Just ( name, [afterStart] ) }
                                 else
                                     parseLines rest state
                         else
@@ -119,10 +145,17 @@ encodeResult : String -> Extracted -> String
 encodeResult funcName extracted =
     Encode.object
         [ ( "funcName", Encode.string funcName )
-        , ( "codes", Encode.list Encode.string extracted.codes )
+        , ( "codes", Encode.list encodeCode extracted.codes )
         , ( "imports", Encode.list Encode.string extracted.imports )
         ]
         |> Encode.encode 0
+
+encodeCode : ExtractedCode -> Encode.Value
+encodeCode c =
+    Encode.object
+        [ ( "name", Encode.string c.name )
+        , ( "code", Encode.string c.code )
+        ]
 
 importVisitor : Node Import -> List String -> ( List (Error {}), List String )
 importVisitor node context =
@@ -194,7 +227,7 @@ declarationVisitor node context =
             in
             case maybeDoc of
                 Just (Node range commentStr) ->
-                    if String.contains "<shiori>" commentStr then
+                    if String.contains "<shiori" commentStr then
                         let
                             extracted = extract commentStr
                         in

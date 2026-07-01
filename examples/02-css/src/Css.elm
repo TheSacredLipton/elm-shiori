@@ -42,18 +42,20 @@ update msg model =
 
 {-|
 
-    <shiori> view (Model 0 "modelInitialValue2") </shiori>
+    <shiori name="Initial State"> view (Model 0 "modelInitialValue2") </shiori>
+    <shiori name="Incremented State"> view (Model 5 "modelInitialValue2") </shiori>
 
 -}
 view : Model -> Html Msg
-view _ =
+view model =
     div [ class "hello" ]
-        [ text "hello" ]
+        [ text ("hello " ++ String.fromInt model.property) ]
 
 
 {-|
 
-    <shiori> premiumCard </shiori>
+    <shiori name="Premium Layout A"> premiumCard </shiori>
+    <shiori name="Premium Layout B"> premiumCard </shiori>
 
 -}
 premiumCard : Html msg
@@ -71,7 +73,7 @@ premiumCard =
 
 {-|
 
-    <shiori> switchToggle </shiori>
+    <shiori name="Switch Toggle"> switchToggle </shiori>
 
 -}
 switchToggle : Html msg
