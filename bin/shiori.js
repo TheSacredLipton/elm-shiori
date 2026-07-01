@@ -150,7 +150,7 @@ const sourceDirectories = roots => {
 const buildRouteElm = modules => {
   const moduleNames = Object.keys(modules).sort();
 
-  const importsSection = moduleNames.map(m => `import ${m} exposing (..)`).join('\n');
+  const importsSection = moduleNames.map(m => `import ${m}`).join('\n');
 
   // 重複を排除したカスタムインポート
   const customImports = new Set();
@@ -324,14 +324,17 @@ const runCodegen = async shioriJson => {
               const resolvedCodes = shioriCodes.map(code => {
                 const escapedFuncName = funcName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
                 const regex = new RegExp(
-                  `"[^"\\\\\\n]*(?:\\\\.[^"\\\\\\n]*)*"|'[^'\\\\\\n]*(?:\\\\.[^'\\\\\\n]*)*'|\\b${escapedFuncName}\\b`,
+                  `"[^"\\\\\\n]*(?:\\\\.[^"\\\\\\n]*)*"|'[^'\\\\\\n]*(?:\\\\.[^'\\\\\\n]*)*'|\\b${escapedFuncName}\\b|(?<!\\.)\\b[A-Z][a-zA-Z0-9_]*\\b(?!\\.)`,
                   'g'
                 );
                 return code.replace(regex, (/** @type {string} */ m) => {
                   if (m.startsWith('"') || m.startsWith("'")) {
                     return m;
                   }
-                  return `${moduleName}.${funcName}`;
+                  if (m === funcName) {
+                    return `${moduleName}.${funcName}`;
+                  }
+                  return `${moduleName}.${m}`;
                 });
               });
               modules[moduleName][funcName].codes.push(...resolvedCodes);
