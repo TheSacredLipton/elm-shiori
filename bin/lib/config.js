@@ -10,6 +10,7 @@ import { logError, red, shioriRoot } from './utils.js';
  * @property {string[]} [stylesheets]
  * @property {string[]} [scripts]
  * @property {string[]} [imports]
+ * @property {'html' | 'elm-ui' | 'elm-css'} [type]
  * @typedef {Object} ElmJson
  * @property {string[]} source-directories
  */
@@ -52,6 +53,11 @@ export const validateShioriJson = json => {
   checkStringArray('stylesheets');
   checkStringArray('scripts');
   checkStringArray('imports');
+  if (json.type !== undefined && !['html', 'elm-ui', 'elm-css'].includes(json.type)) {
+    throw new Error(
+      'shiori.json の "type" は "html"、"elm-ui"、"elm-css" のいずれかである必要があります。'
+    );
+  }
 };
 
 /**

@@ -2,5 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/TheSacredLipton/elm-shiori/main/shiori.schema.json",
   "roots": ["src"],
   "assets": "public",
-  "stylesheets": ["/style.css"]
+  "stylesheets": ["/style.css"],
+  "type": "html"
 }

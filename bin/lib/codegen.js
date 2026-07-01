@@ -122,9 +122,119 @@ export const prepareWorkDir = async () => {
     await fse.copy(join(shioriRoot(), 'core', 'shiori', 'src'), join(workDir, 'src'));
     await fse.copy(join(shioriRoot(), 'core', 'shiori', 'logo.svg'), join(workDir, 'logo.svg'));
 
+    const shioriJson = await readShioriJson();
+
+    // shioriJson.type に応じた Shiori_View.elm の生成
+    const type = shioriJson?.type || 'html';
+    const shioriViewPath = join(workDir, 'src', 'Shiori_View.elm');
+    if (type === 'elm-ui') {
+      const elmUiShioriView = `module Shiori_View exposing (card, map, solo)
+
+import Html exposing (Html)
+import Html.Attributes exposing (style)
+import Element exposing (Element)
+
+map : List (Html msg) -> List (Html ())
+map =
+    List.map <| Html.map (always ())
+
+card : String -> Element msg -> Html msg
+card label content =
+    Element.layout
+        [ Element.width Element.fill ]
+        (Element.el
+            [ Element.htmlAttribute (style "border" "1px solid #e7e5e4")
+            , Element.htmlAttribute (style "border-radius" "12px")
+            , Element.htmlAttribute (style "background-color" "#ffffff")
+            , Element.htmlAttribute (style "display" "flex")
+            , Element.htmlAttribute (style "flex-direction" "column")
+            , Element.htmlAttribute (style "overflow" "hidden")
+            , Element.htmlAttribute (style "box-shadow" "0 1px 3px 0 rgba(0, 0, 0, 0.05)")
+            , Element.width Element.fill
+            ]
+            (Element.column [ Element.width Element.fill ]
+                [ Element.el
+                    [ Element.paddingXY 16 10
+                    , Element.htmlAttribute (style "background-color" "#fafaf9")
+                    , Element.htmlAttribute (style "border-bottom" "1px solid #e7e5e4")
+                    , Element.htmlAttribute (style "font-size" "12px")
+                    , Element.htmlAttribute (style "font-weight" "600")
+                    , Element.htmlAttribute (style "color" "#78716c")
+                    , Element.htmlAttribute (style "letter-spacing" "0.025em")
+                    ]
+                    (Element.text label)
+                , Element.el
+                    [ Element.padding 24
+                    , Element.htmlAttribute (style "background-color" "#ffffff")
+                    , Element.width Element.fill
+                    ]
+                    content
+                ]
+            )
+        )
+
+solo : Element msg -> Html msg
+solo content =
+    Element.layout [ Element.width Element.fill, Element.height Element.fill ] content
+`;
+      await writeFile(shioriViewPath, elmUiShioriView);
+    } else if (type === 'elm-css') {
+      const elmCssShioriView = `module Shiori_View exposing (card, map, solo)
+
+import Html exposing (Html, div, text)
+import Html.Attributes exposing (style)
+import Html.Styled exposing (toUnstyled)
+
+map : List (Html msg) -> List (Html ())
+map =
+    List.map <| Html.map (always ())
+
+card : String -> Html.Styled.Html msg -> Html msg
+card label content =
+    div
+        [ style "border" "1px solid #e7e5e4"
+        , style "border-radius" "12px"
+        , style "background-color" "#ffffff"
+        , style "display" "flex"
+        , style "flex-direction" "column"
+        , style "overflow" "hidden"
+        , style "box-shadow" "0 1px 3px 0 rgba(0, 0, 0, 0.05)"
+        , style "width" "100%"
+        , style "box-sizing" "border-box"
+        ]
+        [ div
+            [ style "padding" "10px 16px"
+            , style "background-color" "#fafaf9"
+            , style "border-bottom" "1px solid #e7e5e4"
+            , style "font-size" "12px"
+            , style "font-weight" "600"
+            , style "color" "#78716c"
+            , style "letter-spacing" "0.025em"
+            ]
+            [ text label ]
+        , div
+            [ style "padding" "24px"
+            , style "background-color" "#ffffff"
+            , style "width" "100%"
+            , style "box-sizing" "border-box"
+            ]
+            [ toUnstyled content ]
+        ]
+
+solo : Html.Styled.Html msg -> Html msg
+solo content =
+    div
+        [ style "width" "100%"
+        , style "height" "100%"
+        , style "box-sizing" "border-box"
+        ]
+        [ toUnstyled content ]
+`;
+      await writeFile(shioriViewPath, elmCssShioriView);
+    }
+
     let html = await readFile(join(shioriRoot(), 'core', 'shiori', 'index.html'), 'utf-8');
 
-    const shioriJson = await readShioriJson();
     if (shioriJson) {
       let customTags = '';
       if (Array.isArray(shioriJson.stylesheets)) {

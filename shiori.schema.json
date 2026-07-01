@@ -55,8 +55,14 @@
       },
       "uniqueItems": true,
       "examples": [["Json.Decode as Decode"]]
+    },
+    "type": {
+      "type": "string",
+      "description": "The target framework type for components (html, elm-ui, elm-css).",
+      "enum": ["html", "elm-ui", "elm-css"],
+      "default": "html"
     }
   },
-  "required": ["roots"],
+  "required": ["roots", "type"],
   "additionalProperties": false
 }

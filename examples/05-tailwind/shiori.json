@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/TheSacredLipton/elm-shiori/main/shiori.schema.json",
   "roots": ["src"],
-  "scripts": ["https://cdn.tailwindcss.com"]
+  "scripts": ["https://cdn.tailwindcss.com"],
+  "type": "html"
 }

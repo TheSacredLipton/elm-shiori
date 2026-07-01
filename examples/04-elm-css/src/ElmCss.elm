@@ -10,7 +10,7 @@ main : Program () Model Msg
 main =
     Browser.sandbox
         { init = init
-        , view = \_ -> Html.Styled.toUnstyled (div [] [ text "hello" ])
+        , view = \model -> Html.Styled.toUnstyled (view model)
         , update = update
         }
 
@@ -43,13 +43,12 @@ update msg model =
 
 {-|
 
-    import Html.Styled
-    <shiori name="Indigo Button"> Html.Styled.toUnstyled (ElmCss.styledButton "Click me") </shiori>
-    <shiori name="Pink Button"> Html.Styled.toUnstyled (ElmCss.styledButton "Submit") </shiori>
-    <shiori name="Gray Button"> Html.Styled.toUnstyled (ElmCss.styledButton "Cancel") </shiori>
+    <shiori name="Indigo Button"> ElmCss.styledButton "Click me" </shiori>
+    <shiori name="Pink Button"> ElmCss.styledButton "Submit" </shiori>
+    <shiori name="Gray Button"> ElmCss.styledButton "Cancel" </shiori>
 
 -}
-styledButton : String -> Html msg
+styledButton : String -> Html.Styled.Html msg
 styledButton label =
     button
         [ css
@@ -70,12 +69,11 @@ styledButton label =
 
 {-|
 
-    import Html.Styled
-    <shiori name="Info Card A"> Html.Styled.toUnstyled ElmCss.infoCard </shiori>
-    <shiori name="Info Card B"> Html.Styled.toUnstyled ElmCss.infoCard </shiori>
+    <shiori name="Info Card A"> ElmCss.infoCard </shiori>
+    <shiori name="Info Card B"> ElmCss.infoCard </shiori>
 
 -}
-infoCard : Html msg
+infoCard : Html.Styled.Html msg
 infoCard =
     div
         [ css
@@ -112,6 +110,6 @@ infoCard =
         ]
 
 
-view : Model -> Html Msg
+view : Model -> Html.Styled.Html Msg
 view _ =
     div [] [ text "hello" ]

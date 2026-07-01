@@ -86,4 +86,14 @@ test('validateShioriJson validates configuration correctly', async () => {
   assert.throws(() => {
     validateShioriJson({ roots: ['src'], stylesheets: 'style.css' });
   }, /stylesheets/);
+
+  // 正常系: type
+  assert.doesNotThrow(() => {
+    validateShioriJson({ roots: ['src'], type: 'elm-ui' });
+  });
+
+  // 異常系: type が無効な値
+  assert.throws(() => {
+    validateShioriJson({ roots: ['src'], type: 'invalid' });
+  }, /type/);
 });

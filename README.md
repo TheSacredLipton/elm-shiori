@@ -16,23 +16,22 @@ npx shiori init
 
 ## 使い方
 
-1.初回は`npx shiori init`を実行
+1. 初回は `npx shiori init` を実行します。
 
-2.[examples](./examples)を参考に`shiori/src/Shiori_View.elm`を編集
+2. `shiori.json` を設定します（必要に応じて、`"type": "elm-ui"` や `"type": "elm-css"` を指定できます）。
 
-- [elm-uiの例](https://github.com/TheSacredLipton/elm-shiori/blob/main/examples/03-elm-ui/shiori/src/Shiori_View.elm)
+- [elm-uiの例](./examples/03-elm-ui/shiori.json)
+- [elm-cssの例](./examples/04-elm-css/shiori.json)
 
-3.`shiori/src/index.html`を編集し任意のCSSやjs等読み込ませる
+3. `shiori/src/index.html` を編集し、任意のCSSやJS等を読み込ませます（不要ならスキップして構いません）。
 
-4.[examples](./examples)を参考に`shiori.json`を設定
+4. Elmコードに [コメントを追加](#コメントの書き方) します。
 
-5.[コメント追加](#コメントの書き方)
-
-6.`npx shiori serve`
+5. `npx shiori serve` を実行します。
 
 - <http://localhost:3000>
 
-7.`shiori/src/Shiori.elm`を編集し外観を変更
+6. `shiori/src/Shiori.elm` を編集し、外観を変更します（不要ならスキップして構いません）。
 
 ## コメントの書き方
 
