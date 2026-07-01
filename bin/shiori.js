@@ -360,6 +360,7 @@ const prepareWorkDir = async () => {
     const workDir = join('elm-stuff', 'shiori');
     await fse.ensureDir(workDir);
     await fse.copy(join(shioriRoot(), 'core', 'shiori', 'src'), join(workDir, 'src'));
+    await fse.copy(join(shioriRoot(), 'core', 'shiori', 'logo.svg'), join(workDir, 'logo.svg'));
 
     let html = await readFile(join(shioriRoot(), 'core', 'shiori', 'index.html'), 'utf-8');
 
