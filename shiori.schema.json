@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "shiori.json",
+  "description": "Configuration schema for elm-shiori",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path to the JSON schema file"
+    },
+    "roots": {
+      "type": "array",
+      "description": "Source root directories to watch Elm files.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "assets": {
+      "type": "string",
+      "description": "Static assets directory to serve (e.g. public)."
+    },
+    "files": {
+      "type": "array",
+      "description": "List of Elm module names containing components to preview.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stylesheets": {
+      "type": "array",
+      "description": "List of CSS file paths to link in the preview page.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scripts": {
+      "type": "array",
+      "description": "List of Javascript file paths to include in the preview page.",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["roots", "files"],
+  "additionalProperties": false
+}
