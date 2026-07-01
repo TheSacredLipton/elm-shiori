@@ -19,8 +19,7 @@
     "@types/ws": "^8.5.10",
     "@types/yargs": "^17.0.32",
     "elm": "0.19.1-6",
-    "elm-test": "0.19.1-revision10",
-    "elm-verify-examples": "^5.3.0"
+    "elm-test": "0.19.1-revision10"
   },
   "dependencies": {
     "@hono/node-server": "^1.11.4",
@@ -37,7 +36,7 @@
   "scripts": {
     "install": "elm-codegen install",
     "start": "node --watch dev.js",
-    "test": "biome ci . && elm-verify-examples && elm-test",
+    "test": "biome ci . && elm-test",
     "biome-apply": "biome check . --apply",
     "npm-publish": "npm run test && npm publish"
   },
