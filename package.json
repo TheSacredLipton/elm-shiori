@@ -36,7 +36,7 @@
   "scripts": {
     "install": "elm-codegen install",
     "start": "node --watch dev.js",
-    "test": "biome ci . && elm-test",
+    "test": "biome ci . && elm-test && node --test",
     "biome-apply": "biome check . --apply",
     "npm-publish": "npm run test && npm publish"
   },
