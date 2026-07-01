@@ -337,31 +337,6 @@ const runCodegen = async shioriJson => {
     const errors = data.errors || [];
     for (const fileError of errors) {
       const filePath = fileError.path;
-      /** @type {string[]} */
-      let fileImports = [];
-      try {
-        const fileContent = await readFile(filePath, 'utf-8');
-        fileImports = fileContent
-          .split('\n')
-          .map(l => l.trim())
-          .filter(l => l.startsWith('import '))
-          .filter(l => {
-            const m = l.match(/^import\s+([A-Za-z0-9_.]+)/);
-            if (m) {
-              const mod = m[1];
-              if (
-                mod === 'Html' ||
-                mod.startsWith('Html.') ||
-                mod === 'Url' ||
-                mod.startsWith('Url.')
-              ) {
-                return false;
-              }
-            }
-            return true;
-          });
-      } catch (_) {}
-
       let matchedRoot = '';
       for (const root of shioriJson.roots) {
         if (filePath.startsWith(`${root}/`)) {
@@ -404,7 +379,7 @@ const runCodegen = async shioriJson => {
                 });
               });
               modules[moduleName][funcName].codes.push(...resolvedCodes);
-              modules[moduleName][funcName].imports.push(...importLines, ...fileImports);
+              modules[moduleName][funcName].imports.push(...importLines);
             }
           } catch (e) {
             logError(e, 'Failed to parse shiori extractor JSON');

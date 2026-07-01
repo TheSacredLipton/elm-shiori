@@ -3,12 +3,15 @@ module ShioriExtractor exposing (rule)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.ModuleName exposing (ModuleName)
+import Elm.Syntax.Import exposing (Import)
+import Elm.Syntax.Exposing exposing (Exposing(..), TopLevelExpose(..))
 import Review.Rule as Rule exposing (Error, Rule)
 import Json.Encode as Encode
 
 rule : Rule
 rule =
-    Rule.newModuleRuleSchema "ShioriExtractor" ()
+    Rule.newModuleRuleSchema "ShioriExtractor" []
+        |> Rule.withImportVisitor importVisitor
         |> Rule.withDeclarationEnterVisitor declarationVisitor
         |> Rule.fromModuleRuleSchema
 
@@ -140,7 +143,66 @@ encodeResult funcName extracted =
         ]
         |> Encode.encode 0
 
-declarationVisitor : Node Declaration -> () -> ( List (Error {}), () )
+importVisitor : Node Import -> List String -> ( List (Error {}), List String )
+importVisitor node context =
+    let
+        imp = Node.value node
+        moduleName = String.join "." (Node.value imp.moduleName)
+        isSystem =
+            moduleName == "Html"
+                || String.startsWith "Html." moduleName
+                || moduleName == "Url"
+                || String.startsWith "Url." moduleName
+    in
+    if isSystem then
+        ( [], context )
+    else
+        let
+            aliasStr =
+                case imp.moduleAlias of
+                    Just aliasNode ->
+                        " as " ++ String.join "." (Node.value aliasNode)
+                    Nothing ->
+                        ""
+            exposingStr =
+                case imp.exposingList of
+                    Just exposingNode ->
+                        " exposing " ++ exposingToString (Node.value exposingNode)
+                    Nothing ->
+                        ""
+            importLine =
+                "import " ++ moduleName ++ aliasStr ++ exposingStr
+        in
+        ( [], importLine :: context )
+
+exposingToString : Exposing -> String
+exposingToString exp =
+    case exp of
+        All _ ->
+            "(..)"
+        Explicit list ->
+            let
+                items = List.map (Node.value >> topLevelExposeToString) list
+            in
+            "(" ++ String.join ", " items ++ ")"
+
+topLevelExposeToString : TopLevelExpose -> String
+topLevelExposeToString val =
+    case val of
+        InfixExpose name ->
+            "(" ++ name ++ ")"
+        TypeExpose typeExpose ->
+            case typeExpose.open of
+                Just _ ->
+                    typeExpose.name ++ "(..)"
+                Nothing ->
+                    typeExpose.name
+        FunctionExpose name ->
+            name
+        TypeOrAliasExpose name ->
+            name
+
+declarationVisitor : Node Declaration -> List String -> ( List (Error {}), List String )
 declarationVisitor node context =
     case Node.value node of
         FunctionDeclaration func ->
@@ -154,7 +216,9 @@ declarationVisitor node context =
                     if String.contains "<shiori>" commentStr then
                         let
                             extracted = extract commentStr
-                            jsonStr = encodeResult funcName extracted
+                            mergedImports = extracted.imports ++ context
+                            extractedWithMerged = { extracted | imports = mergedImports }
+                            jsonStr = encodeResult funcName extractedWithMerged
                         in
                         ( [ Rule.error
                                 { message = "SHIORI_EXTRACT:" ++ jsonStr
@@ -162,13 +226,13 @@ declarationVisitor node context =
                                 }
                                 range
                           ]
-                        , ()
+                        , context
                         )
                     else
-                        ( [], () )
+                        ( [], context )
 
                 Nothing ->
-                    ( [], () )
+                    ( [], context )
 
         _ ->
-            ( [], () )
+            ( [], context )
