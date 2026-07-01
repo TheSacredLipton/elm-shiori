@@ -187,4 +187,49 @@ docTests =
             \() ->
                 Elm.ToString.declaration genToRoute
                     |> Expect.equal { body = "toRoute : Url.Url -> Route\ntoRoute url =\n    url |> parse routeParser  |> Maybe.withDefault NotFound\n\n\n", docs = "", imports = "import Url", signature = "toRoute : Url.Url -> Route" }
+        , test "genLinks" <|
+            \() ->
+                Elm.ToString.declaration (genLinks [("", [])])
+                    |> Expect.equal { body = "links : List ( String, List a )\nlinks =\n    [ ( \"\", [] ) ]\n\n\n", docs = "", imports = "import\nimport", signature = "links : List ( String, List a )" }
+        , test "genLinksHelper" <|
+            \() ->
+                Elm.ToString.expression (genLinksHelper "foo" [ ( "bar", { codes = [ "baz" ], imports = [] } ) ])
+                    |> Expect.equal { body = "[ ( \"bar\", [ \"foo_bar_0\" ] ) ]", imports = "import\nimport", signature = "List ( String, List String )" }
+        , test "variantName" <|
+            \() ->
+                Expect.all
+                    [ \() -> variantName "Main" 100 |> Expect.equal "Main_100"
+                    , \() -> variantName "main" 100 |> Expect.equal "Main_100"
+                    ]
+                    ()
+        , test "headUpper" <|
+            \() ->
+                Expect.all
+                    [ \() -> headUpper "tom" |> Expect.equal "Tom"
+                    , \() -> headUpper "t" |> Expect.equal "T"
+                    ]
+                    ()
+        , test "elmFileName" <|
+            \() ->
+                elmFileName "Main" "button" 100 |> Expect.equal "Main_button_100"
+        , test "urlName" <|
+            \() ->
+                urlName "Main" "button" 1 |> Expect.equal "main_button_1"
+        , test "toScore" <|
+            \() ->
+                toScore "Main.A" |> Expect.equal "Main_A"
+        , test "joinDot" <|
+            \() ->
+                Expect.all
+                    [ \() -> joinDot [] |> Expect.equal ""
+                    , \() -> joinDot [ "Main", "Button" ] |> Expect.equal "Main.Button"
+                    ]
+                    ()
+        , test "joinScore" <|
+            \() ->
+                Expect.all
+                    [ \() -> joinScore [] |> Expect.equal ""
+                    , \() -> joinScore [ "Main", "Button" ] |> Expect.equal "Main_Button"
+                    ]
+                    ()
         ]

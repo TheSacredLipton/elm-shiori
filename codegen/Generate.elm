@@ -172,14 +172,7 @@ getImportsAndCodes =
         )
 
 
-{-|
-
-    import Parser as P
-
-    P.run getKeyword "import Html exposing"
-    --> Ok "import"
-
--}
+{-| -}
 getKeyword : Parser String
 getKeyword =
     P.variable { start = Char.isLower, inner = Char.isAlphaNum, reserved = Set.fromList [] }
@@ -230,14 +223,7 @@ route elmCode =
             ]
 
 
-{-|
-
-    import Elm.ToString exposing (declaration)
-
-    declaration <| import_ True "Url.Parser"
-    -->  { body = "import Url.Parser exposing (..)\n\n\n", docs = "", imports = "", signature = "" }
-
--}
+{-| -}
 import_ : Bool -> String -> Elm.Declaration
 import_ isExposingAll name =
     Elm.unsafe <|
@@ -252,14 +238,7 @@ import_ isExposingAll name =
             ]
 
 
-{-|
-
-        import Elm.ToString exposing (declaration)
-
-        declaration <| genTypeRoute [("", [])]
-        --> { body = "type Route\n    = NotFound\n    |  String\n\n\n", docs = "", imports = "import\nimport", signature = "" }
-
--}
+{-| -}
 genTypeRoute : ElmCode -> Elm.Declaration
 genTypeRoute elmCode =
     Elm.customType "Route" <|
@@ -268,14 +247,7 @@ genTypeRoute elmCode =
                 elmCode
 
 
-{-|
-
-        import Elm.ToString exposing (declaration)
-
-        declaration <| genView [("", [])]
-        --> { body = "view : Url.Url -> List (Html.Html ())\nview url =\n    case url |> toRoute of\n        NotFound ->\n            []\n    \n         str ->\n            case str of\n                _ ->\n                    []\n\n\n", docs = "", imports = "import Html\nimport Url", signature = "view : Url.Url -> List (Html.Html ())" }
-
--}
+{-| -}
 genView : ElmCode -> Elm.Declaration
 genView elmCode =
     Elm.declaration "view" <|
@@ -294,15 +266,7 @@ genViewHelper ( fileName, v ) =
         always (helper2 fileName v)
 
 
-{-| TODO: RENAME
-FIXME: テスト失敗してそうな雰囲気
-
-        import Elm.ToString exposing (expression)
-
-        expression <| helper2 "" [("", { codes = [], imports = [] })]
-        --> { body = "case str of\n    \"\" ->\n        [] |> Shiori_View.map\n\n    _ ->\n        []", imports = "import\nimport", signature = "Infinite type inference loop!  Whoops.  This is an issue with elm-codegen.  If you can report this to the elm-codegen repo, that would be appreciated!" }
-
--}
+{-| TODO: RENAME -}
 helper2 : FileName -> List ( FunctionName, { codes : List String, imports : List String } ) -> Elm.Expression
 helper2 fileName vv =
     Elm.Case.string (Elm.val "str")
@@ -325,14 +289,7 @@ helper2 fileName vv =
         }
 
 
-{-|
-
-    import Elm.ToString exposing (declaration)
-
-    declaration <| genRouteParser [("", [])]
-    --> { body = "routeParser : Parser (Route -> b) b\nrouteParser =\n    [ map  <| s \"\" </> string ] |> oneOf\n\n\n", docs = "", imports = "import\nimport", signature = "routeParser : Parser (Route -> b) b" }
-
--}
+{-| -}
 genRouteParser : ElmCode -> Elm.Declaration
 genRouteParser elmCode =
     elmCode
@@ -342,14 +299,7 @@ genRouteParser elmCode =
         |> Elm.declaration "routeParser"
 
 
-{-|
-
-    import Elm.ToString exposing (expression)
-
-    expression <| url_oneOf
-    --> { body = "oneOf", imports = "import\nimport", signature = "List (Parser a b) -> Parser (Route -> b) b" }
-
--}
+{-| -}
 url_oneOf : Elm.Expression
 url_oneOf =
     let
@@ -376,24 +326,13 @@ url_oneOf =
         }
 
 
-{-| FIXME:
-
-    genRouteParserHelper "Page.Home" --> "map Page_Home <| s \"Page.Home\" </> string"
-
--}
+{-| -}
 genRouteParserHelper : String -> String
 genRouteParserHelper fileName =
     "map " ++ toScore fileName ++ " <| s \"" ++ fileName ++ "\" </> string"
 
 
-{-|
-
-        import Elm.ToString exposing (declaration)
-
-        declaration <| genToRoute
-        -->  { body = "toRoute : Url.Url -> Route\ntoRoute url =\n    url |> parse routeParser  |> Maybe.withDefault NotFound\n\n\n", docs = "", imports = "import Url", signature = "toRoute : Url.Url -> Route" }
-
--}
+{-| -}
 genToRoute : Elm.Declaration
 genToRoute =
     Elm.declaration "toRoute" <|
@@ -406,14 +345,7 @@ genToRoute =
             )
 
 
-{-|
-
-        import Elm.ToString exposing (declaration)
-
-        declaration <| genLinks [("", [])]
-        -->  { body = "links : List ( String, List a )\nlinks =\n    [ ( \"\", [] ) ]\n\n\n", docs = "", imports = "import\nimport", signature = "links : List ( String, List a )" }
-
--}
+{-| -}
 genLinks : ElmCode -> Elm.Declaration
 genLinks elmCode =
     elmCode
@@ -422,14 +354,7 @@ genLinks elmCode =
         |> Elm.declaration "links"
 
 
-{-|
-
-        import Elm.ToString exposing (expression)
-
-        expression <| genLinksHelper "foo" [ ( "bar", { codes = [ "baz" ], imports = [] } ) ]
-        -->   { body = "[ ( \"bar\", [ \"foo_bar_0\" ] ) ]", imports = "import\nimport", signature = "List ( String, List String )" }
-
--}
+{-| -}
 genLinksHelper : FileName -> List ( FunctionName, { codes : List String, imports : List String } ) -> Elm.Expression
 genLinksHelper fileName dictFunctionNameCode =
     let
@@ -450,79 +375,43 @@ genLinksHelper fileName dictFunctionNameCode =
 ------------------
 
 
-{-|
-
-    variantName "Main" 100 --> "Main_100"
-
-    variantName "main" 100 --> "Main_100"
-
--}
+{-| -}
 variantName : String -> Int -> String
 variantName fileName index =
     joinScore [ headUpper fileName, String.fromInt index ]
 
 
-{-|
-
-    headUpper "tom" --> "Tom"
-
-    headUpper "t" --> "T"
-
--}
+{-| -}
 headUpper : String -> String
 headUpper s =
     String.toUpper (String.left 1 s) ++ String.dropLeft 1 s
 
 
-{-|
-
-    elmFileName "Main" "button" 100 --> "Main_button_100"
-
--}
+{-| -}
 elmFileName : String -> String -> Int -> String
 elmFileName fileName functionName index =
     joinScore [ fileName, functionName, String.fromInt index ]
 
 
-{-|
-
-    urlName "Main" "button" 1 --> "main_button_1"
-
--}
+{-| -}
 urlName : String -> String -> Int -> String
 urlName fileName functionName index =
     joinScore [ String.toLower fileName, functionName, String.fromInt index ]
 
 
-{-|
-
-    toScore "Main.A" --> "Main_A"
-
--}
+{-| -}
 toScore : String -> String
 toScore =
     String.replace "." "_"
 
 
-{-| TODO: 先頭を大文字にする処理を追加すると安全かもしれない
-
-    joinDot [] --> ""
-
-    joinDot [ "Main", "Button" ] --> "Main.Button"
-
--}
+{-| TODO: 先頭を大文字にする処理を追加すると安全かもしれない -}
 joinDot : List String -> String
 joinDot =
     String.join "."
 
 
-{-|
-
-    joinScore [] --> ""
-
-    joinScore [ "Main", "Button" ] --> "Main_Button"
-
--}
+{-| -}
 joinScore : List String -> String
 joinScore =
     String.join "_"
