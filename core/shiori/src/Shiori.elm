@@ -391,7 +391,7 @@ md w a b =
 logoIcon : Html msg
 logoIcon =
     img
-        [ src "/logo.svg"
+        [ src "/shiori-logo.svg"
         , style "width" "20px"
         , style "height" "20px"
         , style "margin-right" "8px"
