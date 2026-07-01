@@ -42,7 +42,7 @@ update msg model =
 
 {-|
 
-    <shiori> view (Model 0 "modelInitialValue2")
+    <shiori> view (Model 0 "modelInitialValue2") </shiori>
 
 -}
 view : Model -> Html Msg
@@ -53,7 +53,7 @@ view _ =
 
 {-|
 
-    <shiori> premiumCard
+    <shiori> premiumCard </shiori>
 
 -}
 premiumCard : Html msg
@@ -71,7 +71,7 @@ premiumCard =
 
 {-|
 
-    <shiori> switchToggle
+    <shiori> switchToggle </shiori>
 
 -}
 switchToggle : Html msg

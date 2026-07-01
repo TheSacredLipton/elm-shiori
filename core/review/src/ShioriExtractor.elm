@@ -103,36 +103,17 @@ parseLines lines state =
                                         if String.isEmpty code then state.codes else code :: state.codes
                                 in
                                 parseLines rest { state | codes = newCodes }
-                            else
+                             else
                                 let
                                     hasClose =
-                                        isMultiLineStart rest
+                                        List.any (String.contains "</shiori>") rest
                                 in
                                 if hasClose then
                                     parseLines rest { state | currentBlock = Just [afterStart] }
                                 else
-                                    let
-                                        code = String.trim afterStart
-                                        newCodes =
-                                            if String.isEmpty code then state.codes else code :: state.codes
-                                    in
-                                    parseLines rest { state | codes = newCodes }
+                                    parseLines rest state
                         else
                             parseLines rest state
-
-isMultiLineStart : List String -> Bool
-isMultiLineStart lines =
-    case lines of
-        [] ->
-            False
-
-        line :: rest ->
-            if String.contains "</shiori>" line then
-                True
-            else if String.contains "<shiori>" line then
-                False
-            else
-                isMultiLineStart rest
 
 encodeResult : String -> Extracted -> String
 encodeResult funcName extracted =
@@ -216,18 +197,23 @@ declarationVisitor node context =
                     if String.contains "<shiori>" commentStr then
                         let
                             extracted = extract commentStr
-                            mergedImports = extracted.imports ++ context
-                            extractedWithMerged = { extracted | imports = mergedImports }
-                            jsonStr = encodeResult funcName extractedWithMerged
                         in
-                        ( [ Rule.error
-                                { message = "SHIORI_EXTRACT:" ++ jsonStr
-                                , details = [ "Contains shiori tag" ]
-                                }
-                                range
-                          ]
-                        , context
-                        )
+                        if List.isEmpty extracted.codes then
+                            ( [], context )
+                        else
+                            let
+                                mergedImports = extracted.imports ++ context
+                                extractedWithMerged = { extracted | imports = mergedImports }
+                                jsonStr = encodeResult funcName extractedWithMerged
+                            in
+                            ( [ Rule.error
+                                    { message = "SHIORI_EXTRACT:" ++ jsonStr
+                                    , details = [ "Contains shiori tag" ]
+                                    }
+                                    range
+                              ]
+                            , context
+                            )
                     else
                         ( [], context )
 

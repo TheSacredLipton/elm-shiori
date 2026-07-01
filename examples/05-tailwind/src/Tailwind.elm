@@ -42,7 +42,7 @@ update msg model =
 
 {-|
 
-    <shiori> view (Model 0 "modelInitialValue2")
+    <shiori> view (Model 0 "modelInitialValue2") </shiori>
 
 -}
 view : Model -> Html Msg
@@ -55,7 +55,7 @@ view _ =
 
 {-|
 
-    <shiori> profileCard
+    <shiori> profileCard </shiori>
 
 -}
 profileCard : Html msg
@@ -84,7 +84,7 @@ profileCard =
 
 {-|
 
-    <shiori> articleCard
+    <shiori> articleCard </shiori>
 
 -}
 articleCard : Html msg
@@ -115,7 +115,7 @@ articleCard =
 
 {-|
 
-    <shiori> pricingSection
+    <shiori> pricingSection </shiori>
 
 -}
 pricingSection : Html msg
@@ -171,7 +171,7 @@ pricingSection =
 
 {-|
 
-    <shiori> widthTest
+    <shiori> widthTest </shiori>
 
 -}
 widthTest : Html msg

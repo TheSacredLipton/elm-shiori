@@ -208,7 +208,7 @@ const buildRouteElm = (modules, shioriJson) => {
   const parserItems = [];
   for (const m of moduleNames) {
     const variant = m.replace(/\./g, '_');
-    parserItems.push(`map ${variant} (s "${m}" </> string)`);
+    parserItems.push(`Url.Parser.map ${variant} (s "${m}" </> string)`);
   }
   const parserSection = `routeParser : Parser (Route -> b) b
 routeParser =
@@ -362,7 +362,7 @@ const runCodegen = async shioriJson => {
               const resolvedCodes = shioriCodes.map((/** @type {string} */ code) => {
                 const escapedFuncName = funcName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
                 const regex = new RegExp(
-                  `"[^"\\\\\\n]*(?:\\\\.[^"\\\\\\n]*)*"|'[^'\\\\\\n]*(?:\\\\.[^'\\\\\\n]*)*'|\\b${escapedFuncName}\\b|(?<!\\.)\\b[A-Z][a-zA-Z0-9_]*\\b(?!\\.)`,
+                  `"[^"\\\\\\n]*(?:\\\\.[^"\\\\\\n]*)*"|'[^'\\\\\\n]*(?:\\\\.[^'\\\\\\n]*)*'|(?<!\\.)\\b${escapedFuncName}\\b|(?<!\\.)\\b[A-Z][a-zA-Z0-9_]*\\b(?!\\.)`,
                   'g'
                 );
                 return code.replace(regex, (/** @type {string} */ m) => {

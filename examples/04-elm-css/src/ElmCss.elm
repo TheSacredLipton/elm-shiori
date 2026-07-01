@@ -44,7 +44,7 @@ update msg model =
 {-|
 
     import Html.Styled
-    <shiori> Html.Styled.toUnstyled (ElmCss.styledButton "Click me")
+    <shiori> Html.Styled.toUnstyled (ElmCss.styledButton "Click me") </shiori>
 
 -}
 styledButton : String -> Html msg
@@ -69,7 +69,7 @@ styledButton label =
 {-|
 
     import Html.Styled
-    <shiori> Html.Styled.toUnstyled ElmCss.infoCard
+    <shiori> Html.Styled.toUnstyled ElmCss.infoCard </shiori>
 
 -}
 infoCard : Html msg
@@ -78,7 +78,7 @@ infoCard =
         [ css
             [ displayFlex
             , flexDirection column
-            , gap (px 8)
+            , property "gap" "8px"
             , padding (px 20)
             , backgroundColor (rgb 255 255 255)
             , borderRadius (px 16)

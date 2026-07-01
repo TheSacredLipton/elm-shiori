@@ -78,7 +78,7 @@ view _ =
 
 {-|
 
-    <shiori> buttons
+    <shiori> buttons </shiori>
 
 -}
 buttons : Html msg
@@ -132,7 +132,7 @@ buttons =
 
 {-|
 
-    <shiori> alertBoxes
+    <shiori> alertBoxes </shiori>
 
 -}
 alertBoxes : Html msg

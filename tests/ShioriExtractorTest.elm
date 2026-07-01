@@ -8,14 +8,14 @@ import Test exposing (Test, describe, test)
 all : Test
 all =
     describe "ShioriExtractor"
-        [ test "should report error when function documentation contains <shiori> tag" <|
+        [ test "should report error when function documentation contains <shiori> tag (with closed tag)" <|
             \() ->
                 """module A exposing (..)
 
 {-| Module doc -}
 
 {-|
-    <shiori> square colors.red
+    <shiori> square colors.red </shiori>
 -}
 square : Int
 square = 1
@@ -25,7 +25,7 @@ square = 1
                         [ Review.Test.error
                             { message = "SHIORI_EXTRACT:{\"funcName\":\"square\",\"codes\":[\"square colors.red\"],\"imports\":[]}"
                             , details = [ "Contains shiori tag" ]
-                            , under = "{-|\n    <shiori> square colors.red\n-}"
+                            , under = "{-|\n    <shiori> square colors.red </shiori>\n-}"
                             }
                         ]
         , test "should not report error when documentation does not contain <shiori> tag" <|
@@ -37,6 +37,20 @@ square = 1
 {-|
     some documentation
 -}
+square = 1
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should ignore shiori tag when there is no closed tag" <|
+            \() ->
+                """module A exposing (..)
+
+{-| Module doc -}
+
+{-|
+    <shiori> square colors.red
+-}
+square : Int
 square = 1
 """
                     |> Review.Test.run rule
@@ -96,7 +110,7 @@ view = 1
     import Color
     import Element exposing (El)
 
-    <shiori> square Color.red
+    <shiori> square Color.red </shiori>
 -}
 square : Int
 square = 1
@@ -106,7 +120,7 @@ square = 1
                         [ Review.Test.error
                             { message = "SHIORI_EXTRACT:{\"funcName\":\"square\",\"codes\":[\"square Color.red\"],\"imports\":[\"import Color\",\"import Element exposing (El)\"]}"
                             , details = [ "Contains shiori tag" ]
-                            , under = "{-|\n    import Color\n    import Element exposing (El)\n\n    <shiori> square Color.red\n-}"
+                            , under = "{-|\n    import Color\n    import Element exposing (El)\n\n    <shiori> square Color.red </shiori>\n-}"
                             }
                         ]
         , test "should handle multiple shiori tags within the same comment block" <|
@@ -116,7 +130,7 @@ square = 1
 {-| Module doc -}
 
 {-|
-    <shiori> square Color.red
+    <shiori> square Color.red </shiori>
     <shiori>
     square
         Color.blue
@@ -130,7 +144,7 @@ square = 1
                         [ Review.Test.error
                             { message = "SHIORI_EXTRACT:{\"funcName\":\"square\",\"codes\":[\"square Color.red\",\"square\\n        Color.blue\"],\"imports\":[]}"
                             , details = [ "Contains shiori tag" ]
-                            , under = "{-|\n    <shiori> square Color.red\n    <shiori>\n    square\n        Color.blue\n    </shiori>\n-}"
+                            , under = "{-|\n    <shiori> square Color.red </shiori>\n    <shiori>\n    square\n        Color.blue\n    </shiori>\n-}"
                             }
                         ]
         ]
