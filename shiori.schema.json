@@ -12,42 +12,51 @@
       "type": "array",
       "description": "Source root directories to watch Elm files.",
       "items": {
-        "type": "string"
-      }
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "default": ["src"],
+      "examples": [["src"], ["src", "components"]]
     },
     "assets": {
       "type": "string",
-      "description": "Static assets directory to serve (e.g. public)."
-    },
-    "files": {
-      "type": "array",
-      "description": "List of Elm module names containing components to preview.",
-      "items": {
-        "type": "string"
-      }
+      "description": "Static assets directory to serve (e.g. public).",
+      "minLength": 1,
+      "examples": ["public"]
     },
     "stylesheets": {
       "type": "array",
       "description": "List of CSS file paths to link in the preview page.",
       "items": {
-        "type": "string"
-      }
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "examples": [["/style.css"]]
     },
     "scripts": {
       "type": "array",
       "description": "List of Javascript file paths to include in the preview page.",
       "items": {
-        "type": "string"
-      }
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "examples": [["https://cdn.tailwindcss.com"]]
     },
     "imports": {
       "type": "array",
       "description": "List of Elm import statements to include globally in Shiori.Route.elm (e.g. Json.Decode as Decode).",
       "items": {
-        "type": "string"
-      }
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "examples": [["Json.Decode as Decode"]]
     }
   },
-  "required": ["roots", "files"],
+  "required": ["roots"],
   "additionalProperties": false
 }

@@ -575,7 +575,7 @@ resolveSymbols : String -> String -> String -> String
 resolveSymbols moduleName funcName target =
     let
         isWordChar char =
-            Char.isAlphaNum char || char == '_'
+            Char.isAlphaNum char || char == '_' || char == '.'
         
         elmBuiltins =
             [ "Bool", "True", "False", "Int", "Float", "Char", "String", "List", "Maybe"
@@ -593,26 +593,47 @@ resolveSymbols moduleName funcName target =
                 [] ->
                     False
 
+        isQualified w =
+            String.contains "." w
+
         replaceWord w =
-            if w == funcName then
+            if isQualified w then
+                -- 既に修飾名（例: Element.layout, ElmUI.badgeList）の場合はそのまま
+                w
+            else if w == funcName then
                 moduleName ++ "." ++ funcName
             else if isCapitalized w && not (isBuiltin w) then
                 moduleName ++ "." ++ w
             else
                 w
 
-        splitAndReplace list currentAcc resultAcc =
+        -- inString: ダブルクォート内かどうか
+        splitAndReplace list currentAcc resultAcc inString =
             case list of
                 [] ->
-                    resultAcc ++ replaceWord currentAcc
+                    if inString then
+                        resultAcc ++ currentAcc
+                    else
+                        resultAcc ++ replaceWord currentAcc
+
+                '"' :: rest ->
+                    if inString then
+                        -- 文字列リテラル終了: currentAccをそのまま出力
+                        splitAndReplace rest "" (resultAcc ++ currentAcc ++ "\"") False
+                    else
+                        -- 文字列リテラル開始: 現在のワードを処理してからクォートを出力
+                        splitAndReplace rest "" (resultAcc ++ replaceWord currentAcc ++ "\"") True
 
                 c :: rest ->
-                    if isWordChar c then
-                        splitAndReplace rest (currentAcc ++ String.fromChar c) resultAcc
+                    if inString then
+                        -- 文字列リテラル内: そのまま蓄積
+                        splitAndReplace rest (currentAcc ++ String.fromChar c) resultAcc True
+                    else if isWordChar c then
+                        splitAndReplace rest (currentAcc ++ String.fromChar c) resultAcc False
                     else
-                        splitAndReplace rest "" (resultAcc ++ replaceWord currentAcc ++ String.fromChar c)
+                        splitAndReplace rest "" (resultAcc ++ replaceWord currentAcc ++ String.fromChar c) False
     in
-    splitAndReplace (String.toList target) "" ""
+    splitAndReplace (String.toList target) "" "" False
 
 -- Helper: Indentation helper
 indentCode : Int -> String -> String

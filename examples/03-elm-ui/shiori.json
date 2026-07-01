@@ -1,5 +1,4 @@
 {
   "$schema": "https://raw.githubusercontent.com/TheSacredLipton/elm-shiori/main/shiori.schema.json",
-  "roots": ["src"],
-  "files": ["ElmUI"]
+  "roots": ["src"]
 }
