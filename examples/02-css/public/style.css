@@ -6,3 +6,76 @@
   background-color: #212121;
   border-radius: 10px;
 }
+
+/* プレミアムカード */
+.css-card {
+  width: 100%;
+  max-width: 320px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  border: 1px solid #f3f4f6;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+.css-card-banner {
+  height: 120px;
+  background-image: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+}
+.css-card-content {
+  padding: 20px;
+  text-align: left;
+}
+.css-card-title {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+.css-card-text {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+.css-card-btn {
+  padding: 8px 16px;
+  background-color: #a855f7;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.css-card-btn:hover {
+  background-color: #9333ea;
+}
+
+/* トグルスイッチ */
+.css-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: sans-serif;
+  cursor: pointer;
+}
+.css-switch-track {
+  width: 48px;
+  height: 24px;
+  background-color: #10b981;
+  border-radius: 9999px;
+  position: relative;
+  transition: background-color 0.2s;
+}
+.css-switch-thumb {
+  width: 18px;
+  height: 18px;
+  background-color: #ffffff;
+  border-radius: 9999px;
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}

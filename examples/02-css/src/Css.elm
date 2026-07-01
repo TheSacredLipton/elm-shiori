@@ -1,4 +1,4 @@
-module Css exposing (Model, main, view)
+module Css exposing (Model, main, view, premiumCard, switchToggle)
 
 import Browser
 import Html exposing (..)
@@ -49,3 +49,36 @@ view : Model -> Html Msg
 view _ =
     div [ class "hello" ]
         [ text "hello" ]
+
+
+{-|
+
+    <shiori> premiumCard
+
+-}
+premiumCard : Html msg
+premiumCard =
+    div [ class "css-card" ]
+        [ div [ class "css-card-banner" ] []
+        , div [ class "css-card-content" ]
+            [ h3 [ class "css-card-title" ] [ text "Creative Project" ]
+            , p [ class "css-card-text" ]
+                [ text "This component has its styles completely isolated inside an iframe using vanilla CSS files managed via shiori.json configuration." ]
+            , button [ class "css-card-btn" ] [ text "Explore" ]
+            ]
+        ]
+
+
+{-|
+
+    <shiori> switchToggle
+
+-}
+switchToggle : Html msg
+switchToggle =
+    div [ class "css-switch" ]
+        [ div [ class "css-switch-track" ]
+            [ div [ class "css-switch-thumb" ] []
+            ]
+        , span [ class "css-switch-label" ] [ text "Feature enabled" ]
+        ]

@@ -25,7 +25,9 @@ const { red, cyan } = kleur;
  * @typedef {Object} ShioriJson
  * @property {string[]} roots
  * @property {ElmFiles} files
- * @property {string} assets
+ * @property {string} [assets]
+ * @property {string[]} [stylesheets]
+ * @property {string[]} [scripts]
  * @typedef {Object} ElmJson
  * @property {string[]} source-directories
  */
@@ -357,7 +359,28 @@ const prepareWorkDir = async () => {
     const workDir = join('elm-stuff', 'shiori');
     await fse.ensureDir(workDir);
     await fse.copy(join(shioriRoot(), 'core', 'shiori', 'src'), join(workDir, 'src'));
-    await fse.copy(join(shioriRoot(), 'core', 'shiori', 'index.html'), join(workDir, 'index.html'));
+
+    let html = await readFile(join(shioriRoot(), 'core', 'shiori', 'index.html'), 'utf-8');
+
+    const shioriJson = await readShioriJson();
+    if (shioriJson) {
+      let customTags = '';
+      if (Array.isArray(shioriJson.stylesheets)) {
+        for (const cssPath of shioriJson.stylesheets) {
+          customTags += `    <link rel="stylesheet" href="${cssPath}">\n`;
+        }
+      }
+      if (Array.isArray(shioriJson.scripts)) {
+        for (const jsPath of shioriJson.scripts) {
+          customTags += `    <script src="${jsPath}"></script>\n`;
+        }
+      }
+      if (customTags) {
+        html = html.replace('</head>', `${customTags}</head>`);
+      }
+    }
+
+    await writeFile(join(workDir, 'index.html'), html);
   } catch (err) {
     logError(err);
   }

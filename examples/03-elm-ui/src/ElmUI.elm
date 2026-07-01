@@ -1,4 +1,4 @@
-module ElmUI exposing (..)
+module ElmUI exposing (Model, main, view, button, productCard, badgeList)
 
 import Browser
 import Element exposing (..)
@@ -54,17 +54,80 @@ view _ =
 
 {-|
     import Element
-    <shiori> Element.layout [] (button "button")
-
-    <shiori> Element.layout [] (button "button2")
+    <shiori> Element.layout [] (ElmUI.button "button")
 -}
 button : String -> Element msg
 button str =
     Input.button
-        [ Background.color (rgb255 40 40 40)
-        , Font.color (rgb 255 255 255)
-        , paddingXY 30 20
-        , Border.rounded 10
-        , mouseOver [ Background.color (rgb255 100 100 100) ]
+        [ Background.color (rgb255 249 115 22)
+        , Font.color (rgb255 255 255 255)
+        , paddingXY 24 14
+        , Border.rounded 8
+        , Font.size 14
+        , Font.bold
+        , Border.shadow { offset = (0, 4), size = 0, blur = 6, color = rgba255 249 115 22 0.2 }
         ]
         { label = text str, onPress = Nothing }
+
+
+{-|
+    import Element
+    <shiori> Element.layout [] ElmUI.productCard
+-}
+productCard : Element msg
+productCard =
+    column
+        [ width (px 300)
+        , Background.color (rgb255 255 255 255)
+        , Border.rounded 16
+        , Border.shadow { offset = (0, 8), size = 0, blur = 16, color = rgba255 0 0 0 0.05 }
+        , Border.width 1
+        , Border.color (rgb255 243 244 246)
+        , clip
+        ]
+        [ image [ width fill, height (px 180) ] { src = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80", description = "Product Image" }
+        , column [ padding 20, spacing 12, width fill ]
+            [ el [ Font.size 11, Font.bold, Font.color (rgb255 156 163 175) ] (text "GADGET")
+            , paragraph [ Font.size 16, Font.bold, Font.color (rgb255 31 41 55) ] [ text "Minimalist Smart Watch" ]
+            , row [ width fill, spaceEvenly ]
+                [ el [ Font.size 18, Font.bold, Font.color (rgb255 249 115 22) ] (text "$199.00")
+                , Input.button
+                    [ Background.color (rgb255 31 41 55)
+                    , Font.color (rgb255 255 255 255)
+                    , paddingXY 16 8
+                    , Border.rounded 8
+                    , Font.size 12
+                    , Font.bold
+                    ]
+                    { label = text "Buy Now", onPress = Nothing }
+                ]
+            ]
+        ]
+
+
+{-|
+    import Element
+    <shiori> Element.layout [] ElmUI.badgeList
+-}
+badgeList : Element msg
+badgeList =
+    row [ spacing 8, padding 10 ]
+        [ el
+            [ Background.color (rgb255 239 246 255)
+            , Font.color (rgb255 37 99 235)
+            , Font.size 12
+            , Font.bold
+            , paddingXY 10 6
+            , Border.rounded 9999
+            ]
+            (text "Info Badge")
+        , el
+            [ Background.color (rgb255 236 253 245)
+            , Font.color (rgb255 5 150 105)
+            , Font.size 12
+            , Font.bold
+            , paddingXY 10 6
+            , Border.rounded 9999
+            ]
+            (text "Success Badge")
+        ]
