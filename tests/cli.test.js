@@ -57,3 +57,33 @@ test('shiori build generates build artifacts', async () => {
   await assert.doesNotReject(access(targetJs));
   await assert.doesNotReject(access(targetLogo));
 });
+
+test('validateShioriJson validates configuration correctly', async () => {
+  // 動的インポートしてテストする
+  const { validateShioriJson } = await import('../bin/lib/config.js');
+
+  // 正常系: roots のみ
+  assert.doesNotThrow(() => {
+    validateShioriJson({ roots: ['src'] });
+  });
+
+  // 異常系: roots が配列でない
+  assert.throws(() => {
+    validateShioriJson({ roots: 'src' });
+  }, /roots/);
+
+  // 異常系: roots の要素が文字列でない
+  assert.throws(() => {
+    validateShioriJson({ roots: [123] });
+  }, /roots/);
+
+  // 異常系: assets が文字列でない
+  assert.throws(() => {
+    validateShioriJson({ roots: ['src'], assets: 123 });
+  }, /assets/);
+
+  // 異常系: stylesheets が配列でない
+  assert.throws(() => {
+    validateShioriJson({ roots: ['src'], stylesheets: 'style.css' });
+  }, /stylesheets/);
+});

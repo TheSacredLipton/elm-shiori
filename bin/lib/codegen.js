@@ -7,32 +7,6 @@ import { cyan, execAsync, logError, shioriRoot } from './utils.js';
 
 const { compile } = compiler;
 
-export const ELM_BUILTINS = new Set([
-  'True',
-  'False',
-  'Maybe',
-  'Just',
-  'Nothing',
-  'Result',
-  'Ok',
-  'Err',
-  'List',
-  'Order',
-  'LT',
-  'EQ',
-  'GT',
-  'Int',
-  'Float',
-  'Char',
-  'String',
-  'Bool',
-  'Never',
-  'Task',
-  'Cmd',
-  'Sub',
-  'Program'
-]);
-
 /**
  * @typedef {import('./config.js').ShioriJson} ShioriJson
  */
