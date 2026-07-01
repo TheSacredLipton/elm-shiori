@@ -39,6 +39,13 @@
       "items": {
         "type": "string"
       }
+    },
+    "imports": {
+      "type": "array",
+      "description": "List of Elm import statements to include globally in Shiori.Route.elm (e.g. Json.Decode as Decode).",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": ["roots", "files"],

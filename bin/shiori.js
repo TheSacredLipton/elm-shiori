@@ -29,6 +29,7 @@ const { red, cyan } = kleur;
  * @property {string} [assets]
  * @property {string[]} [stylesheets]
  * @property {string[]} [scripts]
+ * @property {string[]} [imports]
  * @typedef {Object} ElmJson
  * @property {string[]} source-directories
  */
@@ -142,18 +143,50 @@ const sourceDirectories = roots => {
  * @typedef {Object.<string, Object.<string, ModuleMetadata>>} ModulesMetadata
  */
 
+const ELM_BUILTINS = new Set([
+  'True',
+  'False',
+  'Maybe',
+  'Just',
+  'Nothing',
+  'Result',
+  'Ok',
+  'Err',
+  'List',
+  'Order',
+  'LT',
+  'EQ',
+  'GT',
+  'Int',
+  'Float',
+  'Char',
+  'String',
+  'Bool',
+  'Never',
+  'Task',
+  'Cmd',
+  'Sub',
+  'Program'
+]);
+
 /**
  * Builds the Shiori.Route module source code.
  * @param {ModulesMetadata} modules
+ * @param {ShioriJson} [shioriJson]
  * @returns {string}
  */
-const buildRouteElm = modules => {
+const buildRouteElm = (modules, shioriJson) => {
   const moduleNames = Object.keys(modules).sort();
 
   const importsSection = moduleNames.map(m => `import ${m}`).join('\n');
 
   // 重複を排除したカスタムインポート
   const customImports = new Set();
+  if (shioriJson && Array.isArray(shioriJson.imports)) {
+    for (const imp of shioriJson.imports) {
+      customImports.add(`import ${imp}`);
+    }
+  }
   for (const m of moduleNames) {
     for (const f of Object.keys(modules[m])) {
       for (const imp of modules[m][f].imports) {
@@ -282,6 +315,31 @@ const runCodegen = async shioriJson => {
     const errors = data.errors || [];
     for (const fileError of errors) {
       const filePath = fileError.path;
+      /** @type {string[]} */
+      let fileImports = [];
+      try {
+        const fileContent = await readFile(filePath, 'utf-8');
+        fileImports = fileContent
+          .split('\n')
+          .map(l => l.trim())
+          .filter(l => l.startsWith('import '))
+          .filter(l => {
+            const m = l.match(/^import\s+([A-Za-z0-9_.]+)/);
+            if (m) {
+              const mod = m[1];
+              if (
+                mod === 'Html' ||
+                mod.startsWith('Html.') ||
+                mod === 'Url' ||
+                mod.startsWith('Url.')
+              ) {
+                return false;
+              }
+            }
+            return true;
+          });
+      } catch (_) {}
+
       let matchedRoot = '';
       for (const root of shioriJson.roots) {
         if (filePath.startsWith(`${root}/`)) {
@@ -332,6 +390,9 @@ const runCodegen = async shioriJson => {
                   if (m.startsWith('"') || m.startsWith("'")) {
                     return m;
                   }
+                  if (ELM_BUILTINS.has(m)) {
+                    return m;
+                  }
                   if (m === funcName) {
                     return `${moduleName}.${funcName}`;
                   }
@@ -339,14 +400,14 @@ const runCodegen = async shioriJson => {
                 });
               });
               modules[moduleName][funcName].codes.push(...resolvedCodes);
-              modules[moduleName][funcName].imports.push(...importLines);
+              modules[moduleName][funcName].imports.push(...importLines, ...fileImports);
             }
           }
         }
       }
     }
 
-    const routeElmContent = buildRouteElm(modules);
+    const routeElmContent = buildRouteElm(modules, shioriJson);
     const routeElmPath = join('elm-stuff', 'shiori', 'src', 'Shiori', 'Route.elm');
     await fse.ensureDir(join('elm-stuff', 'shiori', 'src', 'Shiori'));
     await writeFile(routeElmPath, routeElmContent);
