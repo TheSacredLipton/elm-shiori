@@ -41,7 +41,7 @@ npx shiori init
 ```elm
 {-|
 
-    <shiori> button
+    <shiori> button </shiori>
 
 -}
 button : Html Msg
@@ -56,7 +56,7 @@ button =
 ```elm
 {-|
 
-    <shiori> button "World"
+    <shiori> button "World" </shiori>
 
 -}
 button : String -> Html Msg
@@ -71,9 +71,9 @@ button str =
 ```elm
 {-|
 
-    <shiori> button "World"
+    <shiori> button "World" </shiori>
 
-    <shiori> button "World2"
+    <shiori> button "World2" </shiori>
 
 -}
 button : String -> Html Msg
@@ -90,7 +90,7 @@ import
 
     import Html exposing (div)
 
-    <shiori> div [] <| .body <| view { world = "world" }
+    <shiori> div [] <| .body <| view { world = "world" } </shiori>
 
 -}
 view : Model -> { title : String, body : List (Html Msg) }
@@ -103,15 +103,73 @@ view model =
 
 複数行
 
-- 現状**非対応**です。1行で書き切ってください。
-- 気が向いたら対応します。
+対応しています。`</shiori>` を閉じタグとして配置することで、複数行にわたる Elm コードを記述できます。
+
+```elm
+{-|
+
+    <shiori>
+    div []
+        [ text "Hello"
+        , text "World"
+        ]
+    </shiori>
+
+-}
+```
 
 ## CLI
 
 ```sh
 npx shiori init
-npx shiori build
-npx shiori serve
+npx shiori build [--output <dir>]
+npx shiori serve [--port <port>]
+```
+
+* `--output`, `-o`: ビルド成果物（HTML、JS、ロゴ、アセット、プレビューURL一覧など）を指定したディレクトリへ一括でエクスポートします。
+* `--port`, `-p`: 開発サーバーを起動するポート番号を指定します（デフォルト: `3000`）。
+
+## VRT (Visual Regression Testing)
+
+`shiori` は各コンポーネントを外枠UI（ヘッダーやサイドバー）なしで描画する **Solo表示モード** をサポートしており、VRT（ビジュアル画像比較テスト）を非常に簡単に統合できます。
+
+### 1. Solo表示URL
+`/preview/ModuleName/functionName/index`（例: `/preview/Hello/buttons/0`）に直接アクセスすると、コンポーネント単体が画面いっぱいに描画されます。VRT撮影の際はこのURLを利用することで、Shiori自身のUI変更によるテストの誤検知を防げます。
+
+### 2. プレビューURL一覧の取得
+`shiori build`（または `serve`）実行時、生成されたプレビュー用の全Solo表示URLが配列として `shiori-previews.json` に書き出されます。
+
+```json
+[
+  "/preview/Hello/alertBoxes/0",
+  "/preview/Hello/alertBoxes/1",
+  "/preview/Hello/buttons/0"
+]
+```
+
+### 3. Playwright による自動VRTテストの記述例
+この `shiori-previews.json` を動的に読み込むことで、プレビューが新規追加されてもテストコードを変更することなく、自動でVRT対象に含めることができます。
+
+```js
+import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+
+const previews = JSON.parse(readFileSync('./dist/shiori-previews.json', 'utf-8'));
+
+test.describe('Shiori VRT', () => {
+  for (const path of previews) {
+    test(`Snapshot for ${path}`, async ({ page }) => {
+      await page.goto(`http://localhost:3000${path}`);
+      
+      // Elmの初期化と初期レンダリング完了を待つ
+      await page.waitForSelector('body > div');
+      
+      await expect(page).toHaveScreenshot(`${path.replace(/\//g, '_')}.png`, {
+        fullPage: true
+      });
+    });
+  }
+});
 ```
 
 ## 開発

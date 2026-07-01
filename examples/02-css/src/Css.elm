@@ -54,16 +54,16 @@ view model =
 
 {-|
 
-    <shiori name="Premium Layout A"> premiumCard </shiori>
-    <shiori name="Premium Layout B"> premiumCard </shiori>
+    <shiori name="Premium Layout A"> premiumCard "Creative Project A" </shiori>
+    <shiori name="Premium Layout B"> premiumCard "Creative Project B" </shiori>
 
 -}
-premiumCard : Html msg
-premiumCard =
+premiumCard : String -> Html msg
+premiumCard title =
     div [ class "css-card" ]
         [ div [ class "css-card-banner" ] []
         , div [ class "css-card-content" ]
-            [ h3 [ class "css-card-title" ] [ text "Creative Project" ]
+            [ h3 [ class "css-card-title" ] [ text title ]
             , p [ class "css-card-text" ]
                 [ text "This component has its styles completely isolated inside an iframe using vanilla CSS files managed via shiori.json configuration." ]
             , button [ class "css-card-btn" ] [ text "Explore" ]

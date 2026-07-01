@@ -8,3 +8,6 @@ generated
 shiori/*
 !shiori/src/Shiori_View.elm
 !shiori/src/Shiori.elm
+dist
+test-results
+vrt.spec.js-snapshots

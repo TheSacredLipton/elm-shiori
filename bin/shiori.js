@@ -439,6 +439,19 @@ const runCodegen = async shioriJson => {
     const routeElmPath = join('elm-stuff', 'shiori', 'src', 'Shiori', 'Route.elm');
     await fse.ensureDir(join('elm-stuff', 'shiori', 'src', 'Shiori'));
     await writeFile(routeElmPath, routeElmContent);
+
+    // プレビューURLリストの生成と書き出し
+    const previewUrls = [];
+    for (const m of Object.keys(modules).sort()) {
+      for (const f of Object.keys(modules[m])) {
+        const codes = modules[m][f].codes;
+        for (let i = 0; i < codes.length; i++) {
+          previewUrls.push(`/preview/${m}/${f}/${i}`);
+        }
+      }
+    }
+    const previewsJsonPath = join('elm-stuff', 'shiori', 'shiori-previews.json');
+    await writeFile(previewsJsonPath, JSON.stringify(previewUrls, null, 2));
   } catch (error) {
     logError(error);
   }
@@ -552,8 +565,47 @@ function logError(error, prefix) {
   }
 }
 
+/**
+ * Exports build artifacts to the specified output directory.
+ * @param {string} outputDir
+ * @param {ShioriJson} shioriJson
+ * @returns {Promise<void>}
+ */
+async function exportBuildArtifacts(outputDir, shioriJson) {
+  try {
+    const workDir = join('elm-stuff', 'shiori');
+    await fse.ensureDir(outputDir);
+
+    await fse.copy(join(workDir, 'index.html'), join(outputDir, 'index.html'));
+    await fse.copy(join(workDir, 'shiori.js'), join(outputDir, 'shiori.js'));
+    await fse.copy(join(workDir, 'logo.svg'), join(outputDir, 'logo.svg'));
+
+    const previewsJsonPath = join(workDir, 'shiori-previews.json');
+    if (await fse.pathExists(previewsJsonPath)) {
+      await fse.copy(previewsJsonPath, join(outputDir, 'shiori-previews.json'));
+    }
+
+    if (shioriJson.assets) {
+      await fse.copy(shioriJson.assets, join(outputDir, shioriJson.assets));
+    }
+  } catch (err) {
+    logError(err, 'Failed to export artifacts');
+  }
+}
+
 const argv = yargs(hideBin(process.argv))
   .command('* [arg]', '=== commands === \n\n init \n build \n serve')
+  .option('output', {
+    alias: 'o',
+    type: 'string',
+    description: 'Output directory for build artifacts'
+  })
+  .option('port', {
+    alias: 'p',
+    type: 'number',
+    description: 'Port number to run serve command on',
+    default: 3000
+  })
   .parseSync();
 
 (async () => {
@@ -570,6 +622,10 @@ const argv = yargs(hideBin(process.argv))
         await copyElmJson(shioriJson.roots);
         await runCodegen(shioriJson);
         await runElmCompile();
+
+        if (argv.output) {
+          await exportBuildArtifacts(argv.output, shioriJson);
+        }
       }
     } catch (err) {
       logError(err);
@@ -578,6 +634,14 @@ const argv = yargs(hideBin(process.argv))
 
   if (arg === 'serve') {
     const shioriJson = await readShioriJson();
+
+    // サーバー起動前に初期ビルドを同期的に完了させる
+    await prepareWorkDir();
+    if (shioriJson) {
+      await copyElmJson(shioriJson.roots);
+      await runCodegen(shioriJson);
+      await runElmCompile();
+    }
 
     // WebSocket 接続クライアントの管理
     /** @type {Set<import('ws').WebSocket>} */
@@ -626,7 +690,7 @@ const argv = yargs(hideBin(process.argv))
     const server = honoServe(
       {
         fetch: app.fetch,
-        port: 3000
+        port: argv.port
       },
       info => {
         console.log(cyan(`Running at http://localhost:${info.port}`));
@@ -643,7 +707,6 @@ const argv = yargs(hideBin(process.argv))
       });
     });
 
-    await prepareWorkDir();
     await serve();
   }
 })();

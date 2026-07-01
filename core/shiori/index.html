@@ -73,7 +73,7 @@
     <script src="/shiori.js"></script>
     <script>
         Elm.Shiori.init({ node: document.body });
-        const ws = new WebSocket('ws://localhost:3000/ws');
+        const ws = new WebSocket('ws://' + window.location.host + '/ws');
         ws.onmessage = e => {
             window.location.reload()
         }
