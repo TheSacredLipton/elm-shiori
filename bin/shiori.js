@@ -299,7 +299,8 @@ const runCodegen = async shioriJson => {
             const funcName = match[1];
             const commentStr = match[2];
 
-            const lines = commentStr.split('\n');
+            const cleanComment = commentStr.replace(/^\{-[-|]?/, '').replace(/-\}$/, '');
+            const lines = cleanComment.split('\n');
             const importLines = [];
             const shioriCodes = [];
             for (let line of lines) {
