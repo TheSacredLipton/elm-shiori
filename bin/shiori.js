@@ -111,7 +111,7 @@ const copyElmJson = async roots => {
       const newElmJson = produce(elmjson, draft => {
         draft['source-directories'] = sourceDirectories(roots);
       });
-      await writeFile(join('shiori', 'elm.json'), JSON.stringify(newElmJson, null, 2));
+      await writeFile(join('elm-stuff', 'shiori', 'elm.json'), JSON.stringify(newElmJson, null, 2));
     }
   } catch (error) {
     logError(error);
@@ -124,7 +124,7 @@ const copyElmJson = async roots => {
  * @returns {string[]}
  */
 const sourceDirectories = roots => {
-  const r = roots.map(root => `../${root}`);
+  const r = roots.map(root => `../../${root}`);
   return [...r, 'src'];
 };
 
@@ -166,20 +166,28 @@ const toSlash = str => {
 };
 
 /**
- * Initializes the application by copying the 'shiori' directory from a base to the current working directory.
+ * Prepares the work directory in 'elm-stuff/shiori' by copying base template files.
+ * @returns {Promise<void>}
+ */
+const prepareWorkDir = async () => {
+  try {
+    const workDir = join('elm-stuff', 'shiori');
+    await fse.ensureDir(workDir);
+    await fse.copy(join(shioriRoot(), 'core', 'shiori', 'src'), join(workDir, 'src'));
+    await fse.copy(join(shioriRoot(), 'core', 'shiori', 'index.html'), join(workDir, 'index.html'));
+  } catch (err) {
+    logError(err);
+  }
+};
+
+/**
+ * Initializes the application by copying the 'shiori.json' file to the current working directory.
  * @returns {Promise<void>}
  */
 const init = async () => {
   try {
-    const p_shiori = 'shiori';
-    await fse.remove(p_shiori);
-    await fse.copy(join(shioriRoot(), 'boilerplate', 'shiori'), p_shiori);
-
-    const shioriJson = await readFile(join(shioriRoot(), 'boilerplate', 'shiori.json'), 'utf-8');
+    const shioriJson = await readFile(join(shioriRoot(), 'core', 'shiori.json'), 'utf-8');
     await writeFile('./shiori.json', shioriJson);
-
-    const gitignore = await readFile(join(shioriRoot(), 'boilerplate', '.gitignore'), 'utf-8');
-    await writeFile('./.gitignore', gitignore);
   } catch (err) {
     logError(err);
   }
@@ -210,7 +218,7 @@ const runCodegen = async shioriJson => {
     if (flags) {
       process.chdir(join('elm-stuff', 'shiori'));
       await run_generation_from_cli(null, {
-        output: join(process.cwd(), '..', '..', 'shiori', 'src'),
+        output: join(process.cwd(), 'src'),
         flags: flags
       });
       process.chdir(join('..', '..'));
@@ -226,9 +234,9 @@ const runCodegen = async shioriJson => {
  */
 const runElmCompile = async () => {
   try {
-    process.chdir(join('shiori'));
+    process.chdir(join('elm-stuff', 'shiori'));
     compile([join('src', 'Shiori.elm')], { output: join('shiori.js') });
-    process.chdir('..');
+    process.chdir(join('..', '..'));
   } catch (error) {
     logError(error);
   }
@@ -265,13 +273,13 @@ const serve = async () => {
         });
 
       chokidar
-        .watch(join('shiori', 'src', 'Shiori', 'Route.elm'))
+        .watch(join('elm-stuff', 'shiori', 'src', 'Shiori', 'Route.elm'))
         .on('change', async () => await runElmCompile());
       chokidar
-        .watch(join('shiori', 'src', 'Shiori_View.elm'))
+        .watch(join('elm-stuff', 'shiori', 'src', 'Shiori_View.elm'))
         .on('change', async () => await runElmCompile());
       chokidar
-        .watch(join('shiori', 'src', 'Shiori.elm'))
+        .watch(join('elm-stuff', 'shiori', 'src', 'Shiori.elm'))
         .on('change', async () => await runElmCompile());
     }
   } catch (err) {
@@ -310,6 +318,7 @@ const argv = yargs(hideBin(process.argv))
     try {
       const shioriJson = await readShioriJson();
       if (shioriJson) {
+        await prepareWorkDir();
         await copyCodegenToElmStuff();
         await copyElmJson(shioriJson.roots);
         await runCodegen(shioriJson);
@@ -327,7 +336,7 @@ const argv = yargs(hideBin(process.argv))
     /** @type {Set<import('ws').WebSocket>} */
     const wsClients = new Set();
 
-    chokidar.watch('shiori/shiori.js').on('change', async () => {
+    chokidar.watch('elm-stuff/shiori/shiori.js').on('change', async () => {
       for (const client of wsClients) {
         if (client.readyState === 1) {
           // OPEN
@@ -344,15 +353,15 @@ const argv = yargs(hideBin(process.argv))
     // Hono アプリケーションの作成
     const app = new Hono();
 
-    app.get('/shiori.js', serveStatic({ path: './shiori/shiori.js' }));
+    app.get('/shiori.js', serveStatic({ path: './elm-stuff/shiori/shiori.js' }));
 
     if (shioriJson?.assets) {
       app.use('/*', serveStatic({ root: shioriJson.assets }));
     }
 
-    app.get('/', serveStatic({ path: './shiori/index.html' }));
+    app.get('/', serveStatic({ path: './elm-stuff/shiori/index.html' }));
     app.notFound(async c => {
-      const res = await serveStatic({ path: './shiori/index.html' })(c, async () => {});
+      const res = await serveStatic({ path: './elm-stuff/shiori/index.html' })(c, async () => {});
       return res || c.text('Not Found', 404);
     });
 
@@ -377,6 +386,7 @@ const argv = yargs(hideBin(process.argv))
       });
     });
 
+    await prepareWorkDir();
     await serve();
   }
 })();

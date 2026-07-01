@@ -26,7 +26,7 @@ view _ =
     []
 `;
   try {
-    const destDir = join(__dirname, 'boilerplate', 'shiori', 'src', 'Shiori');
+    const destDir = join(__dirname, 'core', 'shiori', 'src', 'Shiori');
     await mkdir(destDir, { recursive: true });
     await writeFile(join(destDir, 'Route.elm'), route_elm);
   } catch (error) {
@@ -36,23 +36,21 @@ view _ =
 
 /**
  * write shiori.elm
+ * @param {string} example
  */
-const writeShioriElm = () => {
+const writeShioriElm = example => {
   chokidar
-    .watch(join(__dirname, 'boilerplate', 'shiori', 'src', 'Shiori.elm'))
+    .watch(join(__dirname, 'core', 'shiori', 'src', 'Shiori.elm'))
     .on('change', async () => {
       try {
-        const examples = await readdir(join(__dirname, 'examples'));
         const shiori_elm = await readFile(
-          join(__dirname, 'boilerplate', 'shiori', 'src', 'Shiori.elm'),
+          join(__dirname, 'core', 'shiori', 'src', 'Shiori.elm'),
           'utf-8'
         );
-        for (const example of examples) {
-          await writeFile(
-            join(__dirname, 'examples', example, 'shiori', 'src', 'Shiori.elm'),
-            shiori_elm
-          );
-        }
+        await writeFile(
+          join(__dirname, 'examples', example, 'elm-stuff', 'shiori', 'src', 'Shiori.elm'),
+          shiori_elm
+        );
       } catch (error) {
         console.error(red(`Error during file handling: ${error}`));
       }
@@ -97,7 +95,7 @@ const argv = yargs(hideBin(process.argv))
   if (typeof example === 'string' && examples.includes(example)) {
     console.log(cyan('== running dev.js =='));
     await writeRouteElm();
-    writeShioriElm();
+    writeShioriElm(example);
     await runShioriJs(example);
   } else {
     console.log(examples);
