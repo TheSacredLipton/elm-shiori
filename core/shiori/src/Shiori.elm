@@ -25,11 +25,18 @@ main =
         }
 
 
+type Device
+    = Responsive
+    | Tablet
+    | Mobile
+
+
 type alias Model =
     { key : Nav.Key
     , url : Url.Url
     , isActive : Bool
     , width : Float
+    , device : Device
     }
 
 
@@ -39,6 +46,7 @@ init _ url key =
       , url = url
       , isActive = False
       , width = 0
+      , device = Responsive
       }
     , Task.perform (\v -> GetViewport v.viewport.width) getViewport
     )
@@ -49,6 +57,7 @@ type Msg
     | UrlChanged Url.Url
     | ToggleMenu
     | GetViewport Float
+    | ChangeDevice Device
     | NoOp
 
 
@@ -74,8 +83,13 @@ update msg model =
         GetViewport w ->
             ( { model | width = w }, Cmd.none )
 
+        ChangeDevice d ->
+            ( { model | device = d }, Cmd.none )
+
         NoOp ->
             ( model, Cmd.none )
+
+
 
 
 view : Model -> Browser.Document Msg
@@ -109,7 +123,7 @@ view model =
                 , style "flex-direction" "column"
                 , style "height" "100vh"
                 ]
-                [ header model.width model.url
+                [ header model
                 , header_
                 , smNav model.isActive model.url
                 , div
@@ -120,7 +134,7 @@ view model =
                     ]
                     [ sideNav model.width 250 model.url
                     , sideNav_ model.width 250
-                    , body model.url
+                    , body model
                     ]
                 ]
         ]
@@ -144,8 +158,12 @@ stripPreviewPrefix url =
         url
 
 
-header : Float -> Url.Url -> Html Msg
-header w url =
+header : Model -> Html Msg
+header model =
+    let
+        w = model.width
+        url = model.url
+    in
     div
         [ style "height" "48px"
         , style "width" "100%"
@@ -192,7 +210,12 @@ header w url =
                 , style "align-items" "center"
                 , style "gap" "12px"
                 ]
-                [ previewLink url
+                [ if url.path /= "/" then
+                    deviceToolbar model.device
+
+                  else
+                    text ""
+                , previewLink url
                 , menuButton w
                 ]
             ]
@@ -380,13 +403,18 @@ sideNavSubLink name url isActive =
         [ text name ]
 
 
-body : Url.Url -> Html Msg
-body url =
+body : Model -> Html Msg
+body model =
+    let
+        url = model.url
+    in
     div
         [ style "width" "100%"
         , style "padding" "24px"
         , style "box-sizing" "border-box"
         , style "height" "100%"
+        , style "display" "flex"
+        , style "flex-direction" "column"
         ]
         [ if url.path == "/" then
             div
@@ -400,13 +428,119 @@ body url =
                 [ text "サイドバーからコンポーネントを選択してください" ]
 
           else
-            iframe
-                [ src ("/preview" ++ url.path)
-                , attribute "key" url.path
-                , class "shiori-preview-iframe"
+            div
+                [ style "display" "flex"
+                , style "flex-direction" "column"
+                , style "height" "100%"
+                , style "width" "100%"
+                , style "align-items" "center"
                 ]
-                []
+                [ div
+                    [ style "flex" "1"
+                    , style "width" "100%"
+                    , style "display" "flex"
+                    , style "justify-content" "center"
+                    , style "align-items" "flex-start"
+                    , style "overflow" "auto"
+                    , style "padding" "16px 0"
+                    ]
+                    [ iframe
+                        ([ src ("/preview" ++ url.path)
+                         , attribute "key" url.path
+                         , class "shiori-preview-iframe"
+                         , style "transition" "width 0.3s ease, max-width 0.3s ease, border 0.3s ease, border-radius 0.3s ease"
+                         ]
+                            ++ deviceIframeStyles model.device
+                        )
+                        []
+                    ]
+                ]
         ]
+
+
+deviceToolbar : Device -> Html Msg
+deviceToolbar currentDevice =
+    div
+        [ style "display" "flex"
+        , style "background-color" "#f5f5f4"
+        , style "padding" "4px"
+        , style "border-radius" "8px"
+        , style "gap" "4px"
+        , style "box-shadow" "inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)"
+        ]
+        [ deviceButton Responsive "Responsive" currentDevice
+        , deviceButton Tablet "Tablet (768px)" currentDevice
+        , deviceButton Mobile "Mobile (375px)" currentDevice
+        ]
+
+
+deviceButton : Device -> String -> Device -> Html Msg
+deviceButton device label currentDevice =
+    let
+        isActive =
+            device == currentDevice
+    in
+    Html.button
+        [ onClick (ChangeDevice device)
+        , style "padding" "6px 12px"
+        , style "border" "none"
+        , style "border-radius" "6px"
+        , style "font-size" "12px"
+        , style "font-weight" "600"
+        , style "cursor" "pointer"
+        , style "transition" "all 0.2s ease"
+        , style "background-color"
+            (if isActive then
+                "#ffffff"
+
+             else
+                "transparent"
+            )
+        , style "color"
+            (if isActive then
+                "#1c1917"
+
+             else
+                "#78716c"
+            )
+        , style "box-shadow"
+            (if isActive then
+                "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)"
+
+             else
+                "none"
+            )
+        ]
+        [ text label ]
+
+
+deviceIframeStyles : Device -> List (Html.Attribute msg)
+deviceIframeStyles device =
+    case device of
+        Responsive ->
+            [ style "width" "100%"
+            , style "height" "100%"
+            , style "border" "none"
+            , style "border-radius" "12px"
+            ]
+
+        Tablet ->
+            [ style "width" "768px"
+            , style "height" "1024px"
+            , style "max-height" "100%"
+            , style "border" "10px solid #1c1917"
+            , style "border-radius" "24px"
+            , style "box-sizing" "border-box"
+            ]
+
+        Mobile ->
+            [ style "width" "375px"
+            , style "height" "812px"
+            , style "max-height" "100%"
+            , style "border" "12px solid #1c1917"
+            , style "border-radius" "36px"
+            , style "box-sizing" "border-box"
+            ]
 
 
 md : Float -> String -> String -> Html.Attribute msg
