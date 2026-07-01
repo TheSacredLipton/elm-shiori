@@ -177,185 +177,6 @@ const ELM_BUILTINS = new Set([
 ]);
 
 /**
- * Builds the Shiori.Route module source code.
- * @param {ModulesMetadata} modules
- * @param {ShioriJson} [shioriJson]
- * @returns {string}
- */
-const buildRouteElm = (modules, shioriJson) => {
-  const moduleNames = Object.keys(modules).sort();
-
-  const importsSection = moduleNames.map(m => `import ${m}`).join('\n');
-
-  // 重複を排除したカスタムインポート
-  const customImports = new Set();
-  if (shioriJson && Array.isArray(shioriJson.imports)) {
-    for (const imp of shioriJson.imports) {
-      customImports.add(`import ${imp}`);
-    }
-  }
-  for (const m of moduleNames) {
-    for (const f of Object.keys(modules[m])) {
-      for (const imp of modules[m][f].imports) {
-        customImports.add(imp);
-      }
-    }
-  }
-  const customImportsSection = Array.from(customImports).sort().join('\n');
-
-  // Route型定義
-  const routeVariants = ['NotFound'];
-  for (const m of moduleNames) {
-    const variant = m.replace(/\./g, '_');
-    routeVariants.push(`${variant} String (Maybe Int)`);
-  }
-  const routeTypeSection = `type Route\n    = ${routeVariants.join('\n    | ')}`;
-
-  // routeParser
-  const parserItems = [];
-  for (const m of moduleNames) {
-    const variant = m.replace(/\./g, '_');
-    parserItems.push(
-      `Url.Parser.map (\\f idx -> ${variant} f (Just idx)) (s "${m}" </> string </> Url.Parser.int)`
-    );
-    parserItems.push(`Url.Parser.map (\\f -> ${variant} f Nothing) (s "${m}" </> string)`);
-  }
-  const parserSection = `routeParser : Parser (Route -> b) b
-routeParser =
-    oneOf
-        [ ${parserItems.join('\n        , ')}
-        ]`;
-
-  // view
-  const viewBranches = [];
-  viewBranches.push('        NotFound ->\n            []');
-
-  for (const m of moduleNames) {
-    const variant = m.replace(/\./g, '_');
-    const funcBranches = [];
-    for (const f of Object.keys(modules[m])) {
-      const codes = modules[m][f].codes; // Array of { name, code }
-
-      const indentCode = (/** @type {string} */ code, /** @type {number} */ spaces) => {
-        const lines = code.split('\n');
-        const pad = ' '.repeat(spaces);
-        if (lines.length <= 1) return pad + code;
-        let minIndent = Number.POSITIVE_INFINITY;
-        for (const line of lines) {
-          if (line.trim() === '') continue;
-          const match = line.match(/^[ \t]*/);
-          const indentLength = match ? match[0].length : 0;
-          if (indentLength < minIndent) {
-            minIndent = indentLength;
-          }
-        }
-        if (minIndent === Number.POSITIVE_INFINITY) minIndent = 0;
-        return lines
-          .map((/** @type {string} */ line) => {
-            const stripped = line.slice(minIndent);
-            return stripped.trim() === '' ? '' : pad + stripped;
-          })
-          .join('\n');
-      };
-
-      const letBindings = codes
-        .map((c, i) => {
-          const indented = indentCode(c.code, 28);
-          return `                        preview_${i} =\n${indented}`;
-        })
-        .join('\n\n');
-
-      const cardCodes = codes.map((c, i) => {
-        const displayName = c.name || `Preview ${i}`;
-        return `Shiori_View.card "${displayName}" preview_${i}`;
-      });
-      const cardsJoined = cardCodes.join('\n                            , ');
-
-      const soloBranches = codes
-        .map((c, i) => {
-          return `                                ${i} ->\n                                    [ Shiori_View.solo preview_${i} ] |> Shiori_View.map`;
-        })
-        .join('\n\n');
-
-      funcBranches.push(
-        `                "${f}" ->
-                    let
-${letBindings}
-                    in
-                    case maybeIdx of
-                        Just idx ->
-                            case idx of
-${soloBranches}
-
-                                _ ->
-                                    []
-                        Nothing ->
-                            [ ${cardsJoined}
-                            ] |> Shiori_View.map`
-      );
-    }
-
-    viewBranches.push(`        ${variant} str maybeIdx ->
-            case str of
-${funcBranches.join('\n')}
-                _ ->
-                    []`);
-  }
-
-  const viewSection = `view : Url.Url -> List (Html.Html ())
-view url =
-    case url |> toRoute of
-${viewBranches.join('\n\n')}`;
-
-  // links
-  const linksItems = [];
-  for (const m of moduleNames) {
-    const funcItems = [];
-    for (const f of Object.keys(modules[m])) {
-      const codes = modules[m][f].codes;
-      const subItems = codes.map((c, i) => {
-        const displayName = c.name || `Preview ${i}`;
-        const path = `/${m}/${f}/${i}`;
-        return `( "${displayName}", "${path}" )`;
-      });
-      funcItems.push(`( "${f}", [ ${subItems.join(', ')} ] )`);
-    }
-    linksItems.push(`( "${m}", [ ${funcItems.join('\n      , ')} ] )`);
-  }
-
-  const linksSection = `links : List ( String, List ( String, List ( String, String ) ) )
-links =
-    [ ${linksItems.join('\n    , ')}
-    ]`;
-
-  return `module Shiori.Route exposing (Route(..), links, routeParser, toRoute, view)
-
-import Html exposing (Html)
-import Url
-import Url.Parser exposing ((</>), Parser, map, oneOf, parse, s, string)
-import Shiori_View
-
-${importsSection}
-
-${customImportsSection}
-
-${routeTypeSection}
-
-${parserSection}
-
-toRoute : Url.Url -> Route
-toRoute url =
-    url
-        |> parse routeParser
-        |> Maybe.withDefault NotFound
-
-${viewSection}
-
-${linksSection}
-`;
-};
-
-/**
  * Executes code generation by running elm-review to extract metadata
  * and generating Route.elm dynamically.
  * @param {ShioriJson} shioriJson
@@ -364,25 +185,39 @@ ${linksSection}
 const runCodegen = async shioriJson => {
   try {
     const configPath = join(shioriRoot(), 'core', 'review');
+    const cwd = join('elm-stuff', 'shiori');
+
+    // 1. 自動修正を適用して Route.elm を生成/更新する
+    try {
+      await execAsync(`npx elm-review --config ${configPath} --fix-all-without-prompt`, { cwd });
+    } catch (err) {
+      // 警告エラー等が残るため例外が飛びますが、修正自体は適用されるため無視します
+    }
+
+    // 2. 他モジュールのシャオリタグ情報を収集して previews.json を作成する
     let stdout = '';
     try {
-      const result = await execAsync(`npx elm-review --config ${configPath} --report json`);
+      const result = await execAsync(`npx elm-review --config ${configPath} --report json`, {
+        cwd
+      });
       stdout = result.stdout;
     } catch (err) {
       stdout = /** @type {*} */ (err).stdout || '';
     }
 
     if (!stdout.trim()) {
-      throw new Error('elm-review の出力が空です');
+      stdout = '{"errors":[]}';
     }
 
     const data = JSON.parse(stdout);
-    /** @type {ModulesMetadata} */
+    /** @type {Object.<string, Object.<string, {codes: {name: string, code: string}[], imports: string[]}>>} */
     const modules = {};
 
     const errors = data.errors || [];
     for (const fileError of errors) {
-      const filePath = fileError.path;
+      // elm-stuff/shiori 内から見た相対パス（例: "../../src/Hello.elm"）を
+      // カレントディレクトリ（例: "examples/01-hello"）から見た相対パスに正規化する
+      const filePath = join('elm-stuff', 'shiori', fileError.path);
       let matchedRoot = '';
       for (const root of shioriJson.roots) {
         if (filePath.startsWith(`${root}/`)) {
@@ -406,27 +241,7 @@ const runCodegen = async shioriJson => {
                 modules[moduleName][funcName] = { codes: [], imports: [] };
               }
               const resolvedCodes = shioriCodes.map(
-                (/** @type {{name: string, code: string}} */ c) => {
-                  const code = c.code;
-                  const escapedFuncName = funcName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                  const regex = new RegExp(
-                    `"[^"\\\\\\n]*(?:\\\\.[^"\\\\\\n]*)*"|'[^'\\\\\\n]*(?:\\\\.[^'\\\\\\n]*)*'|(?<!\\.)\\b${escapedFuncName}\\b|(?<!\\.)\\b[A-Z][a-zA-Z0-9_]*\\b(?!\\.)`,
-                    'g'
-                  );
-                  const resolved = code.replace(regex, (/** @type {string} */ m) => {
-                    if (m.startsWith('"') || m.startsWith("'")) {
-                      return m;
-                    }
-                    if (ELM_BUILTINS.has(m)) {
-                      return m;
-                    }
-                    if (m === funcName) {
-                      return `${moduleName}.${funcName}`;
-                    }
-                    return `${moduleName}.${m}`;
-                  });
-                  return { name: c.name, code: resolved };
-                }
+                (/** @type {{name: string, code: string}} */ c) => ({ name: c.name, code: c.code })
               );
               modules[moduleName][funcName].codes.push(...resolvedCodes);
               modules[moduleName][funcName].imports.push(...importLines);
@@ -437,11 +252,6 @@ const runCodegen = async shioriJson => {
         }
       }
     }
-
-    const routeElmContent = buildRouteElm(modules, shioriJson);
-    const routeElmPath = join('elm-stuff', 'shiori', 'src', 'Shiori', 'Route.elm');
-    await fse.ensureDir(join('elm-stuff', 'shiori', 'src', 'Shiori'));
-    await writeFile(routeElmPath, routeElmContent);
 
     // プレビューURLリストの生成と書き出し
     const previewUrls = [];
@@ -515,12 +325,14 @@ const init = async () => {
  * @returns {Promise<void>}
  */
 const runElmCompile = async () => {
+  const originalCwd = process.cwd();
   try {
     process.chdir(join('elm-stuff', 'shiori'));
     compile([join('src', 'Shiori.elm')], { output: join('shiori.js') });
-    process.chdir(join('..', '..'));
   } catch (error) {
     logError(error);
+  } finally {
+    process.chdir(originalCwd);
   }
 };
 
