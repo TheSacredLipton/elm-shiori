@@ -148,13 +148,13 @@ npx shiori serve [--port <port>]
 ```
 
 ### 3. Playwright による自動VRTテストの記述例
-この `shiori-previews.json` を動的に読み込むことで、プレビューが新規追加されてもテストコードを変更することなく、自動でVRT対象に含めることができます。
+まず `npx shiori build --output shiori-dist` などで書き出しを行い、その出力先にある `shiori-previews.json` を動的に読み込むことで、プレビューが新規追加されてもテストコードを変更することなく、自動でVRT対象に含めることができます。
 
 ```js
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
-const previews = JSON.parse(readFileSync('./dist/shiori-previews.json', 'utf-8'));
+const previews = JSON.parse(readFileSync('./shiori-dist/shiori-previews.json', 'utf-8'));
 
 test.describe('Shiori VRT', () => {
   for (const path of previews) {
