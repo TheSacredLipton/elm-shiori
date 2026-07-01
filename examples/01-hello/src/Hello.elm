@@ -42,7 +42,13 @@ update msg model =
 
 {-|
 
-    <shiori> view (Model 0 "modelInitialValue2")
+    <shiori>
+    view
+        (Model
+            0
+            "modelInitialValue2"
+        )
+    </shiori>
 
 -}
 view : Model -> Html Msg

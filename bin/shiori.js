@@ -224,7 +224,29 @@ routeParser =
     const variant = m.replace(/\./g, '_');
     const funcBranches = [];
     for (const f of Object.keys(modules[m])) {
-      const codesJoined = modules[m][f].codes.join(', ');
+      const indentCode = (/** @type {string} */ code) => {
+        const lines = code.split('\n');
+        if (lines.length <= 1) return code;
+        let minIndent = Number.POSITIVE_INFINITY;
+        for (const line of lines) {
+          if (line.trim() === '') continue;
+          const match = line.match(/^[ \t]*/);
+          const indentLength = match ? match[0].length : 0;
+          if (indentLength < minIndent) {
+            minIndent = indentLength;
+          }
+        }
+        if (minIndent === Number.POSITIVE_INFINITY) minIndent = 0;
+        return lines
+          .map((/** @type {string} */ line, /** @type {number} */ idx) => {
+            const stripped = line.slice(minIndent);
+            if (idx === 0) return stripped;
+            return `                        ${stripped}`;
+          })
+          .join('\n');
+      };
+      const codesWithIndent = modules[m][f].codes.map(indentCode);
+      const codesJoined = codesWithIndent.join(', ');
       funcBranches.push(
         `                "${f}" ->\n                    [ ${codesJoined} ] |> Shiori_View.map`
       );
@@ -352,35 +374,17 @@ const runCodegen = async shioriJson => {
 
       for (const err of fileError.errors) {
         if (err.rule === 'ShioriExtractor' && err.message.startsWith('SHIORI_EXTRACT:')) {
-          const match = err.message.match(/^SHIORI_EXTRACT:([^:]+):([\s\S]+)$/);
-          if (match) {
-            const funcName = match[1];
-            const commentStr = match[2];
-
-            const cleanComment = commentStr.replace(/^\{-[-|]?/, '').replace(/-\}$/, '');
-            const lines = cleanComment.split('\n');
-            const importLines = [];
-            const shioriCodes = [];
-            for (let line of lines) {
-              line = line.trim();
-              if (line.startsWith('import ')) {
-                importLines.push(line);
-              } else if (line.startsWith('<shiori>')) {
-                const code = line.replace('<shiori>', '').trim();
-                if (code) {
-                  shioriCodes.push(code);
-                }
-              }
-            }
-
-            if (shioriCodes.length > 0) {
+          const jsonStr = err.message.slice('SHIORI_EXTRACT:'.length);
+          try {
+            const { funcName, codes: shioriCodes, imports: importLines } = JSON.parse(jsonStr);
+            if (shioriCodes && shioriCodes.length > 0) {
               if (!modules[moduleName]) {
                 modules[moduleName] = {};
               }
               if (!modules[moduleName][funcName]) {
                 modules[moduleName][funcName] = { codes: [], imports: [] };
               }
-              const resolvedCodes = shioriCodes.map(code => {
+              const resolvedCodes = shioriCodes.map((/** @type {string} */ code) => {
                 const escapedFuncName = funcName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
                 const regex = new RegExp(
                   `"[^"\\\\\\n]*(?:\\\\.[^"\\\\\\n]*)*"|'[^'\\\\\\n]*(?:\\\\.[^'\\\\\\n]*)*'|\\b${escapedFuncName}\\b|(?<!\\.)\\b[A-Z][a-zA-Z0-9_]*\\b(?!\\.)`,
@@ -402,6 +406,8 @@ const runCodegen = async shioriJson => {
               modules[moduleName][funcName].codes.push(...resolvedCodes);
               modules[moduleName][funcName].imports.push(...importLines, ...fileImports);
             }
+          } catch (e) {
+            logError(e, 'Failed to parse shiori extractor JSON');
           }
         }
       }
