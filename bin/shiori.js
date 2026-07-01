@@ -67,15 +67,10 @@ const readElmJson = async () => {
  */
 const readShioriJson = async () => {
   try {
-    try {
-      const json = JSON.parse(await readFile('shiori.json', 'utf-8'));
-      if (json.files && json.roots) return json;
-      throw new Error('shiori.jsonにfilesまたはrootがありません');
-    } catch (error) {
-      throw new Error(`${error}shiori.jsonが存在しません`);
-    }
+    const json = JSON.parse(await readFile('shiori.json', 'utf-8'));
+    if (json.files && json.roots) return json;
+    throw new Error('shiori.jsonにfilesまたはrootがありません');
   } catch (error) {
-    logError(error);
     return null;
   }
 };
@@ -321,6 +316,7 @@ const init = async () => {
   try {
     const shioriJson = await readFile(join(shioriRoot(), 'core', 'shiori.json'), 'utf-8');
     await writeFile('./shiori.json', shioriJson);
+    console.log(cyan('shiori.json configuration file has been created successfully.'));
   } catch (err) {
     logError(err);
   }
@@ -424,54 +420,76 @@ async function exportBuildArtifacts(outputDir, shioriJson) {
 }
 
 const argv = yargs(hideBin(process.argv))
-  .command('* [arg]', '=== commands === \n\n init \n build \n serve')
-  .option('output', {
-    alias: 'o',
-    type: 'string',
-    description: 'Output directory for build artifacts'
+  .scriptName('shiori')
+  .usage('$0 <command> [options]')
+  .command('init', 'Initialize shiori.json configuration file')
+  .command('build', 'Build preview artifacts', yargs => {
+    return yargs.option('output', {
+      alias: 'o',
+      type: 'string',
+      description: 'Output directory for build artifacts'
+    });
   })
-  .option('port', {
-    alias: 'p',
-    type: 'number',
-    description: 'Port number to run serve command on',
-    default: 3000
+  .command('serve', 'Start dev server for component previews', yargs => {
+    return yargs.option('port', {
+      alias: 'p',
+      type: 'number',
+      description: 'Port number to run serve command on',
+      default: 3000
+    });
   })
+  .demandCommand(1, 'Please specify a command: init, build, or serve')
+  .strict()
+  .help()
   .parseSync();
 
 (async () => {
-  const arg = argv.arg;
-  if (arg === 'init') {
+  const command = argv._[0];
+
+  if (command === 'init') {
     await init();
   }
 
-  if (arg === 'build') {
+  if (command === 'build') {
     try {
       const shioriJson = await readShioriJson();
-      if (shioriJson) {
-        await prepareWorkDir();
-        await copyElmJson(shioriJson.roots);
-        await runCodegen(shioriJson);
-        await runElmCompile();
-
-        if (argv.output) {
-          await exportBuildArtifacts(argv.output, shioriJson);
-        }
+      if (!shioriJson) {
+        console.error(
+          red('shiori.json が見つかりません。まず "npx shiori init" を実行して初期化してください。')
+        );
+        process.exit(1);
       }
+      console.log(cyan('Building preview artifacts...'));
+      await prepareWorkDir();
+      await copyElmJson(shioriJson.roots);
+      await runCodegen(shioriJson);
+      await runElmCompile();
+
+      if (argv.output) {
+        // @ts-expect-error - argv.output is string | undefined
+        await exportBuildArtifacts(argv.output, shioriJson);
+      }
+      console.log(cyan('Build completed successfully.'));
     } catch (err) {
       logError(err);
     }
   }
 
-  if (arg === 'serve') {
+  if (command === 'serve') {
     const shioriJson = await readShioriJson();
+    if (!shioriJson) {
+      console.error(
+        red('shiori.json が見つかりません。まず "npx shiori init" を実行して初期化してください。')
+      );
+      process.exit(1);
+    }
 
+    console.log(cyan('Starting development server...'));
     // サーバー起動前に初期ビルドを同期的に完了させる
     await prepareWorkDir();
-    if (shioriJson) {
-      await copyElmJson(shioriJson.roots);
-      await runCodegen(shioriJson);
-      await runElmCompile();
-    }
+    await copyElmJson(shioriJson.roots);
+    await runCodegen(shioriJson);
+    await runElmCompile();
 
     // WebSocket 接続クライアントの管理
     /** @type {Set<import('ws').WebSocket>} */
@@ -520,6 +538,7 @@ const argv = yargs(hideBin(process.argv))
     const server = honoServe(
       {
         fetch: app.fetch,
+        // @ts-expect-error - argv.port is number
         port: argv.port
       },
       info => {
