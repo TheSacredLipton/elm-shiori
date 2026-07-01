@@ -119,21 +119,20 @@ npx shiori serve
 - Global install推奨
   - node
   - elm
-- CodeRabbitお試し中
 
 ```sh
 git clone https://github.com/TheSacredLipton/elm-shiori.git
 npm start 01-hello
 ```
 
-### npm publish
-
 確認
 
 ```sh
-npm i -D https://github.com/TheSacredLipton/elm-shiori.git
+npm i -D git+https://github.com/TheSacredLipton/elm-shiori.git#branch-name
 npx shiori init
 ```
+
+### npm publish
 
 - とりあえず手動
 
@@ -144,5 +143,4 @@ npm run npm-publish
 ## ライセンス
 
 - MIT license
-- 一部[elm-codegen](https://github.com/mdgriffith/elm-codegen)で生成されたコードを含みます
 
