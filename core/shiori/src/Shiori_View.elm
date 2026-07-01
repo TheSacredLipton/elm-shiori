@@ -19,6 +19,8 @@ card label content =
         , style "flex-direction" "column"
         , style "overflow" "hidden"
         , style "box-shadow" "0 1px 3px 0 rgba(0, 0, 0, 0.05)"
+        , style "width" "100%"
+        , style "box-sizing" "border-box"
         ]
         [ div
             [ style "padding" "10px 16px"
@@ -32,10 +34,9 @@ card label content =
             [ text label ]
         , div
             [ style "padding" "24px"
-            , style "display" "flex"
-            , style "justify-content" "center"
-            , style "align-items" "center"
             , style "background-color" "#ffffff"
+            , style "width" "100%"
+            , style "box-sizing" "border-box"
             ]
             [ content ]
         ]
@@ -46,8 +47,7 @@ solo content =
     div
         [ style "width" "100%"
         , style "height" "100%"
-        , style "display" "flex"
-        , style "justify-content" "center"
-        , style "align-items" "center"
+        , style "box-sizing" "border-box"
         ]
         [ content ]
+
